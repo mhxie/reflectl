@@ -16,7 +16,8 @@ What would you like to do?
 5) Explore — surface forgotten connections and open threads
 6) Energy Audit — four-dimension energy assessment
 7) Compact Notes — find and merge redundant or overlapping notes
-8) Build Index — rebuild your reflection context (run first if new)
+8) Recommend Resources — get reading/learning recommendations on a topic
+9) Build Index — rebuild your reflection context (run first if new)
 ```
 
 Based on the user's choice:
@@ -27,7 +28,8 @@ Based on the user's choice:
 - **5 (Explore):** Read and follow `.claude/commands/explore.md`
 - **6 (Energy Audit):** Read and follow `.claude/commands/energy-audit.md`
 - **7 (Compact Notes):** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
-- **8 (Build Index):** Read and follow `.claude/commands/index.md`
+- **8 (Recommend Resources):** Dispatch to the **Librarian** agent. Ask the user what topic they want recommendations for. The Librarian searches existing notes for context, then recommends books, papers, articles, and other resources with Chinese summaries.
+- **9 (Build Index):** Read and follow `.claude/commands/index.md`
 
 If the user just types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
 
