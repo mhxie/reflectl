@@ -17,7 +17,9 @@ What would you like to do?
 6) Energy Audit — four-dimension energy assessment
 7) Compact Notes — find and merge redundant or overlapping notes
 8) Recommend Resources — get reading/learning recommendations on a topic
-9) Build Index — rebuild your reflection context (run first if new)
+9) Deep Dive — full briefing on a topic (notes + resources + framework, in parallel)
+10) Note Triage — scan for compaction candidates across your notes
+11) Build Index — rebuild your reflection context (run first if new)
 ```
 
 Based on the user's choice:
@@ -29,7 +31,13 @@ Based on the user's choice:
 - **6 (Energy Audit):** Read and follow `.claude/commands/energy-audit.md`
 - **7 (Compact Notes):** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
 - **8 (Recommend Resources):** Dispatch to the **Librarian** agent. Ask the user what topic they want recommendations for. The Librarian searches existing notes for context, then recommends books, papers, articles, and other resources with Chinese summaries.
-- **9 (Build Index):** Read and follow `.claude/commands/index.md`
+- **9 (Deep Dive):** Ask the user for a topic, then dispatch **three agents in parallel**:
+  1. **Researcher** — search all notes related to this topic (what you've already thought/written)
+  2. **Librarian** — find external resources to deepen understanding (books, papers, articles)
+  3. **Thinker** — select and apply a relevant framework from `frameworks/`
+  Once all three return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
+- **10 (Note Triage):** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
+- **11 (Build Index):** Read and follow `.claude/commands/index.md`
 
 If the user just types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
 
