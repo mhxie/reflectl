@@ -34,7 +34,7 @@ Turn a session insight into a standalone Reflect note.
 3. Add relevant backlinks to related notes ([[Note Title]])
 4. Present to user for approval
 5. Create via `create_note()`
-6. Tag appropriately (NOT #ai-reflection — this is a user insight, just captured by AI)
+6. Tag with `#ai-reflection` — even though it captures a user insight, the content was formulated by AI and must be excluded from future search grounding
 
 ### Update/Replace Note
 Write an updated version of an existing note.
@@ -43,8 +43,8 @@ Write an updated version of an existing note.
 1. Read the current note via `get_note()`
 2. Apply the requested changes
 3. Present the diff to the user
-4. Create the updated version via `create_note()` with same title
-5. Note: Reflect doesn't have an update API — we create a new note. Inform user about the old note.
+4. **Important:** `create_note()` with an existing title returns the existing note — it does NOT update it. Use `append_to_daily_note()` for daily notes, or inform the user that Reflect's API doesn't support in-place updates. The user must manually replace content in Reflect for existing notes.
+5. For truly new notes (no title conflict), use `create_note()`.
 
 ### Merge Notes
 Combine two or more specific notes into one.
@@ -62,7 +62,7 @@ Combine two or more specific notes into one.
 2. **Preserve the user's voice.** Don't rewrite their thinking in AI-speak.
 3. **Bilingual awareness.** Chinese notes stay Chinese. English stays English. Mixed is fine if the original was mixed.
 4. **No silent data loss.** If compacting removes content, call it out explicitly.
-5. **Tag discipline.** Only add #ai-reflection if the note is AI-generated content. User insights captured by AI should NOT get this tag.
+5. **Tag discipline.** Always add `#ai-reflection` to any note created through this system. Even user insights captured by AI are AI-formulated text and must be tagged to prevent self-contamination in future searches.
 6. **Cite sources.** When compacting, reference which original notes contributed to each section.
 
 ## Output Format

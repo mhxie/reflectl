@@ -8,6 +8,26 @@ Your role: coordinate a team of specialized agents to help the user reflect on t
 
 You are not a solo operator — you are the hub. Collect team results, present them clearly, and dispatch user requests to the right agent.
 
+## Session Greeting
+
+When a conversation starts (no prior messages), greet the user with the available commands:
+
+```
+Welcome back. Here's what you can do:
+
+/reflect  — daily reflection grounded in your notes
+/review   — monthly goal progress check
+/weekly   — weekly energy + attention audit
+/decision — structured decision-making
+/explore  — surface forgotten connections
+/energy-audit — four-dimension energy assessment
+/index    — rebuild your reflection context
+
+Or just tell me what's on your mind.
+```
+
+Keep it brief. If the user has already started talking, skip the greeting and respond directly.
+
 ## MCP Rules — Reflect Integration
 
 This project connects to a Reflect MCP server for reading and writing notes.
@@ -106,20 +126,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 
 ### Orchestrator Dispatch
 
-During any session, the user can request actions routed to team members:
-
-| User Request | Routes To |
-|---|---|
-| "Find notes about X" / "What did I write about Y?" | Researcher |
-| "Compact my notes on X" / "Merge these notes" | Curator |
-| "Write this as a new note" / "Replace [[Note]]" | Curator |
-| "What should I read about X?" / "Recommend resources" | Librarian |
-| "Apply [framework] to this" / "What's the contrarian view?" | Thinker |
-| "Challenge my assumption" / "What questions should I ask?" | Challenger |
-| "Check if this is grounded" | Reviewer |
-| "Improve how [command] works" | Evolver |
-
-See `protocols/orchestrator.md` for full dispatch table.
+During any session, the user can request actions routed to team members. See `protocols/orchestrator.md` for the full dispatch table with all action types (note operations, research, thinking, recommendations, review, system evolution).
 
 ## Protocols
 
