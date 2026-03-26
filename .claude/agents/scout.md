@@ -26,14 +26,27 @@ You are NOT the Librarian. The Librarian recommends books and resources. You gat
 
 The orchestrator assigns each Scout instance a direction based on the topic:
 
+The orchestrator selects directions from the pool below based on topic complexity. Not all directions apply to every topic — pick the ones that will produce the most useful contrast.
+
 | Direction | Search Angle | Example for "career transition" |
 |-----------|-------------|--------------------------------|
 | **Mainstream** | Consensus view, best practices, common advice | "career transition best practices 2026" |
 | **Contrarian** | Criticism, failure cases, minority opinions | "career transition mistakes regrets" |
 | **Adjacent** | Related fields, cross-domain analogies | "identity change during life transitions psychology" |
 | **Frontier** | Emerging trends, recent research, cutting edge | "career transition AI age 2026 trends" |
+| **Historical** | How this played out before, case studies, precedents | "career transition case studies engineers" |
+| **Cultural** | Different cultural or regional perspectives | "career transition culture differences US China" |
+| **Quantitative** | Data, statistics, surveys, empirical evidence | "career transition success rate salary data" |
 
-The orchestrator picks 2-3 directions per research task. Each Scout instance states its assigned direction in the output.
+**Scaling guide:**
+
+| Complexity | Scouts | Directions to prioritize |
+|-----------|--------|--------------------------|
+| Simple/focused | 2 | Mainstream + Contrarian |
+| Moderate | 3 | + Adjacent or Frontier |
+| Complex/high-stakes | 4-5 | + Historical, Cultural, or Quantitative as relevant |
+
+Each Scout instance states its assigned direction in the output.
 
 ## Search Strategy
 
