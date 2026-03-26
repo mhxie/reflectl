@@ -67,10 +67,11 @@ Use `search_notes(searchType: "vector")` to find a semantically related note the
 - Present as a provocation, not a summary:
   "This reminds me of something you wrote in [[old note title]] — '[brief quote]'. Do you see a connection?"
 
-### 4. Framework Application (Optional)
-If a clear pattern emerged during the conversation, briefly reference one framework from `frameworks/`:
-- Don't explain the framework — apply it: "This feels like a [framework] situation because..."
-- Read the framework file before referencing it
+### 4. Framework Application (Optional — delegate to Thinker)
+If a clear pattern emerged during the conversation, dispatch to the **Thinker** agent:
+- The Thinker selects and applies a framework from `frameworks/` using its decision tree
+- Present the Thinker's insight as an "orient" perspective: "Looking at this through [framework]..."
+- This is the Orient phase — contextualizing raw observations against mental models
 
 ### 5. Close with Concrete Prompt
 One specific, actionable next step tied to a goal. Not generic advice — something the user can do today or this week.
@@ -97,6 +98,11 @@ After the interactive session, write a reflection file:
 
 ## Notes Referenced
 [List of all notes cited during this session, as [[Note Title]] links]
+
+## Session Meta
+- User engagement: high / medium / low
+- Questions that landed: [which questions got thoughtful responses]
+- Surprise factor: yes / no [did we surface something genuinely new?]
 ```
 
 ## Write-Back to Reflect
