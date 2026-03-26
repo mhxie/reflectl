@@ -149,6 +149,7 @@ The `protocols/` directory defines system behavior:
 | `values-clarification.md` | Stated vs. revealed values analysis |
 | `integration.md` | Insight-to-action pipeline |
 | `coaching-progressions.md` | Adapting depth by reflection maturity |
+| `contradiction-detection.md` | 4 strategies for surfacing contradictions in notes |
 
 ## Frameworks
 

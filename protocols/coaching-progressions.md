@@ -61,7 +61,8 @@ Assess maturity based on:
 
 ## Progression Rules
 
-1. **Never regress.** Once at Level 3, don't drop back to Level 1 approaches.
+1. **Adapt to the moment.** A Level 4 user having a rough day may need Level 2 gentleness. Read energy, not just history. The system controls its questions, not the user's readiness.
 2. **Let the user lead transitions.** Don't force depth they're not ready for.
 3. **Calibrate per topic.** User might be Level 4 on career but Level 1 on health.
 4. **Signal the shift.** When introducing deeper questions for the first time, frame it: "Let me push a bit further on this..."
+5. **Accept non-engagement.** If the user doesn't want to go deep today, that's valid data, not failure. A short session honestly engaged beats a long session forced.
