@@ -81,7 +81,9 @@ Don't push for a decision. If the user is ready, capture it. If not, capture the
 
 ## Output
 
-**File:** `reflections/YYYY-MM-DD-decision-<topic>.md`
+**File:** `reflections/YYYY-MM-DD-decision-<slugified-topic>.md`
+
+Note: Slugify the topic for the filename — lowercase, replace spaces with hyphens, remove special characters (e.g., "SF vs NYC job" → `sf-vs-nyc-job`). Keep the original topic text in the file content.
 
 ```markdown
 # Decision Journal — YYYY-MM-DD
@@ -122,4 +124,7 @@ Don't push for a decision. If the user is ready, capture it. If not, capture the
 
 ## Write-Back
 
-Append decision summary to daily note with `#ai-reflection #decision` tags.
+Check if today's daily note already contains `#ai-reflection` content.
+
+- If **no existing AI content**: Use `append_to_daily_note` to add decision summary with `#ai-reflection #decision` tags.
+- If **AI content already exists**: Skip write-back to avoid duplicates. Tell the user about the skip.

@@ -52,9 +52,13 @@ Required fields:
 - `goal_coverage`: `{score: 0-10, missing_categories: []}`
 - `honesty`: `{score: 0-10, flags: []}`
 - `staleness`: `{score: 0-10, warnings: []}`
-- `overall`: `{score: 0-10, verdict: "APPROVED" | "NEEDS_REVISION", summary: ""}`
+- `overall`: `{score: 0-10, verdict: "APPROVED" | "APPROVED_WITH_NOTES" | "NEEDS_REVISION" | "REJECTED", summary: ""}`
 
-Minimum passing score: 7/10 overall. Below 7 triggers revision loop.
+Score thresholds (aligned with quality-gates.md and reviewer.md):
+- 8-10: `APPROVED` — deliver to user
+- 6-7.9: `APPROVED_WITH_NOTES` — deliver with caveats
+- 4-5.9: `NEEDS_REVISION` — triggers revision loop (max 2 rounds)
+- 0-3.9: `REJECTED` — start over or deliver with major caveats
 
 ## Contract: Challenger → User
 
