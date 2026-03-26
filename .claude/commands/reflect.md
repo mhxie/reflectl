@@ -24,6 +24,12 @@ Run a reflection session grounded in your Reflect notes and goals.
 
 Based on the loaded context, run an interactive reflection:
 
+### 0. Accountability Check (if not the first session)
+If a previous reflection exists in `reflections/`, read the most recent one and find its "Next Action" section. Open with a brief check-in:
+- "Last session, the next step was [action]. How did that go?"
+- Handle the response per `protocols/integration.md` — celebrate, explore partial, or investigate what blocked without judgment.
+- If there was no prior action, skip this step.
+
 ### 1. Warm-Up: Adaptive Opening
 Choose opening style based on what you find in the daily note:
 
