@@ -75,5 +75,4 @@ After writing the reflection file, check if today's daily note already contains 
 
 ## Wrap Up
 
-Tell the user the reflection has been saved and suggest committing to git:
-"Reflection saved to `reflections/YYYY-MM-DD-reflection.md`. You can commit it with: `git add reflections/ && git commit -m 'reflection: YYYY-MM-DD'`"
+Tell the user the reflection has been saved.

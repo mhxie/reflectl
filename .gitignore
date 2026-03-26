@@ -2,12 +2,16 @@
 .DS_Store
 
 # Personal data (PRIVATE — never commit)
-reflect-*/               # Raw note snapshots
-index/                   # Reflection index with personal goals/summaries
-!index/.gitkeep          # Keep directory placeholder
-reflections/             # Coaching session outputs
-!reflections/.gitkeep    # Keep directory placeholder
-.mcp.json                # Local MCP server URL
+# Raw note snapshots
+reflect-*/
+# Reflection index with personal goals/summaries
+index/
+!index/.gitkeep
+# Coaching session outputs
+reflections/
+!reflections/.gitkeep
+# Local MCP server URL
+.mcp.json
 
 # Local tool config (symlinks to user's gstack installation)
 .claude/skills/
