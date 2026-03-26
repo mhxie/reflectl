@@ -1,45 +1,75 @@
 # Reflect
 
-Your reflection system. Choose a session type to begin.
+Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for native scroll-and-select UI.
 
-## Session Menu
+## Quick Start
 
-Present this menu to the user and wait for their choice:
+If the user types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
 
-```
-What would you like to do?
+## Step 1: Choose Mode
 
-1) Daily Reflection — reflect on today's notes and recent thinking
-2) Goal Review — check progress on goals (progressing/neglected/shifted)
-3) Weekly Review — energy + attention audit for the past week
-4) Decision Journal — structured decision-making with frameworks
-5) Explore — surface forgotten connections and open threads
-6) Energy Audit — four-dimension energy assessment
-7) Compact Notes — find and merge redundant or overlapping notes
-8) Recommend Resources — get reading/learning recommendations on a topic
-9) Deep Dive — full briefing on a topic (notes + resources + framework, in parallel)
-10) Note Triage — scan for compaction candidates across your notes
-11) Build Index — rebuild your reflection context (run first if new)
-```
+Use `AskUserQuestion` with these options:
 
-Based on the user's choice:
-- **1 (Daily Reflection):** Continue with the Daily Reflection flow below
-- **2 (Goal Review):** Read and follow `.claude/commands/review.md`
-- **3 (Weekly Review):** Read and follow `.claude/commands/weekly.md`
-- **4 (Decision Journal):** Read and follow `.claude/commands/decision.md`
-- **5 (Explore):** Read and follow `.claude/commands/explore.md`
-- **6 (Energy Audit):** Read and follow `.claude/commands/energy-audit.md`
-- **7 (Compact Notes):** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
-- **8 (Recommend Resources):** Dispatch to the **Librarian** agent. Ask the user what topic they want recommendations for. The Librarian searches existing notes for context, then recommends books, papers, articles, and other resources with Chinese summaries.
-- **9 (Deep Dive):** Ask the user for a topic, then dispatch **three agents in parallel**:
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Reflect** | Think about what's happening — daily reflection, weekly review, or explore connections |
+| 2 | **Plan** | Make decisions and set direction — goal review, decision journal, or energy audit |
+| 3 | **Act** | Do something with your notes — compact, deep dive, or triage |
+| 4 | **Learn** | Get recommendations or rebuild your context index |
+
+## Step 2: Choose Action
+
+Based on Step 1, use a second `AskUserQuestion`:
+
+### If Reflect:
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Daily Reflection** | Reflect on today's notes and recent thinking |
+| 2 | **Weekly Review** | Energy + attention audit for the past week |
+| 3 | **Explore** | Surface forgotten connections and open threads |
+
+- **Daily Reflection:** Continue with the Daily Reflection flow below
+- **Weekly Review:** Read and follow `.claude/commands/weekly.md`
+- **Explore:** Read and follow `.claude/commands/explore.md`
+
+### If Plan:
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Goal Review** | Check progress on goals — progressing, neglected, or shifted |
+| 2 | **Decision Journal** | Structured decision-making with framework cross-validation |
+| 3 | **Energy Audit** | Four-dimension energy assessment (physical, mental, emotional, social) |
+
+- **Goal Review:** Read and follow `.claude/commands/review.md`
+- **Decision Journal:** Read and follow `.claude/commands/decision.md`
+- **Energy Audit:** Read and follow `.claude/commands/energy-audit.md`
+
+### If Act:
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Compact Notes** | Find and merge redundant or overlapping notes |
+| 2 | **Deep Dive** | Full briefing on a topic — notes + resources + framework, 3 agents in parallel |
+| 3 | **Note Triage** | Scan for compaction candidates across your notes |
+
+- **Compact Notes:** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
+- **Deep Dive:** Ask the user for a topic, then dispatch **three agents in parallel**:
   1. **Researcher** — search all notes related to this topic (what you've already thought/written)
   2. **Librarian** — find external resources to deepen understanding (books, papers, articles)
   3. **Thinker** — select and apply a relevant framework from `frameworks/`
   Once all three return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
-- **10 (Note Triage):** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
-- **11 (Build Index):** Read and follow `.claude/commands/index.md`
+- **Note Triage:** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
 
-If the user just types `/reflect` with additional context (e.g., "/reflect I had a tough day"), skip the menu and go straight to Daily Reflection using their input as context.
+### If Learn:
+
+| Option | Label | Description |
+|--------|-------|-------------|
+| 1 | **Recommend Resources** | Get reading/learning recommendations on a topic (Chinese summaries) |
+| 2 | **Build Index** | Rebuild your reflection context — run this first if new, or monthly to refresh |
+
+- **Recommend Resources:** Dispatch to the **Librarian** agent. Ask the user what topic they want recommendations for. The Librarian searches existing notes for context, then recommends books, papers, articles, and other resources with Chinese summaries.
+- **Build Index:** Read and follow `.claude/commands/index.md`
 
 ---
 
