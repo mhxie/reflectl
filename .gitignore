@@ -14,8 +14,6 @@ reflections/
 .mcp.json
 # Codex session state
 .context/
-# gstack skill symlinks
-.claude/skills/
 
 # Build state
 *.build-state.json
