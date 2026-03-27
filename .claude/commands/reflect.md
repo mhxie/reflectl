@@ -185,14 +185,15 @@ After the interactive session, write a reflection file:
 
 After writing the reflection file, check if today's daily note already contains content tagged `#ai-reflection`.
 
-- If **no existing AI content**: Use `append_to_daily_note` to add a brief summary:
+- If **AI content already exists**: Skip write-back. Tell the user: "Already wrote to today's daily note earlier — skipping duplicate write-back."
+
+- If **no existing AI content**: **Ask the user for approval before writing.** Present the proposed write-back and wait for confirmation. Do not auto-write. The write-back should follow this format:
   ```
   ## AI Reflection #ai-reflection
   [2-3 sentence summary of key insights from today's reflection session]
+  Related: [[Note Title 1]] [[Note Title 2]]
   ```
-  Use today's date in YYYY-MM-DD format.
-
-- If **AI content already exists**: Skip write-back to avoid duplicates. Tell the user: "Already wrote to today's daily note earlier — skipping duplicate write-back."
+  Include [[backlinks]] to all notes referenced during the session so they appear in Reflect's backlink graph. Use today's date in YYYY-MM-DD format.
 
 ## Wrap Up
 
