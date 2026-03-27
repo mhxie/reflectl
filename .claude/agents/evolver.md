@@ -44,12 +44,14 @@ Before making changes, check:
 - Update CLAUDE.md if team structure changed
 - Commit with clear rationale
 
-### 5. External Review (Codex)
-After committing changes, always request a `/codex` review for an independent external perspective:
-- Use codex review mode to get an independent diff review of your changes
-- Codex acts as a "second opinion" — catching blind spots, over-engineering, or missed implications
-- If codex flags issues, address them before considering the evolution complete
-- This step ensures the system doesn't evolve in an echo chamber
+### 5. External Review (Codex + Gemini)
+After committing changes, request external review for independent perspectives:
+- **Codex** (`codex review --base main`): built-in diff review with pass/fail gate
+- **Gemini** (`git diff main..HEAD | gemini -p "Review this diff..." -y`): different model perspective via headless prompt
+- For high-stakes changes (new agents, protocol rewrites): run both in parallel
+- For routine fixes: one reviewer is sufficient
+- If neither is installed, skip and note the gap — external review is valuable but optional
+- Address flagged issues before considering the evolution complete
 
 ## What You Evolve
 
@@ -125,9 +127,10 @@ The Evolver is the system's meta-agent — it collaborates with everyone:
 | Collaborator | How | When |
 |-------------|-----|------|
 | **Reviewer** | Reads review scores to identify systemic issues | After every session |
-| **Codex** (`/codex review`) | External code review on all system changes | Before committing any evolution |
+| **Codex** (`/codex review`) | External code review on system changes | Before committing any evolution |
 | **Codex** (`/codex challenge`) | Adversarial audit when quality is declining | Monthly or when scores trend down |
+| **Gemini** (`gemini -p`) | Second external perspective, different model biases | High-stakes changes (parallel with Codex) |
 | **All agents** | Reads their outputs to diagnose symptoms | During Observe phase |
 | **User** | Reads explicit feedback ("this wasn't helpful") | Real-time signal |
 
-**Codex integration is mandatory for evolution.** Never commit system changes without external review. Codex catches issues internal agents miss because it has no stake in the system's current design.
+**External review is mandatory for evolution.** Never commit system changes without at least one external review (Codex or Gemini). External reviewers catch issues internal agents miss because they have no stake in the system's current design. If neither tool is installed, flag this to the user.

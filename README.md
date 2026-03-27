@@ -25,6 +25,12 @@ Everything writes back to your Reflect daily notes (with your approval), so insi
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
 - [Reflect.app](https://reflect.app/) with the [MCP server](https://reflect.app/mcp) running locally
 
+**Optional — external reviewers:**
+- [Codex CLI](https://github.com/openai/codex) — `npm i -g @openai/codex` — OpenAI's coding agent, used for independent code review and adversarial audits
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli` — Google's coding agent, used as a second external perspective
+
+The system works without these, but external reviewers from different AI models catch blind spots that internal agents miss.
+
 ### Install
 
 ```bash
@@ -102,7 +108,7 @@ Your notes stay in Reflect. The system reads them on-the-fly via MCP, runs sessi
 Key design choices:
 - **Era-aware** — tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation)
 - **Bilingual** — handles English and Chinese notes, matches your language
-- **Self-improving** — the Evolver agent evolves the system after sessions
+- **Self-improving** — the Evolver agent evolves the system, reviewed by external AI models (Codex, Gemini)
 - **Privacy by default** — personal data never leaves your machine
 
 ## License

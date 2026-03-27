@@ -122,8 +122,8 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
 2. Proposes changes to agents, commands, or CLAUDE.md
-3. Evolver → `/codex review` for external perspective on changes
-4. Reviewer + Codex cross-validate: internal quality + external audit
+3. Evolver → external review (Codex + Gemini in parallel for high-stakes; either one for routine)
+4. Reviewer + external reviewers cross-validate: internal quality + external audit
 
 See `protocols/orchestrator.md` for the full collaboration matrix.
 
@@ -173,7 +173,7 @@ Cross-validation guide: `frameworks/cross-validation.md`
 
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
-Use `/codex` for external review of system evolution changes.
+Use `/codex` and/or Gemini CLI for external review of system evolution changes. For high-stakes changes, run both in parallel for independent perspectives from different models.
 
 Available skills:
 - `/office-hours`

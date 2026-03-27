@@ -154,21 +154,39 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Thinker + Challenger** | Framework says X, but does it actually fit? | After any framework application |
 | **Researcher + Scout** | Internal notes vs. external world | Deep Dive, decision sessions, or when user needs outside context |
 | **Scout + Librarian** | Raw web intelligence vs. curated recommendations | After Scout gathers findings, Librarian curates the best for deep reading |
-| **Synthesizer + Codex** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
+| **Synthesizer + Codex/Gemini** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
 | **Reader + Reader** | Same text, different lenses — do they converge or diverge? | Multi-lens reading sessions |
 | **Reader + Thinker** | Lens analysis vs. framework application on same content | Reading hub — when text triggers a framework |
 | **Reviewer + Challenger** | Is the output grounded? + Is it asking the right questions? | Quality gate for important sessions |
 
-### External Collaborator: Codex
+### External Collaborators: Codex + Gemini
 
-Codex (via `/codex`) provides an independent external perspective. Use it for:
+Two independent AI reviewers provide external perspectives. Use them in parallel for high-stakes changes, or individually for routine review.
 
-| Situation | Codex Mode | What it checks |
-|-----------|-----------|----------------|
-| System evolution | `codex review` | Are the changes to agents/protocols/commands correct? |
-| Session quality declining | `codex challenge` | What's wrong with our approach? Adversarial audit |
-| New framework or protocol | `codex review` | Does it integrate cleanly with existing system? |
-| Architecture review | `codex review` | Global optimality — are we accumulating patches or genuinely improving? |
+| Reviewer | CLI | Strengths | How to invoke |
+|----------|-----|-----------|---------------|
+| **Codex** (OpenAI) | `codex review`, `codex challenge` | Built-in diff review with pass/fail gate; adversarial challenge mode | `/codex review` or `/codex challenge` |
+| **Gemini** (Google) | `gemini -p "<prompt>"` | Different model perspective; headless prompt mode | Pass diff via prompt with `-p` flag |
+
+#### When to use which
+
+| Situation | Reviewer | Why |
+|-----------|----------|-----|
+| System evolution | Both in parallel | Two independent perspectives catch more blind spots |
+| Routine code review | Codex (has built-in review mode) | Lower friction — `codex review --base main` |
+| Architecture/design review | Gemini (prompt-based) | Good for open-ended "is this the right design?" questions |
+| Adversarial audit | Codex challenge mode | Built-in adversarial framing |
+| Second opinion on a decision | Either or both | Different models have different biases — diversity is the point |
+
+#### Gemini review invocation
+
+```bash
+git diff <base>..HEAD | gemini -p "Review this diff for a reflection system project. Check for: consistency across files, missing integration points, overclaims, and design issues. Be direct and specific." -y
+```
+
+#### Graceful degradation
+
+Both tools are optional. If neither is installed, skip external review and note: "No external reviewer available — consider installing codex (`npm i -g @openai/codex`) or gemini (`npm i -g @google/gemini-cli`)."
 
 ### Orchestrator's Collaboration Duties
 
