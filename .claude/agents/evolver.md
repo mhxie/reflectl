@@ -42,16 +42,25 @@ Before making changes, check:
 - Make the change
 - Update any protocols affected
 - Update CLAUDE.md if team structure changed
-- Commit with clear rationale
 
-### 5. External Review (Codex + Gemini)
-After committing changes, request external review for independent perspectives:
-- **Codex** (`codex review --base main`): built-in diff review with pass/fail gate
-- **Gemini** (`git diff main..HEAD | gemini -p "Review this diff..." -y`): different model perspective via headless prompt
-- For high-stakes changes (new agents, protocol rewrites): run both in parallel
-- For routine fixes: one reviewer is sufficient
-- If neither is installed, skip and note the gap — external review is valuable but optional
-- Address flagged issues before considering the evolution complete
+### 5. Commit + Review (Tiered)
+**Commit first, then review.** External reviewers (`codex review`, `gemini -p`) use `git diff <base>..HEAD`, which only sees committed changes. Internal reviewers can read working-tree files, but committing first ensures all reviewers see the same state.
+
+1. Commit changes with clear rationale
+2. Select the review tier based on scope (see `protocols/orchestrator.md` → Review Tiers)
+3. Run the reviewers for that tier
+4. If reviewers flag issues: fix, then create a new commit (do not amend)
+
+| Change scope | Tier | Reviewers |
+|-------------|------|-----------|
+| Single-file fix | Tier 1 | Internal Diff only |
+| Multi-file, existing patterns | Tier 2 | Internal Diff + 1 External |
+| New capabilities, cross-cutting | Tier 3 | Internal Holistic + Internal Diff + 1 External |
+| Architectural, 5+ files | Tier 4 | All 4 (Internal Holistic + Internal Diff + Codex + Gemini) |
+
+**Critical: always include Internal Holistic review (Tier 3+) for changes that touch agent definitions, handoff contracts, or workflow patterns.** The holistic reviewer reads full files, not diffs — catching global inconsistency that incremental review misses.
+
+Address flagged issues before considering the evolution complete.
 
 ## What You Evolve
 
@@ -127,10 +136,12 @@ The Evolver is the system's meta-agent — it collaborates with everyone:
 | Collaborator | How | When |
 |-------------|-----|------|
 | **Reviewer** | Reads review scores to identify systemic issues | After every session |
-| **Codex** (`/codex review`) | External code review on system changes | Before committing any evolution |
+| **Reviewer** (holistic mode) | Reads full files, catches global inconsistency | Tier 3+ changes (new agents, workflows, contracts) |
+| **Reviewer** (diff mode) | Reads incremental changes, catches broken wiring | Every evolution (Tier 1+) |
+| **Codex** (`/codex review`) | External diff review with pass/fail gate | Tier 2+ changes |
 | **Codex** (`/codex challenge`) | Adversarial audit when quality is declining | Monthly or when scores trend down |
-| **Gemini** (`gemini -p`) | Second external perspective, different model biases | High-stakes changes (parallel with Codex) |
+| **Gemini** (`gemini -p`) | Second external perspective, different model biases | Tier 4 changes (parallel with Codex) |
 | **All agents** | Reads their outputs to diagnose symptoms | During Observe phase |
 | **User** | Reads explicit feedback ("this wasn't helpful") | Real-time signal |
 
-**External review is mandatory for evolution.** Never commit system changes without at least one external review (Codex or Gemini). External reviewers catch issues internal agents miss because they have no stake in the system's current design. If neither tool is installed, flag this to the user.
+**Review is mandatory for evolution.** Never commit system changes without at least Internal Diff review (Tier 1). For changes touching agent definitions, workflows, or contracts, Internal Holistic review (Tier 3+) is required — incremental review alone risks local optimum traps. If external tools aren't installed, flag this to the user.

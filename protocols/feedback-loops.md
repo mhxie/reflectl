@@ -48,7 +48,7 @@ Monthly or every 10 sessions, the Evolver should:
    - Which session types (reflect/review/weekly/etc.) score highest?
    - Is the trend improving, stable, or declining?
 3. **Propose system changes** based on evidence
-4. **Request codex review** on proposed changes for external perspective
+4. **Run tiered review** on proposed changes (see `protocols/orchestrator.md` → Review Tiers)
 
 ## Feedback Collection
 

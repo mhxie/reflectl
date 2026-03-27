@@ -10,7 +10,7 @@ Every agent output that feeds another agent MUST include a metadata block:
 ---handoff---
 from: <agent name>
 to: <agent name>
-type: research-brief | reader-brief | synthesis | review-check | challenge-set | perspective | evolution-report
+type: research-brief | reader-brief | scout-brief | synthesis | review-check | system-review-request | challenge-set | perspective | recommendation | note-operation | evolution-report
 confidence: high | medium | low
 gaps: <comma-separated list of what's missing>
 context_tokens: <approximate token count of payload>
@@ -100,6 +100,48 @@ Required fields:
 - `cross_validation`: Where frameworks agree/disagree
 - `contrarian_take`: The perspective against the grain
 - `external_sources`: Any web research cited
+
+## Contract: Scout → Orchestrator
+
+**Type:** `scout-brief`
+
+Required fields:
+- `topic`: What was researched
+- `direction`: Which search direction was assigned (Mainstream, Contrarian, Adjacent, etc.)
+- `findings`: Array of `{finding, source_url, date, relevance}`
+- `contrarian_signal`: At least one perspective challenging the user's view
+- `knowledge_gap`: What the user's notes don't cover that the web suggests is important
+- `confidence`: How reliable the sources are
+
+## Contract: Librarian → Orchestrator
+
+**Type:** `recommendation`
+
+Required fields:
+- `topic`: What recommendations are for
+- `resources`: Array of `{title, author, type, core_insight, relevance_to_user}`
+- `already_read`: Resources the user already has notes on (excluded from recommendations)
+- `contrarian_pick`: At least one recommendation that challenges current thinking
+
+## Contract: Curator → Orchestrator
+
+**Type:** `note-operation`
+
+Required fields:
+- `operation`: compact | merge | create | replace
+- `notes_affected`: Array of note titles involved
+- `proposed_content`: The new/merged content (for user approval)
+- `rationale`: Why this operation was recommended
+
+## Contract: Evolver → Reviewer (System Review)
+
+**Type:** `system-review-request`
+
+Required fields:
+- `review_mode`: holistic | diff | both
+- `change_scope`: description of what changed
+- `files_changed`: Array of file paths
+- `tier`: 1-4 (determines which reviewers are invoked)
 
 ## Escalation Protocol
 

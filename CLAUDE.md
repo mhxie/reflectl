@@ -83,7 +83,7 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 | **Reviewer** | Sonnet | Quality-checks citations, goal coverage, honesty (scored rubric 0-10) | After Synthesizer produces output |
 | **Challenger** | Opus | Asks probing questions with depth taxonomy and emotional register detection | During reflection — deepens the conversation |
 | **Thinker** | Opus | Applies frameworks independently with meta-cognitive checks | When the team needs an outside view |
-| **Evolver** | Opus | Improves the system using OODA methodology + codex review | After sessions — evolves the process |
+| **Evolver** | Opus | Improves the system using OODA methodology + tiered review | After sessions — evolves the process |
 | **Curator** | Opus | Note operations: compact, merge, replace, create notes in Reflect | When user wants to act on their notes |
 | **Scout** | Sonnet | Gathers external context from the web — articles, research, recent developments | When the team needs outside-world intelligence |
 | **Reader** | Opus | Reads articles/notes through 4 lenses (Critical, Structural, Practical, Dialectical) | When user wants to deeply read and discuss an article |
@@ -122,8 +122,8 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
 2. Proposes changes to agents, commands, or CLAUDE.md
-3. Evolver → external review (Codex + Gemini in parallel for high-stakes; either one for routine)
-4. Reviewer + external reviewers cross-validate: internal quality + external audit
+3. Select review tier based on scope: Tier 1 (diff only) through Tier 4 (holistic + diff + Codex + Gemini)
+4. Address all reviewer findings before committing
 
 See `protocols/orchestrator.md` for the full collaboration matrix.
 
@@ -156,7 +156,7 @@ The `protocols/` directory defines system behavior:
 
 ## Frameworks
 
-The `frameworks/` directory contains 23 thinking frameworks organized by question type:
+The `frameworks/` directory contains 22 thinking frameworks organized by question type:
 
 | Question | Frameworks |
 |----------|-----------|
@@ -169,37 +169,6 @@ The `frameworks/` directory contains 23 thinking frameworks organized by questio
 
 Cross-validation guide: `frameworks/cross-validation.md`
 
-## gstack
+## External Reviewers
 
-Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
-
-Use `/codex` and/or Gemini CLI for external review of system evolution changes. For high-stakes changes, run both in parallel for independent perspectives from different models.
-
-Available skills:
-- `/office-hours`
-- `/plan-ceo-review`
-- `/plan-eng-review`
-- `/plan-design-review`
-- `/design-consultation`
-- `/review`
-- `/ship`
-- `/land-and-deploy`
-- `/canary`
-- `/benchmark`
-- `/browse`
-- `/qa`
-- `/qa-only`
-- `/design-review`
-- `/setup-browser-cookies`
-- `/setup-deploy`
-- `/retro`
-- `/investigate`
-- `/document-release`
-- `/codex`
-- `/cso`
-- `/autoplan`
-- `/careful`
-- `/freeze`
-- `/guard`
-- `/unfreeze`
-- `/gstack-upgrade`
+Use `/codex` (OpenAI) and/or `gemini -p` (Google) for external review of system evolution changes. For high-stakes changes, run both in parallel for independent perspectives from different models. See `protocols/orchestrator.md` → Review Tiers.

@@ -96,7 +96,7 @@ Reflect.app  <──MCP──>  Claude Code (Orchestrator)
                     +-----------+-----------+
                     v           v           v
               Agent Team    Sessions    Frameworks
-              (10 agents)   (9 types)   (23 frameworks)
+              (10 agents)   (9 types)   (22 frameworks)
                     |           |           |
                     v           v           v
               Protocols    reflections/  Cross-validation

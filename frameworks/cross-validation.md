@@ -50,7 +50,7 @@ Apply two frameworks from different categories to the same question. The power i
 
 ## Framework Selection Quick Reference
 
-All 23 frameworks organized by question type:
+All 22 frameworks organized by question type:
 
 ### Direction (What to pursue)
 Ikigai, Regret Minimization, First Principles, Jobs to Be Done, Map of Meaning

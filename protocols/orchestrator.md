@@ -25,7 +25,7 @@ Launch agents based on command type:
 
 | Command | Agents Launched |
 |---------|----------------|
-| `/project:reflect` | Researcher + Challenger (parallel) |
+| `/project:reflect` | Researcher + Challenger + 2-5× Scout (parallel) |
 | `/project:review` | Researcher (then Synthesizer) |
 | `/project:weekly` | Researcher |
 | `/project:decision` | Researcher + Thinker (parallel) |
@@ -133,7 +133,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
-| **Evolver → Codex** | Evolver proposes a system change | Evolver → `/codex review` for external perspective | External quality gate on system evolution |
+| **Evolver → Tiered Review** | Evolver proposes a system change | Evolver commits → selects review tier → runs reviewers | Quality gate on system evolution (see Review Tiers) |
 
 ### Parallel Dispatches (A and B run simultaneously)
 
@@ -154,39 +154,73 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Thinker + Challenger** | Framework says X, but does it actually fit? | After any framework application |
 | **Researcher + Scout** | Internal notes vs. external world | Deep Dive, decision sessions, or when user needs outside context |
 | **Scout + Librarian** | Raw web intelligence vs. curated recommendations | After Scout gathers findings, Librarian curates the best for deep reading |
-| **Synthesizer + Codex/Gemini** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
+| **Synthesizer + External Reviewer** | Internal synthesis vs. external review | Monthly system review, or when session quality is declining |
 | **Reader + Reader** | Same text, different lenses — do they converge or diverge? | Multi-lens reading sessions |
 | **Reader + Thinker** | Lens analysis vs. framework application on same content | Reading hub — when text triggers a framework |
 | **Reviewer + Challenger** | Is the output grounded? + Is it asking the right questions? | Quality gate for important sessions |
 
-### External Collaborators: Codex + Gemini
+### Review Tiers
 
-Two independent AI reviewers provide external perspectives. Use them in parallel for high-stakes changes, or individually for routine review.
+Four reviewer types, scaled by change complexity. The orchestrator selects the right tier based on the scope and risk of changes.
 
-| Reviewer | CLI | Strengths | How to invoke |
-|----------|-----|-----------|---------------|
-| **Codex** (OpenAI) | `codex review`, `codex challenge` | Built-in diff review with pass/fail gate; adversarial challenge mode | `/codex review` or `/codex challenge` |
-| **Gemini** (Google) | `gemini -p "<prompt>"` | Different model perspective; headless prompt mode | Pass diff via prompt with `-p` flag |
+#### The 4 Reviewers
 
-#### When to use which
+| # | Reviewer | What it reads | What it catches | Invocation |
+|---|----------|--------------|-----------------|------------|
+| 1 | **Internal Holistic** | Full file state (not the diff) | Global inconsistency, local optimum traps, architectural drift | Reviewer agent reading all changed files end-to-end |
+| 2 | **Internal Diff** | Incremental changes only | Broken contracts, missing wiring, introduced bugs | Reviewer agent reading the diff |
+| 3 | **External Diff (Codex)** | `git diff` | Blind spots from a different model's perspective | `codex review --base <base>` |
+| 4 | **External Diff (Gemini)** | `git diff` | Second external perspective, different biases | `git diff <base>..HEAD \| gemini -p "Review this diff..." -y` |
 
-| Situation | Reviewer | Why |
-|-----------|----------|-----|
-| System evolution | Both in parallel | Two independent perspectives catch more blind spots |
-| Routine code review | Codex (has built-in review mode) | Lower friction — `codex review --base main` |
-| Architecture/design review | Gemini (prompt-based) | Good for open-ended "is this the right design?" questions |
-| Adversarial audit | Codex challenge mode | Built-in adversarial framing |
-| Second opinion on a decision | Either or both | Different models have different biases — diversity is the point |
+**Why both internal review types matter:** The diff reviewer catches what you just broke. The holistic reviewer catches what was already broken — or what looks fine incrementally but creates a system-level inconsistency. Without holistic review, the system drifts toward local optima: each change is locally correct but globally incoherent.
 
-#### Gemini review invocation
+#### Tier Selection
 
-```bash
-git diff <base>..HEAD | gemini -p "Review this diff for a reflection system project. Check for: consistency across files, missing integration points, overclaims, and design issues. Be direct and specific." -y
-```
+| Tier | Reviewers | When to use | Examples |
+|------|-----------|-------------|---------|
+| **Tier 1** (routine) | Internal Diff only | Small targeted fixes, typos, single-file edits | Fix a typo in a protocol, adjust a search query |
+| **Tier 2** (moderate) | Internal Diff + 1 External | Multi-file changes within existing patterns | Add a collaboration trigger, update a rubric |
+| **Tier 3** (significant) | Internal Holistic + Internal Diff + 1 External | New capabilities, new workflows, cross-cutting changes | Add a new agent, create a new workflow, modify handoff contracts |
+| **Tier 4** (high-stakes) | All 4 in parallel | Architectural changes, rewrites, anything touching 5+ files | Rewrite a protocol, add a new session type, restructure the team |
 
-#### Graceful degradation
+**Default:** When uncertain, use Tier 3. Over-reviewing is cheaper than under-reviewing.
 
-Both tools are optional. If neither is installed, skip external review and note: "No external reviewer available — consider installing codex (`npm i -g @openai/codex`) or gemini (`npm i -g @google/gemini-cli`)."
+#### Holistic Review Checklist
+
+The Internal Holistic reviewer reads all changed files in full (not just the diff) and checks:
+
+- [ ] Agent counts consistent across CLAUDE.md, README.md, orchestrator.md
+- [ ] All agents referenced in workflows have corresponding `.claude/agents/*.md` files
+- [ ] Handoff contracts in `protocols/agent-handoff.md` cover all agent-to-agent flows
+- [ ] No circular dispatch (agent A triggers B triggers A)
+- [ ] Protocol references in agent files point to existing protocols
+- [ ] Framework count claims match actual `frameworks/*.md` file count
+- [ ] Coaching style rules in CLAUDE.md are reflected in agent behavior definitions
+- [ ] New capabilities are reachable from `/reflect` menu
+
+#### External Reviewer Invocation
+
+Always use the strongest available model for review depth.
+
+| Reviewer | Command | Model |
+|----------|---------|-------|
+| **Codex** | `codex review --base <base> -c 'model_reasoning_effort="xhigh"'` | Best available with max reasoning |
+| **Codex** (adversarial) | `codex challenge` | Best available |
+| **Gemini** | `git diff <base>..HEAD \| gemini -m gemini-3.1-pro-preview -p "Review this diff for a reflection system. Check for: consistency, missing integration, overclaims, design issues. Be direct." -y` | Gemini 3.1 Pro |
+
+#### Graceful Degradation
+
+External tools are optional but the tier system enforces consequences when they're missing:
+
+| Requested Tier | Tools missing | Downgrade to | Action |
+|---------------|--------------|-------------|--------|
+| Tier 1 | (no external needed) | — | Run as normal |
+| Tier 2 | 1 external missing | Tier 1 | Warn: "External reviewer unavailable — downgraded to Tier 1 (internal diff only)" |
+| Tier 3 | Both externals missing | Tier 2 (holistic + diff, no external) | Warn and flag as under-reviewed |
+| Tier 4 | 1 external missing | Tier 3 | Run with the available external reviewer |
+| Tier 4 | Both externals missing | Tier 2 | Warn: "No external reviewers — downgraded to Tier 2. Consider installing codex or gemini." |
+
+**Never silently skip a required reviewer.** Always warn and explicitly downgrade the tier.
 
 ### Orchestrator's Collaboration Duties
 

@@ -14,8 +14,7 @@ reflections/
 .mcp.json
 # Codex session state
 .context/
-
-# Local tool config (symlinks to user's gstack installation)
+# gstack skill symlinks
 .claude/skills/
 
 # Build state
