@@ -50,6 +50,12 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - **Web search fails**: Proceed without external sources, note the limitation
 - **No clear framework fit**: Use first principles thinking — always available
 
+### Curator
+- **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan source notes for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in sources but missing from output, block the proposal until fixed.
+- **create_note returns existing note**: This means the title conflicts. Inform the user — they must either choose a different title or manually edit in Reflect.
+- **Merge mistake after creation**: Cannot fix via API. Create a corrected note with an amended title (e.g., "Title v2") and inform the user to delete the bad one manually.
+- **Partial note read failure**: If any source note in a merge fails to load, abort the merge. Do not proceed with partial sources.
+
 ### Evolver
 - **Cannot write to files**: Report proposed changes as text diff for manual application
 - **Git operations fail**: Propose changes without committing

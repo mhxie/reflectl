@@ -39,6 +39,12 @@ This project connects to a Reflect MCP server for reading and writing notes.
 - Write-back is optional and should never block a session. If it fails, continue.
 - For note operations (create, compact, merge), delegate to the **Curator** agent.
 
+**MCP Write Limitations:**
+- The API only supports `create_note` and `append_to_daily_note`. There is **no update, edit, or delete** operation.
+- `create_note()` with an existing title returns the existing note — it does NOT overwrite it.
+- Merges and compactions create new notes. The user must manually delete originals in Reflect. Always inform the user of this cleanup step.
+- Because mistakes cannot be undone via API, all note operations must go through the Curator's Content Preservation Checklist before writing.
+
 ## Index Rules
 
 The `index/` directory contains pre-synthesized reflection context:

@@ -53,8 +53,33 @@ Combine two or more specific notes into one.
 1. Read all notes to merge via `get_note()`
 2. Identify the best structure (usually chronological or thematic)
 3. Merge content, preserving all unique material
-4. Present merged note to user
-5. Create via `create_note()`
+4. **Run the Content Preservation Checklist** (see below) before presenting
+5. Present merged note to user
+6. Create via `create_note()`
+
+## Content Preservation Checklist
+
+Before presenting any compact or merge proposal, verify each item:
+
+- [ ] **Images**: Scan every source note for `![` markdown image syntax. Copy all image URLs verbatim into the merged note. Never summarize or omit images.
+- [ ] **Links**: Preserve all `[[backlinks]]`, external URLs, and markdown links.
+- [ ] **Embedded content**: Preserve any embedded media (audio, video, iframes, HTML blocks).
+- [ ] **Tables**: Copy tables exactly — do not convert to prose.
+- [ ] **Tags**: Carry over all tags from source notes (deduplicate).
+- [ ] **Dates/metadata**: Preserve original dates and any metadata the user added.
+- [ ] **Line-by-line diff**: For each source note, confirm every non-trivial line appears in the output (either preserved or explicitly noted as removed in `changes_summary`).
+
+If any content is intentionally omitted, it MUST be listed in `changes_summary` with the reason. Silent omission is a critical failure.
+
+## MCP Limitations
+
+The Reflect MCP server has a limited write API. Know these constraints:
+
+- **No update/edit operation.** You cannot modify an existing note. `create_note()` with an existing title returns the existing note unchanged.
+- **No delete operation.** You cannot delete notes via MCP.
+- **Consequence for merges:** Merging creates a NEW note. The user must manually delete the originals in Reflect. Always tell the user this.
+- **Consequence for mistakes:** If a merge is wrong, you must create yet another new note. The user will have extra notes to clean up. This is why the Content Preservation Checklist exists — get it right the first time.
+- **Append-only for daily notes.** `append_to_daily_note()` adds to the bottom; it cannot edit existing content.
 
 ## Rules
 
@@ -74,9 +99,11 @@ When presenting a note for approval:
 operation: compact | create | update | merge
 source_notes: [[Note A]], [[Note B]], ...
 proposed_title: "Title"
+media_inventory: [List all images/embeds found in source notes — must all appear in proposed_content]
 proposed_content: |
   [Full content of the proposed note]
 changes_summary: [What was added/removed/merged]
+mcp_note: [For merge/compact: "Original notes must be manually deleted in Reflect"]
 ---end-proposal---
 ```
 
