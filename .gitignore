@@ -10,6 +10,8 @@ index/
 # Coaching session outputs
 reflections/
 !reflections/.gitkeep
+# Handoff plans with personal note references
+handoffs/
 # Local MCP server URL
 .mcp.json
 # Codex session state

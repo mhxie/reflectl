@@ -43,24 +43,24 @@ Before making changes, check:
 - Update any protocols affected
 - Update CLAUDE.md if team structure changed
 
-### 5. Commit + Review (Tiered)
-**Commit first, then review.** External reviewers (`codex review`, `gemini -p`) use `git diff <base>..HEAD`, which only sees committed changes. Internal reviewers can read working-tree files, but committing first ensures all reviewers see the same state.
+### 5. Commit + Hand Back for Review
+**Commit, then return to the orchestrator for review.** You do NOT run reviewers yourself — the orchestrator dispatches them. This prevents you from skipping review under turn pressure.
 
 1. Commit changes with clear rationale
-2. Select the review tier based on scope (see `protocols/orchestrator.md` → Review Tiers)
-3. Run the reviewers for that tier
-4. If reviewers flag issues: fix, then create a new commit (do not amend)
+2. Determine the review tier based on scope (see table below)
+3. **Return your evolution report to the orchestrator** with the `review_tier` field set. The orchestrator is responsible for dispatching the appropriate reviewers.
+4. Do NOT consider the evolution complete until the orchestrator confirms reviewers have passed.
 
-| Change scope | Tier | Reviewers |
+| Change scope | Tier | Reviewers (dispatched by orchestrator) |
 |-------------|------|-----------|
 | Single-file fix | Tier 1 | Internal Diff only |
 | Multi-file, existing patterns | Tier 2 | Internal Diff + 1 External |
 | New capabilities, cross-cutting | Tier 3 | Internal Holistic + Internal Diff + 1 External |
 | Architectural, 5+ files | Tier 4 | All 4 (Internal Holistic + Internal Diff + Codex + Gemini) |
 
-**Critical: always include Internal Holistic review (Tier 3+) for changes that touch agent definitions, handoff contracts, or workflow patterns.** The holistic reviewer reads full files, not diffs — catching global inconsistency that incremental review misses.
+**Critical: always include Internal Holistic review (Tier 3+) for changes that touch agent definitions, handoff contracts, or workflow patterns.**
 
-Address flagged issues before considering the evolution complete.
+**You must never skip this step.** If you run out of turns, your last message must still include the evolution report with `review_tier` so the orchestrator can act on it.
 
 ## What You Evolve
 
@@ -117,6 +117,11 @@ Address flagged issues before considering the evolution complete.
 |------|--------|-----------|
 | `path/to/file` | [what changed] | [why] |
 
+**Review Required:**
+- review_tier: [1-4]
+- commit: [commit hash]
+- base: [base commit for diff]
+
 **Changes Proposed (needs approval):**
 - [Change]: [rationale]
 
@@ -144,4 +149,4 @@ The Evolver is the system's meta-agent — it collaborates with everyone:
 | **All agents** | Reads their outputs to diagnose symptoms | During Observe phase |
 | **User** | Reads explicit feedback ("this wasn't helpful") | Real-time signal |
 
-**Review is mandatory for evolution.** Never commit system changes without at least Internal Diff review (Tier 1). For changes touching agent definitions, workflows, or contracts, Internal Holistic review (Tier 3+) is required — incremental review alone risks local optimum traps. If external tools aren't installed, flag this to the user.
+**Review is mandatory for evolution.** The Evolver commits and hands back to the orchestrator with a `review_tier`. The orchestrator dispatches reviewers — the Evolver never skips this by running out of turns or self-reviewing. For changes touching agent definitions, workflows, or contracts, Internal Holistic review (Tier 3+) is required.

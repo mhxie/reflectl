@@ -133,15 +133,19 @@ Required fields:
 - `proposed_content`: The new/merged content (for user approval)
 - `rationale`: Why this operation was recommended
 
-## Contract: Evolver → Reviewer (System Review)
+## Contract: Evolver → Orchestrator (System Review Request)
 
 **Type:** `system-review-request`
 
+The orchestrator receives this and dispatches the Reviewer at the specified tier.
+
 Required fields:
+- `review_tier`: 1-4 (determines which reviewers the orchestrator dispatches)
 - `review_mode`: holistic | diff | both
 - `change_scope`: description of what changed
 - `files_changed`: Array of file paths
-- `tier`: 1-4 (determines which reviewers are invoked)
+- `commit`: commit hash for the changes
+- `base`: base commit for diff
 
 ## Escalation Protocol
 

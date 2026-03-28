@@ -127,9 +127,10 @@ This project uses Claude Code's experimental agent teams for parallel execution.
 
 **System evolution (after any session):**
 1. Evolver observes what worked and what didn't
-2. Proposes changes to agents, commands, or CLAUDE.md
-3. Select review tier based on scope: Tier 1 (diff only) through Tier 4 (holistic + diff + Codex + Gemini)
-4. Address all reviewer findings before committing
+2. Proposes and commits changes to agents, commands, or CLAUDE.md
+3. Evolver returns to orchestrator with `review_tier` — it does NOT self-review
+4. **Orchestrator dispatches reviewers** for the specified tier (Tier 1-4). This is mandatory and cannot be skipped.
+5. Address all reviewer findings in a new commit
 
 See `protocols/orchestrator.md` for the full collaboration matrix.
 
