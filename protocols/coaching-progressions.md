@@ -15,7 +15,7 @@ An era is a stretch of life with a coherent identity. Examples:
 
 ### Era State
 
-Track the current era in `index/goals.md` under an `## Era` section:
+Track the current era in `profile/directions.md` under an `## Era` section:
 
 ```markdown
 ## Era
@@ -31,8 +31,8 @@ An era transition happens when the user's life context shifts meaningfully — n
 At an era transition:
 - Run a full `/review` to close out the prior era
 - Ask: "What are you carrying forward? What are you leaving behind?"
-- Update era state in `index/goals.md`
-- Rebuild index with `/index`
+- Update era state in `profile/directions.md`
+- Rebuild index with `/introspect`
 
 ### Golden Age vs. Dark Age
 
@@ -64,7 +64,7 @@ Directions shape what "progress" means in reflection. Someone leaning toward Mas
 Ask once per era (at era start or first session of a new era):
 "Which direction are you leaning toward this chapter?"
 
-Store in `index/goals.md` under the Era section. Don't re-ask — only revisit at era transitions or when the user initiates.
+Store in `profile/directions.md` under the Era section. Don't re-ask — only revisit at era transitions or when the user initiates.
 
 ## Reflection Maturity
 

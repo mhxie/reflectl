@@ -10,7 +10,7 @@ Each session should feel like a chapter in an ongoing conversation, not a standa
 
 At the start of every session, load:
 1. **Last 3 reflection/review files** from `reflections/`
-2. **Index files** (meta-summary.md, goals.md)
+2. **Profile files** (identity.md, directions.md)
 3. **Today's daily note** (current context)
 
 This gives the session a "previously on..." anchor.
@@ -41,8 +41,8 @@ Sessions leave artifacts that future sessions can read:
 | `reflections/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
 | `reflections/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
 | `reflections/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
-| `index/meta-summary.md` | User profile | Every session |
-| `index/goals.md` | Goals | Every goal-related session |
+| `profile/identity.md` | User profile | Every session |
+| `profile/directions.md` | Goals | Every goal-related session |
 
 ## Cadence Recommendations
 
@@ -54,7 +54,7 @@ Sessions leave artifacts that future sessions can read:
 | `/project:decision` | As needed | When facing a real decision |
 | `/project:explore` | Weekly or when feeling stuck | Keeps serendipity alive |
 | `/project:energy-audit` | Monthly or after high-stress periods | Energy patterns are slow-moving |
-| `/project:index` | Monthly or after major life change | Index needs fresh data when context shifts significantly |
+| `/introspect` | Monthly or after major life change | Profile needs fresh data when context shifts significantly |
 
 ## Focus Lock
 

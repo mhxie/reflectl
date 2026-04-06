@@ -19,14 +19,14 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - Write-back to Reflect fails → save locally, inform user
 
 ### Level 3: Blocking (stop and inform)
-- No index files AND no MCP connection → cannot proceed, guide user to fix
-- All goal data missing → cannot run review, suggest `/project:index`
+- No profile files AND no MCP connection → cannot proceed, guide user to fix
+- All goal data missing → cannot run review, suggest `/introspect`
 - Fundamental prompt misunderstanding → ask user to clarify
 
 ## Agent-Specific Fallbacks
 
 ### Researcher
-- **MCP down**: Read `index/meta-summary.md` and `index/goals.md` as sole sources. Prefix output with `[DEGRADED: MCP unavailable, using cached index only]`
+- **MCP down**: Read `profile/identity.md` and `profile/directions.md` as sole sources. Prefix output with `[DEGRADED: MCP unavailable, using cached index only]`
 - **Empty results**: Try 3 alternative queries before reporting gap. Query strategy: exact → semantic → broader category
 - **Rate limited**: Batch remaining queries, report partial results
 
@@ -37,7 +37,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 
 ### Reviewer
 - **Cannot verify citation**: Mark as `UNVERIFIED` rather than `FAIL`. Distinguish "wrong" from "couldn't check"
-- **Index goals.md missing**: Skip goal coverage check, note in output
+- **profile/directions.md missing**: Skip goal coverage check, note in output
 - **MCP down during spot-check**: Use grep on local files as fallback
 
 ### Challenger
@@ -52,9 +52,13 @@ Failures are ranked by severity. Handle at the lowest level possible.
 
 ### Curator
 - **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan source notes for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in sources but missing from output, block the proposal until fixed.
+- **create_note produces empty note (silent failure)**: The parameter is `contentMarkdown`, not `content`. After every `create_note` call, verify with `get_note` that the body is non-empty. If empty: the wrong parameter was used. Fix the parameter name and retry with a new title (the empty note now occupies the original title and cannot be overwritten or deleted via API).
 - **create_note returns existing note**: This means the title conflicts. Inform the user — they must either choose a different title or manually edit in Reflect.
 - **Merge mistake after creation**: Cannot fix via API. Create a corrected note with an amended title (e.g., "Title v2") and inform the user to delete the bad one manually.
 - **Partial note read failure**: If any source note in a merge fails to load, abort the merge. Do not proceed with partial sources.
+- **Note deleted before processing**: Always cache source notes locally before processing (see Curator's fetch-and-cache step). If a source note disappears mid-session, use the local cache. If no cache exists, abort and warn — the content may be unrecoverable.
+- **Size overflow**: The Reflect API times out at ~20KB. Use 15KB as the working limit — split notes into parts at 15KB with cross-link headers. Never attempt to create a note you estimate will exceed 15KB.
+- **Image/media count mismatch**: If the output media count does not match the source media count, the proposal is invalid. Re-scan cached sources and fix before presenting to user.
 
 ### Evolver
 - **Cannot write to files**: Report proposed changes as text diff for manual application

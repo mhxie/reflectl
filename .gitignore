@@ -4,17 +4,27 @@
 # Personal data (PRIVATE — never commit)
 # Raw note snapshots
 reflect-*/
-# Reflection index with personal goals/summaries
+# Reflection index (legacy) with personal goals/summaries
 index/
 !index/.gitkeep
+# Profile with personal identity/goals/expertise
+profile/
 # Coaching session outputs
 reflections/
 !reflections/.gitkeep
 # Personal reference material (examples, sensitive context)
 personal/
 !personal/.gitkeep
+# Content sources (personal data — PDFs, cache, personas)
+sources/papers/
+sources/cache/
+reader_persona.md
+# Paper review methodology (functional locally, kept out of public repo)
+.claude/commands/paper-review.md
 # Handoff plans with personal note references
 handoffs/
+# Draft note content for Reflect compaction (temporary working files)
+drafts/
 # Local MCP server URL
 .mcp.json
 # Codex session state

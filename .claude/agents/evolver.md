@@ -23,7 +23,7 @@ Map the issue to its source:
 |---------|-------------|---------------|
 | Weak citations | Researcher search strategy | `.claude/agents/researcher.md` |
 | Generic insights | Synthesizer patterns | `.claude/agents/synthesizer.md` |
-| Missed goals | Index coverage | `.claude/commands/index.md` |
+| Missed goals | Profile coverage | `.claude/commands/introspect.md` |
 | Wrong questions | Challenger taxonomy | `.claude/agents/challenger.md` |
 | Irrelevant frameworks | Thinker selection | `.claude/agents/thinker.md` |
 | Session feels flat | Command flow | `.claude/commands/reflect.md` |

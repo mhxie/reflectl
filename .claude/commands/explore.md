@@ -4,7 +4,7 @@ Free-form exploration session for when the user doesn't have a specific question
 
 ## Prerequisites
 
-1. Read `index/meta-summary.md` for context.
+1. Read `profile/identity.md` for context.
 2. Read the most recent reflection file from `reflections/`.
 
 ## The Exploration Process

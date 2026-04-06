@@ -11,7 +11,7 @@ Each agent has a finite context window. Manage it deliberately.
 When loading context, prioritize in this order:
 
 1. **System instructions** (agent prompt, protocols) — always loaded
-2. **Index files** (meta-summary.md, goals.md) — always loaded for reflect/review
+2. **Profile files** (identity.md, directions.md) — always loaded for reflect/review
 3. **Today's context** (daily note, current reflection) — always loaded
 4. **Recent context** (last 3-7 daily notes, recent reflections) — loaded if space permits
 5. **Searched context** (MCP search results, full note reads) — loaded on demand
@@ -22,8 +22,8 @@ When loading context, prioritize in this order:
 | Content Type | Approximate Tokens | Priority |
 |---|---|---|
 | Agent prompt + protocols | ~2K | Always |
-| meta-summary.md | ~3-5K | Always |
-| goals.md | ~5-10K | Always for review, optional for reflect |
+| profile/identity.md | ~3-5K | Always |
+| profile/directions.md | ~5-10K | Always for review, optional for reflect |
 | Today's daily note | ~1-3K | Always |
 | Each additional note (full) | ~1-5K | On demand |
 | Each search result (excerpt) | ~200-500 | On demand |
@@ -48,7 +48,7 @@ When loading context, prioritize in this order:
 
 ### Reviewer
 - **Spot-check, don't re-read everything.** Check 3-5 citations, not all of them.
-- **Read goals.md for coverage check.** Don't re-search MCP for goals.
+- **Read profile/directions.md for coverage check.** Don't re-search MCP for goals.
 
 ### Challenger
 - **Focus on recent daily notes.** Your job is about the present, not comprehensive history.
@@ -62,7 +62,7 @@ When loading context, prioritize in this order:
 
 Agents don't share context windows. All inter-agent communication happens through:
 1. **Handoff blocks** (structured output passed via orchestrator)
-2. **Files** (reflections/ directory, index files)
+2. **Files** (reflections/ directory, profile files)
 3. **MCP** (each agent can independently query Reflect)
 
 **Rule:** Never assume another agent has context you didn't explicitly pass in the handoff.

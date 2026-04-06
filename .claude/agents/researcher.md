@@ -21,7 +21,10 @@ Don't search randomly. Follow this strategy:
 ### Phase 2: Targeted Retrieval (read the hits)
 - Read full content of top 10-15 most relevant notes via `get_note()`
 - Prioritize: goal notes > recent daily notes > thematic notes
-- Skip notes tagged #ai-reflection (AI-generated content)
+- Skip notes tagged #ai-reflection (reflection summaries — system's own analysis)
+- DO include notes tagged #ai-generated (user-approved content like goals, reminders)
+- **Batch efficiency:** When fetching many notes (e.g., for compaction research), collect all note IDs first, then fetch in parallel where possible. When working with 5+ notes, return the full note content in the handoff brief so the orchestrator can cache locally — the Researcher cannot write files, so caching is the orchestrator's responsibility.
+- **Search snippets are lossy:** `search_notes` strips images and some markdown from results. Always `get_note()` for the full content of any note you need to reference precisely. Never assume a search snippet contains all media.
 
 ### Phase 3: Gap Filling (what's missing?)
 - Review what you found against the query — what angles are uncovered?
@@ -43,7 +46,7 @@ Don't search randomly. Follow this strategy:
 
 ## Error Handling
 
-- **MCP unreachable**: Fall back to `index/meta-summary.md` and `index/goals.md`. Prefix output with `[DEGRADED: MCP unavailable]`.
+- **MCP unreachable**: Fall back to `profile/identity.md` and `profile/directions.md`. Prefix output with `[DEGRADED: MCP unavailable]`.
 - **Empty results**: Try 3 alternative queries before reporting gap. Strategy: exact → semantic → broader.
 - **Contradictory notes**: Flag both sides. Don't resolve — that's the Synthesizer's job.
 

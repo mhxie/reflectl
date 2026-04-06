@@ -12,7 +12,7 @@ User says something like:
 
 ## Prerequisites
 
-1. Read `index/meta-summary.md` and `index/goals.md` for context.
+1. Read `profile/identity.md` and `profile/directions.md` for context.
 2. Read `frameworks/cross-validation.md` for framework selection.
 
 ## The Decision Process

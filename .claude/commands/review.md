@@ -4,14 +4,14 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
 
 ## Prerequisites
 
-1. Check if `index/meta-summary.md` exists. If not, tell the user: "No reflection index found. Run `/project:index` first to build your profile." and stop.
-2. Read `index/meta-summary.md`. Check the `Last built:` date. If older than 7 days, warn: "Your reflection index is stale (built on [date]). Consider running `/project:index` to refresh."
+1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
+2. Read `profile/identity.md`. Check the `Last built:` date. If older than 7 days, warn: "Your profile is stale (built on [date]). Consider running `/introspect` to refresh."
 
 ## Context Loading
 
-1. **Read index files:**
-   - `index/meta-summary.md` — reflection context
-   - `index/goals.md` — goals with categories and metrics
+1. **Read profile files:**
+   - `profile/identity.md` — reflection context
+   - `profile/directions.md` — goals with categories and metrics
 
 2. **Read all reflections from the last 30 days** from the `reflections/` directory. If none exist, note this is the first review.
 
@@ -25,7 +25,7 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
 
 ## Analysis
 
-For each goal category (#capacity, #learning, #identity, #energy — or whatever categories exist in goals.md):
+For each goal category (#capacity, #learning, #identity, #energy — or whatever categories exist in directions.md):
 
 ### Progressing
 Which goals have evidence of recent activity? Look for:
@@ -34,14 +34,14 @@ Which goals have evidence of recent activity? Look for:
 - Reflections that referenced these goals
 
 ### Neglected
-Which goals appear in goals.md but have NO recent activity? Look for:
+Which goals appear in directions.md but have NO recent activity? Look for:
 - Goals not mentioned in any recent reflection
 - Goal notes not edited in 30+ days
 - Topics absent from daily notes
 
 ### Shifted
 Have the user's priorities changed? Look for:
-- New topics appearing frequently in recent notes that aren't in goals.md
+- New topics appearing frequently in recent notes that aren't in directions.md
 - Goals that were active 3 months ago but have gone quiet
 - Contradictions between stated goals and recent behavior
 

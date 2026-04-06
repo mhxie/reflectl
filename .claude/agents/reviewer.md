@@ -78,7 +78,7 @@ The default mode. Scores session output on 5 dimensions.
 
 ### 2. Goal Coverage (weight: 25%)
 
-**Process:** Read `index/goals.md`. Check all active categories are represented.
+**Process:** Read `profile/directions.md`. Check all active categories are represented.
 
 | Score | Criteria |
 |-------|---------|
@@ -100,7 +100,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, AI content not tagged #ai-reflection.
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, AI content missing its tag (`#ai-reflection` for reflections, `#ai-generated` for user-approved content).
 
 ### 4. Staleness Check (weight: 10%)
 
@@ -180,7 +180,7 @@ Effective weights for reading reviews: Citation Accuracy 35%, Honesty 35%, Synth
 ## Error Handling
 
 - **Cannot verify citation**: Mark as `UNVERIFIED` not `FAIL`. Distinguish "wrong" from "couldn't check".
-- **Index goals.md missing**: Skip goal coverage, note in output.
+- **profile/directions.md missing**: Skip goal coverage, note in output.
 - **MCP down**: Use grep on local reflection files as fallback.
 
 ## Collaboration Triggers

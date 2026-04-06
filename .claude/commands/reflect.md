@@ -6,6 +6,8 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 If the user types `/reflect` with additional context, detect intent and route:
 - **Reading intent** (mentions an article, URL, [[Note Title]], or "read/discuss"): skip the menu and go to Read & Discuss using their input as the article to read.
+- **Meeting intent** (mentions "meeting", "standup", "1:1", or "meeting notes"): skip the menu and dispatch the **Meeting** agent directly.
+- **Talk/transcript intent** (mentions "seminar", "talk", "transcript", "podcast", "video" or pastes a large block of transcript text): skip the menu and go to Read & Discuss, with Reader preprocessing the transcript format.
 - **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): skip the menu and go straight to Daily Reflection using their input as context.
 
 ## Step 1: Choose Mode
@@ -18,7 +20,7 @@ Use `AskUserQuestion` with these options:
 | 2 | **Plan** | Make decisions and set direction — goal review, decision journal, or energy audit |
 | 3 | **Act** | Do something with your notes — compact, deep dive, or triage |
 | 4 | **Read** | Read and discuss an article or note with structured reading lenses |
-| 5 | **Learn** | Get recommendations or rebuild your context index |
+| 5 | **Learn** | Get recommendations or introspect to rebuild your self-model |
 
 ## Step 2: Choose Action
 
@@ -52,18 +54,22 @@ Based on Step 1, use a second `AskUserQuestion`:
 
 | Option | Label | Description |
 |--------|-------|-------------|
-| 1 | **Compact Notes** | Find and merge redundant or overlapping notes |
-| 2 | **Deep Dive** | Full briefing on a topic — notes + web research + resources + framework, 4 agents in parallel |
-| 3 | **Note Triage** | Scan for compaction candidates across your notes |
+| 1 | **Curate Inbox** | Goal-aware triage of your Readwise inbox — score, route, and tag |
+| 2 | **Compact Notes** | Find and merge redundant or overlapping notes |
+| 3 | **Deep Dive** | Full briefing on a topic — notes + web research + resources + framework, 4 agents in parallel |
+| 4 | **Note Triage** | Scan for compaction candidates across your notes |
+| 5 | **Process Meeting** | Turn a work meeting transcript into structured notes with action items |
 
+- **Curate Inbox:** Read and follow `.claude/commands/curate.md`
 - **Compact Notes:** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
 - **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
   1. **Researcher** — search all notes related to this topic (what you've already thought/written)
   2. **Scout** — search the web for recent articles, research, and developments on this topic
   3. **Librarian** — find curated resources to deepen understanding (books, papers, courses)
   4. **Thinker** — select and apply a relevant framework from `frameworks/`
-  Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output.
-- **Note Triage:** Ask the user for 3-5 topic areas (or pull from `index/meta-summary.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
+  Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output. Before write-back (if any), dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and Scout-sourced claims.
+- **Note Triage:** Ask the user for 3-5 topic areas (or pull from `profile/identity.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
+- **Process Meeting:** Ask the user to paste or provide the meeting transcript. Dispatch the **Meeting** agent (Executive mode — action items, decisions, next steps). Present the structured output. Before saving, dispatch **Challenger** to check: are action items attributed correctly? Are any decisions ambiguous or missing owners? Ask the user if they want to save as a Reflect note — if yes, dispatch **Curator** to create it. For research talks or presentations, use Read instead — Reader handles transcript format with real analytical lenses.
 
 ### If Read:
 
@@ -74,7 +80,7 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 3 | **Multi-Lens Read** | Read with all 4 lenses in parallel — full analysis |
 
 - **Read & Discuss:** Ask for the article/note. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
-- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
 - **Multi-Lens Read:** Ask the user which article or note to read. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
 
 #### Reading Hub Flow (Multi-Lens Read)
@@ -84,6 +90,7 @@ Based on Step 1, use a second `AskUserQuestion`:
      - Opinion/journalism/essays → + Dialectical (find the tensions)
      - How-to/research/strategy → + Practical (extract takeaways)
      - Philosophy/argument/debate → + Dialectical + Practical
+     - Video/podcast transcripts → Critical + Practical (Reader auto-preprocesses transcript format)
    - **Researcher** — find user's existing notes related to the topic
    - **Scout** (1-2 instances) — gather external context on the topic
    - **Thinker** — select and apply a relevant framework
@@ -131,10 +138,10 @@ This ensures every article read has a permanent, searchable reference in Reflect
 | Option | Label | Description |
 |--------|-------|-------------|
 | 1 | **Recommend Resources** | Get reading/learning recommendations on a topic (Chinese summaries) |
-| 2 | **Build Index** | Rebuild your reflection context — run this first if new, or monthly to refresh |
+| 2 | **Introspect** | Rebuild your self-model — discover identity, taste, curiosity, and directions from your notes |
 
 - **Recommend Resources:** Dispatch to the **Librarian** agent. Ask the user what topic they want recommendations for. The Librarian searches existing notes for context, then recommends books, papers, articles, and other resources with Chinese summaries.
-- **Build Index:** Read and follow `.claude/commands/index.md`
+- **Introspect:** Read and follow `.claude/commands/introspect.md`
 
 ---
 
@@ -144,16 +151,16 @@ Run a reflection session grounded in your Reflect notes and goals.
 
 ## Prerequisites
 
-1. Check if `index/meta-summary.md` exists. If not, tell the user: "No reflection index found. Run `/project:index` first to build your profile." and stop.
-2. Read `index/meta-summary.md`. Check the `Last built:` date. If older than 7 days, warn: "Your reflection index is stale (built on [date]). Consider running `/project:index` to refresh. Continuing with current index."
+1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
+2. Read `profile/identity.md`. Check the `Last built:` date. If older than 7 days, warn: "Your profile is stale (built on [date]). Consider running `/introspect` to refresh. Continuing with current profile."
 
-**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/integration.md` (insight → action), `protocols/contradiction-detection.md` (surfacing contradictions in Step 3).
+**Protocols used in this session:** `protocols/session-continuity.md` (connecting sessions), `protocols/integration.md` (insight → action), `protocols/contradiction-detection.md` (surfacing contradictions in Step 3), `protocols/epistemic-hygiene.md` (write-first nudge in warm-up, provenance tagging in write-back).
 
 ## Context Loading
 
-1. **Read index files:**
-   - `index/meta-summary.md` — your reflection context
-   - `index/goals.md` — your goals and metrics
+1. **Read profile files:**
+   - `profile/identity.md` — your self-model and intellectual taste
+   - `profile/directions.md` — your goals and directions
 
 2. **Read recent reflections** (last 3 files from `reflections/` directory, sorted by date). If none exist, this is the first session — note that.
 

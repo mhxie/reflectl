@@ -4,8 +4,8 @@ Deep assessment of where your energy goes — physical, mental, emotional, and s
 
 ## Prerequisites
 
-1. Read `index/meta-summary.md` for context.
-2. Read `index/goals.md` for #energy category goals.
+1. Read `profile/identity.md` for context.
+2. Read `profile/directions.md` for #energy category goals.
 
 ## Context Loading
 

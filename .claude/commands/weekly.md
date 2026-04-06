@@ -4,12 +4,12 @@ Run a structured weekly review covering the past 7 days. Deeper than daily refle
 
 ## Prerequisites
 
-1. Check if `index/meta-summary.md` exists. If not: "Run `/project:index` first." Stop.
+1. Check if `profile/identity.md` exists. If not: "Run `/introspect` first to build your self-model." Stop.
 2. Check `Last built:` date. If >7 days stale, warn and continue.
 
 ## Context Loading
 
-1. **Read index files:** `index/meta-summary.md` + `index/goals.md`
+1. **Read profile files:** `profile/identity.md` + `profile/directions.md`
 
 2. **Read all reflections from the past 7 days** from `reflections/` directory.
 

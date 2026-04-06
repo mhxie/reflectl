@@ -24,7 +24,7 @@ The user applies different rules to different life areas:
 
 ### Strategy 3: Say-Do Contradiction
 Compare stated goals with actual behavior:
-1. Read goals from `index/goals.md`
+1. Read goals from `profile/directions.md`
 2. Search recent daily notes for evidence of action on those goals
 3. Surface gaps: "You list [[Goal X]] as high priority, but it hasn't appeared in your daily notes for 6 weeks."
 
