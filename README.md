@@ -2,7 +2,7 @@
 
 A personal reflection system that reads your notes and helps you think.
 
-Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + [Reflect.app](https://reflect.app/). It connects to your notes via MCP, then coordinates a team of AI agents to help you reflect, read deeply, make decisions, and take action.
+Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with a **local-first** Zettelkasten under `zk/` as the data layer. [Reflect.app](https://reflect.app/) is one of several capture surfaces (alongside Readwise, voice, mobile); the authoritative knowledge layer lives on disk and is scored by a deterministic TrustRank engine. A team of AI agents reads from `zk/`, helps you reflect, read deeply, make decisions, and take action.
 
 ## What It Does
 
@@ -16,7 +16,9 @@ Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + [Reflec
 
 **Learn** — Get reading recommendations or introspect to rebuild your self-model.
 
-Everything writes back to your Reflect daily notes (with your approval), so insights stay where your notes live.
+**Wiki** — Crystallize validated thinking into `zk/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure; `/sync` pushes wiki entries to Reflect for mobile reading.
+
+Session insights write back to your Reflect daily notes (with your approval). Compiled knowledge lives locally in `zk/wiki/` and syncs out one-way.
 
 ## Getting Started
 
@@ -76,7 +78,14 @@ Type `/reflect` to get a menu of everything you can do:
 | **Compact Notes** | Find and merge redundant notes |
 | **Process Meeting** | Turn a work meeting transcript into structured notes with action items |
 
-You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/introspect`.
+You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/sync`, `/lint`.
+
+**Knowledge layer commands:**
+
+| Command | What it does |
+|---|---|
+| `/sync` | Push `zk/wiki/` entries to Reflect for mobile display. One-way, manifest-tracked, never pulls back. |
+| `/lint` | Corpus-level structural check over `zk/wiki/` and the sync manifest — parse errors, duplicate titles, slug drift, manifest dead rows. Run before `/sync` or whenever trust scores shift unexpectedly. |
 
 ## The Team
 
@@ -92,24 +101,41 @@ Eleven agents work together during sessions. You don't need to manage them — t
 ## How It Works
 
 ```
-Reflect.app  <──MCP──>  Claude Code (Orchestrator)
-(your notes)                    |
-                    +-----------+-----------+
-                    v           v           v
-              Agent Team    Sessions    Frameworks
-              (11 agents)  (10 types)   (22 frameworks)
-                    |           |           |
-                    v           v           v
-              Protocols    zk/reflections/  Cross-validation
-              (16 rules)   (outputs)     & Pattern Library
+Capture sources                 Local data layer (zk/)              Display
+(Reflect, Readwise,  ─sync──>   L4  zk/wiki/         ──/sync──>  Reflect
+ voice, mobile)                 (trust-scored)                   (mobile read)
+                                L3  zk/papers/
+                                L2  zk/daily-notes/, reflections/,
+                                    preprints/, agent-findings/, ...
+                                L1  zk/cache/, zk/readwise/
+
+                                        ^
+                                        |
+                                        v
+                                Claude Code (Orchestrator)
+                                        |
+                    +-----------+-------+-------+-----------+
+                    v           v               v           v
+              Agent Team    Sessions      Frameworks   Trust engine
+              (11 agents)  (10 types)   (22 frameworks) (trust.py,
+                    |           |               |         lint.py)
+                    v           v               v
+              Protocols    zk/reflections/    Cross-validation
+              (20 rules)   (session outputs)  & Pattern Library
 ```
 
-Your notes stay in Reflect. The system reads them on-the-fly via MCP, runs sessions with the agent team, and writes insights back to your daily notes. All personal data is gitignored — only the system configuration is committed.
+**Five-tier knowledge model.** Everything under `zk/` is classified by depth of crystallization — raw capture (L1), working notes (L2), externally-certified papers (L3), locally-certified wiki entries (L4). Directory = tier; no tags required. Agents read from disk via semantic search and grep, not via MCP. Reflect is demoted to a capture + display surface.
+
+**TrustRank over the wiki.** Wiki entries under `zk/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds — trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
+
+**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes approved insights back to your Reflect daily notes. Session outputs are stored in `zk/reflections/`. All personal data under `zk/` is gitignored — only the system configuration (protocols, agents, commands, scripts) is committed.
 
 Key design choices:
+- **Local-first** — the knowledge layer lives on disk, not in a remote app. MCP is used only as a narrow escape hatch for today's unsynced capture and for pushing finished wiki entries to Reflect.
+- **Deterministic trust scoring** — TrustRank is a stdlib-only Python pass, not an LLM heuristic. The same input always produces the same score.
 - **Era-aware** — tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation)
 - **Bilingual** — handles English and Chinese notes, matches your language
-- **Self-improving** — the Evolver agent evolves the system, reviewed by external AI models (Codex, Gemini)
+- **Self-improving** — the Evolver agent evolves the system, reviewed by external AI models (Codex, Gemini) via `scripts/review.sh`
 - **Privacy by default** — personal data never leaves your machine
 
 ## License
