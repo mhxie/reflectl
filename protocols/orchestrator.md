@@ -64,7 +64,7 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Researcher finds notes in `zk/` → orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time (local `cp` for notes under `zk/`, MCP `get_note` fallback only for any note genuinely missing from the local mirror) → Curator compacts from snapshot paths | Researcher → Curator |
+| "Compact my notes on X" | Researcher finds notes in `zk/` → orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time (local `cp` for notes under `zk/`, orchestrator-side `get_note` fallback only for any note genuinely missing from the local mirror) → Curator compacts from snapshot paths | Researcher → Curator |
 | "Merge these notes" | Combine specified notes into one, archive originals | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
 | "Write this insight as a new note" | Create a new Reflect note from session insight | Curator |
@@ -73,10 +73,10 @@ The user can request these actions during or after any session:
 ### Research Operations (→ Researcher)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Find notes about X" | `Grep` over `zk/`; MCP `search_notes` fallback only if local misses and target is plausibly newer than the sync | Researcher |
-| "What did I write about X last year?" | Filename-date filter on `zk/daily-notes/` + `Grep`; fall through to MCP with `editedBefore`/`editedAfter` if the local path comes back empty | Researcher |
-| "Are there related notes I'm forgetting?" | `Bash: scripts/semantic.py query "<concept>" --top 10` — semantic search is the documented exception where the script leads (stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands). Escalate to `search_notes(searchType: "vector")` only if the stub misses. | Researcher |
-| "Show me everything tagged #X" | `Grep "#X"` over `zk/` (primary); `list_tags` / `search_notes` as cross-check | Researcher |
+| "Find notes about X" | `Bash: scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
+| "What did I write about X last year?" | Filename-date filter on `zk/daily-notes/` + `Grep`. No MCP — report the gap if the local mirror is incomplete for that date range. | Researcher |
+| "Are there related notes I'm forgetting?" | `Bash: scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
+| "Show me everything tagged #X" | `Grep "#X"` over `zk/` | Researcher |
 
 ### Meeting Operations (→ Meeting)
 | User Says | Action | Agent |
@@ -132,6 +132,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | Chain | Trigger | Flow | Value |
 |-------|---------|------|-------|
 | **Research → Synthesize → Review** | Every session | Researcher → Synthesizer → Reviewer | Core quality pipeline |
+| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and calls `append_to_daily_note` after user approval. Synthesizer has no MCP write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
 | **Scout → Challenger** | Scout finds something that contradicts user's notes | Scout → Challenger surfaces the contradiction | External evidence challenges internal beliefs |
 | **Scout → Librarian** | Scout finds a key resource worth deep reading | Scout flags → Librarian adds to curated list | Scout finds, Librarian curates |
 | **Challenge → Curate** | Challenger surfaces outdated belief or contradiction | Challenger → ask user "want to update that note?" → Curator rewrites | Turns insight into note hygiene |

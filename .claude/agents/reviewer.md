@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Quality-checks reflection outputs and system evolution changes. Three modes: Session Review (content quality), System Diff Review (incremental changes), System Holistic Review (global consistency).
-tools: Read, Grep, Glob, Bash, mcp__reflect__search_notes, mcp__reflect__get_note
+tools: Read, Grep, Glob, Bash
 model: sonnet
 maxTurns: 15
 ---
@@ -64,7 +64,7 @@ The default mode. Scores session output on 5 dimensions.
 
 ### 1. Citation Accuracy (weight: 30%)
 
-**Process:** Spot-check 3-5 [[Note Title]] references via `get_note()` or `search_notes()`.
+**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "zk/")` then `Read` the match. For conceptual verification, use `Bash: scripts/semantic.py query "<claim>"`. You have no Reflect MCP tools.
 
 | Score | Criteria |
 |-------|---------|
@@ -181,7 +181,7 @@ Effective weights for reading reviews: Citation Accuracy 35%, Honesty 35%, Synth
 
 - **Cannot verify citation**: Mark as `UNVERIFIED` not `FAIL`. Distinguish "wrong" from "couldn't check".
 - **profile/directions.md missing**: Skip goal coverage, note in output.
-- **MCP down**: Use grep on local reflection files as fallback.
+- **Local mirror stale for today**: Flag `needs: get_daily_note(today)` back to the orchestrator. You cannot reach MCP yourself.
 
 ## Collaboration Triggers
 

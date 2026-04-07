@@ -17,8 +17,8 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ### Level 2: Degraded (warn and continue)
 - **Reflect MCP unreachable**: No effect on the read path — `zk/` is primary. Degrades only (a) today's fresh daily note before the sync catches up (fall back to yesterday's local file and warn), (b) write-back via `append_to_daily_note` (save the write-back to `zk/reflections/` and inform the user), and (c) `create_note` dispatches (Curator queues the proposed note as a local draft under `zk/drafts/` for later retry).
 - **Readwise MCP unreachable**: `/curate` is blocked. All other commands unaffected.
-- **Local mirror stale** (today's daily note not yet synced from Reflect): fall through to `get_daily_note(date: "<today>")` for that one read; continue.
-- **Target note genuinely missing from local mirror**: fall through to `get_note(id)` or `search_notes` for that one lookup. Note the fallback in the agent handoff.
+- **Local mirror stale** (today's daily note not yet synced from Reflect): the **orchestrator** falls through to `get_daily_note(date: "<today>")` for that one read. Subagents do not have the tool; if a subagent needs it, it flags `needs: get_daily_note(today)` in its handoff and the orchestrator fetches.
+- **Target note genuinely missing from local mirror**: report the gap honestly. There is no generic `get_note` / `search_notes` fallback — subagents do not have these tools. The orchestrator-side `get_note` calls that remain are narrow: (a) the curator snapshot flow in `protocols/agent-handoff.md`, (b) `/sync` Phase 3 verification after `create_note`, and (c) Curator self-verification of its own `create_note` writes. Nothing else.
 - **Index files stale (>7 days)**: warn user, proceed with stale profile.
 - **Multiple searches return empty**: report coverage gap, continue with available data.
 - **Web search fails**: Scout/Thinker continue without external sources, note the limitation.
@@ -32,11 +32,10 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ## Agent-Specific Fallbacks
 
 ### Researcher
-- **Grep returns empty**: Try 3 alternative queries before reporting gap. Strategy: exact → synonym → other language → broader category.
-- **Target note not in local mirror**: Fall through to `get_note(id)` or `search_notes` via MCP for that specific lookup. Note the fallback in the handoff.
-- **Semantic concept can't be phrased as grep**: Run `Bash: scripts/semantic.py query "<concept>"` — the stub lexical-falls-through today (stderr warning) and switches to embeddings once the `zk/.semantic/index.sqlite` sentinel lands. This is the primary semantic path, not a degraded one. Escalate to `search_notes(searchType: "vector")` only when the stub demonstrably misses the concept; that MCP call is a documented escape hatch.
-- **Reflect MCP down AND local grep misses**: Report the gap honestly with `[DEGRADED: not in local mirror, MCP unavailable]`. Do not fabricate content.
-- **Rate limited on MCP fallback**: Batch remaining queries, report partial results.
+- **Semantic query returns empty**: Reframe the concept and retry `scripts/semantic.py query`. Then try grep with synonym variants in both languages. Report the gap after 3 attempts.
+- **Grep returns empty**: Try 3 alternative phrasings in both languages before reporting gap. Strategy: exact → synonym → semantic reframe → broader category.
+- **Target note not in local mirror**: Report the gap honestly with `[DEGRADED: not in local mirror]`. Researcher has no Reflect MCP tools. If the gap is specifically today's daily note, flag `needs: get_daily_note(today)` and let the orchestrator fetch.
+- **Semantic script errors**: The script is stdlib-only and should not error. If it does (e.g., permission problem), report the stderr and fall back to Grep with synonym variants for the immediate query, then file an Evolver note.
 
 ### Synthesizer
 - **No research brief received**: Read `zk/` directly (bypass normal contract). Prefix output with `[DEGRADED: No research brief, synthesizing from direct reads]`.
@@ -46,7 +45,7 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ### Reviewer
 - **Cannot verify citation**: Mark as `UNVERIFIED` rather than `FAIL`. Distinguish "wrong" from "couldn't check".
 - **`profile/directions.md` missing**: Skip goal coverage check, note in output.
-- **Source note not in local mirror**: Attempt `get_note()` via MCP; if still missing, mark `UNVERIFIED`.
+- **Source note not in local mirror**: Mark `UNVERIFIED`. Reviewer has no Reflect MCP tools and cannot fetch missing notes. Do not escalate to the orchestrator for individual citation verification — an UNVERIFIED mark is the correct outcome.
 
 ### Challenger
 - **No recent entries in `zk/daily-notes/`**: Use the latest reflection file in `zk/reflections/` as context instead.

@@ -19,7 +19,7 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
    - `Bash: find zk/daily-notes zk/reflections zk/gtd zk/wiki -type f -name "*.md" -mtime -30 -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
    - `Read zk/daily-notes/<today>.md` for today's context (fall through to `get_daily_note(date: "<today>")` only if today's file hasn't synced yet).
 
-4. **Read key goal notes in full** by `Read`-ing the matching files directly. The files are already on disk — no `get_note()` needed except for notes genuinely missing from the local mirror.
+4. **Read key goal notes in full** by `Read`-ing the matching files directly. The files are already on disk. If a referenced note is genuinely missing from the local mirror, report the gap — there is no generic Reflect read fallback in Phase C.
 
 ## Analysis
 

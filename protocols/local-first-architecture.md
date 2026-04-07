@@ -137,12 +137,12 @@ The expected steady-state ratio is roughly: hundreds of L1/L2 notes for every L4
 
 ## What Changes for Each Agent
 
-Phase A wires the read path now. Phase C wires the wiki write path and the `/sync` display push.
+Phase A wired the read path. Phase B shipped `scripts/trust.py`. **Phase C (this milestone) drops Reflect read MCP from every subagent, moves Curator to local-first wiki writes, and adds `/sync` for one-way display push.** Phase D is `/lint`.
 
 | Agent | L1 capture | L4 wiki (`zk/wiki/`) | L3 receipts |
 |---|---|---|---|
-| **Researcher** | **Phase A: reads local mirror first.** `Grep` + `Read` over `zk/daily-notes/`, `zk/reflections/`, etc. MCP (`search_notes`, `get_note`, `get_daily_note`) is fallback for today's fresh capture, semantic queries, and genuinely missing notes. | Phase A: reads `zk/wiki/` with grep directly — no `Phase C` gate, the files are already on disk. | Reads `zk/readwise/`, `zk/papers/` directly. |
-| **Curator** | Continues to write to daily notes via `append_to_daily_note`. | Phase C: writes wiki entries to `zk/wiki/` first; only pushes to Reflect via `/sync` after structural integrity passes. | Unchanged. |
+| **Researcher** | **Local-only, semantic-primary.** `Bash: scripts/semantic.py query` for content queries, `Grep` + `Read` for structural queries. No Reflect MCP tools in frontmatter. If today's daily note is not yet on disk, flags `needs: get_daily_note(today)` and the orchestrator fetches. | Reads `zk/wiki/` with grep directly. | Reads `zk/readwise/`, `zk/papers/` directly. |
+| **Curator** | Continues to write to daily notes via `append_to_daily_note` (write-side MCP retained). | **Phase C: drafts wiki entries as markdown proposals with `target_path: zk/wiki/<slug>.md`.** The orchestrator writes the file after user approval (subagents cannot Write). Then `scripts/trust.py --note <path>` verifies structural integrity and reports initial scores. | Unchanged. |
 | **Synthesizer** | Reads capture-layer briefs from Researcher; writes session reflections to `zk/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
 | **Reviewer** | Continues to gate capture-layer write-backs. | Phase C: gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
 | **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `zk/agent-findings/` (not the ephemeral `zk/cache/`). |

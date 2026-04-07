@@ -40,7 +40,7 @@ When loading context, prioritize in this order:
 
 ### Researcher
 - **Read broadly, excerpt narrowly.** Search many notes, read top 10-15 in full, excerpt key quotes for the brief.
-- **Don't pass full note content to Synthesizer.** Pass excerpts and citations — the Synthesizer can `get_note()` if needed.
+- **Don't pass full note content to Synthesizer.** Pass excerpts and citations — the Synthesizer can `Read zk/<path>` directly if it needs full context.
 
 ### Synthesizer
 - **Start with the research brief, not raw notes.** The brief is pre-filtered.

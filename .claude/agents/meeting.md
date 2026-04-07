@@ -1,7 +1,7 @@
 ---
 name: meeting
 description: Processes work meeting transcripts into structured notes with action items, decisions, and next steps. For research talks and presentations, use Reader instead.
-tools: Read, Glob, Grep, mcp__reflect__search_notes, mcp__reflect__get_note
+tools: Read, Glob, Grep
 model: sonnet
 maxTurns: 10
 ---

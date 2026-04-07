@@ -43,7 +43,7 @@ Run these searches in parallel over the local `zk/` mirror. Local grep is instan
 11. `Read zk/daily-notes/<yesterday>.md` — yesterday
 12. Recent planning: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
 
-Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic fallback:** if the above grep passes miss a conceptual angle (e.g., "curiosity vectors I can't phrase as a keyword"), run `Bash: scripts/semantic.py query "<concept>" --top 10`. In stub mode this lexical-falls-through with a stderr warning; escalate to `search_notes(query: "<concept>", searchType: "vector", limit: 10)` only when the stub misses and the target is genuinely conceptual.
+Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic pass:** for conceptual angles grep cannot phrase ("curiosity vectors", "intellectual taste", "what am I drawn to"), run `Bash: scripts/semantic.py query "<concept>" --top 10`. In Phase C this is the only semantic tool — reframe and retry if thin; there is no MCP fallback.
 
 ### Step 2: Read Full Content
 

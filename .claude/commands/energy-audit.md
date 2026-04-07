@@ -9,12 +9,12 @@ Deep assessment of where your energy goes — physical, mental, emotional, and s
 
 ## Context Loading
 
-1. **Read the last 14 daily notes from the local mirror** to track energy patterns: `Read zk/daily-notes/<today>.md` back through `Read zk/daily-notes/<14-days-ago>.md` (one `Read` per date). Fall through to `get_daily_note(date)` only for any specific date missing from the local mirror.
+1. **Read the last 14 daily notes from the local mirror** to track energy patterns: `Read zk/daily-notes/<today>.md` back through `Read zk/daily-notes/<14-days-ago>.md` (one `Read` per date). The orchestrator may `get_daily_note(date: "<today>")` for today's file if the sync hasn't pulled it yet — that's the one Reflect read MCP call remaining. For older dates missing from the mirror, report the gap.
 2. **Search for energy-related notes:**
    - `Grep(pattern: "累|疲惫|精力", path: "zk/")` — Chinese exhaustion markers (local, exact).
    - `Grep(pattern: "运动|健康|睡眠", path: "zk/")` — Chinese health markers (local, exact).
    - `Grep(pattern: "exercise|health|sleep", path: "zk/")` — English health markers (local, exact).
-   - `Bash: scripts/semantic.py query "tired exhausted drained" --top 10` — semantic search for energy *states* that may not use literal "tired/exhausted" language. This is the documented exception where semantic search leads. In stub mode the script lexical-falls-through with a stderr warning; escalate to `search_notes(query: "energy tired exhausted", searchType: "vector", limit: 10)` only when the stub misses a genuinely affective concept.
+   - `Bash: scripts/semantic.py query "tired exhausted drained" --top 10` — **primary** for affective states that may not use literal "tired/exhausted" language. Reframe the concept and retry if results are thin. No MCP fallback in Phase C.
 
 ## The Four Energy Dimensions
 

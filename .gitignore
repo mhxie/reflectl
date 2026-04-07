@@ -32,3 +32,6 @@ __pycache__/
 
 # Local-first data layer (symlink or subdir; never commit the vault)
 zk
+
+# /sync idempotency ledger (tracks which wiki entries have been pushed to Reflect)
+zk/.sync-manifest.json

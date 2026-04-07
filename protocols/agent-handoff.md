@@ -143,7 +143,8 @@ The Curator works exclusively from `snapshot_paths` — it never re-reads the or
 **Type:** `note-operation`
 
 Required fields:
-- `operation`: compact | merge | create | replace
+- `operation`: compact | merge | create | replace | wiki-entry
+- `target_path`: (required for `wiki-entry`, optional otherwise) Local file path under `zk/wiki/<slug>.md` where the orchestrator will write the draft after user approval. Curator cannot Write — it only proposes the path and body.
 - `notes_affected`: Array of note titles involved
 - `snapshot_paths`: (required for compact/merge) Array of `zk/cache/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal. (Formerly `cached_sources`; renamed to reflect that they are dispatch-time snapshots, not an MCP size-limit workaround.)
 - `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.

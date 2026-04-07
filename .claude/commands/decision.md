@@ -37,9 +37,9 @@ This determines how much analysis is appropriate.
 
 ### Step 3: Search for Relevant History
 
-Pull prior thinking from the local mirror first:
-- `Grep(pattern: "<key terms>", path: "zk/")` — exact-match related notes. Try both languages.
-- `Bash: scripts/semantic.py query "<decision topic>" --top 10` — has the user thought about *adjacent* versions of this before? Semantic search is the documented exception for concepts grep cannot phrase; use it alongside grep, not as a fallback. Stub mode warns on stderr and falls back to lexical matching; escalate to `search_notes(query: "<topic>", searchType: "vector", limit: 10)` only when the stub misses a genuinely conceptual query.
+Pull prior thinking from the local vault. No Reflect MCP.
+- `Bash: scripts/semantic.py query "<decision topic>" --top 10` — **primary**: has the user thought about adjacent versions of this before? Reframe and retry if thin.
+- `Grep(pattern: "<key terms>", path: "zk/")` — exact-match related notes for structural follow-up. Try both languages.
 - `Grep(pattern: "<goal keyword>", path: "zk/gtd/")` AND `Grep(pattern: "<goal keyword>", path: "zk/wiki/")` — two separate calls; `Grep`'s `path` takes a single root, not a space-separated list. Checks which active goals (gtd) and which certified directions (wiki) are affected by this decision.
 
 ### Step 4: Apply Two Frameworks (Cross-Validation)

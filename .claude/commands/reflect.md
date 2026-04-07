@@ -61,7 +61,11 @@ Based on Step 1, use a second `AskUserQuestion`:
 | 5 | **Process Meeting** | Turn a work meeting transcript into structured notes with action items |
 
 - **Curate Inbox:** Read and follow `.claude/commands/curate.md`
-- **Compact Notes:** Dispatch to the **Curator** agent. Ask the user what topic or notes to compact. The Curator searches for related notes, proposes a merged version, and waits for approval before writing.
+- **Compact Notes:** Ask the user what topic or notes to compact. Then run the snapshot-first flow (see `protocols/orchestrator.md` → Note Operations → Compact Notes):
+  1. **Researcher** identifies related notes in `zk/` (semantic.py primary, Grep for structural).
+  2. **Orchestrator snapshots each source** to `zk/cache/compact-<slug>-<n>.md` — local `cp` for files under `zk/`, `get_note()` fallback only for notes genuinely missing from the local mirror.
+  3. Dispatch to **Curator** with `snapshot_paths: [...]` in the handoff. The Curator works exclusively from the snapshot files, runs the Content Preservation Checklist, and returns a draft.
+  4. User approves each output note individually before Curator writes.
 - **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
   1. **Researcher** — search all notes related to this topic (what you've already thought/written)
   2. **Scout** — search the web for recent articles, research, and developments on this topic
@@ -167,7 +171,7 @@ Run a reflection session grounded in your Reflect notes and goals.
 3. **Pull fresh context from the local mirror:**
    - `Read zk/daily-notes/<today>.md` — what you've done today. If the file is missing or visibly truncated (today's capture hasn't synced yet), fall through to `get_daily_note(date: "<today>")` via MCP.
    - `Read zk/daily-notes/<yesterday>.md` — what you did yesterday. Local only; no MCP fallback needed for a sync-complete day.
-   - For recent activity related to your themes, list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths. If the theme is conceptual rather than lexical (a mood, a shift, a pattern you can't enumerate), run `Bash: scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5`. In stub mode this lexical-falls-through with a stderr warning; escalate to `search_notes(query: "<theme>", searchType: "vector", limit: 5, editedAfter: "<7 days ago>")` only when the stub misses a genuinely conceptual query.
+   - For recent activity related to your themes, run `Bash: scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
 ## Coaching Session
 
@@ -208,7 +212,7 @@ Each question should:
 - Match the user's language (Chinese for Chinese goals)
 
 ### 3. Forgotten Connection (Semantic Discovery)
-Use `Bash: scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. In stub mode the script lexical-falls-through with a stderr warning; if the stub misses the concept, escalate to `search_notes(query: "<concept>", searchType: "vector")` as the documented escape hatch.
+Use `Bash: scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. Reframe and retry if thin — Phase C removed the `search_notes` escape hatch.
 - Search with a concept from the conversation, not just keywords
 - Go back at least 3 months for genuine surprise
 - Present as a provocation, not a summary:
