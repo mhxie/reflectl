@@ -26,5 +26,9 @@ handoffs/
 # Build state
 *.build-state.json
 
+# Python bytecode cache from running scripts/*.py
+__pycache__/
+*.pyc
+
 # Local-first data layer (symlink or subdir; never commit the vault)
 zk
