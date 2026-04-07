@@ -132,6 +132,7 @@ Capture sources                 Local data layer (zk/)              Display
 
 Key design choices:
 - **Local-first** — the knowledge layer lives on disk, not in a remote app. MCP is used only as a narrow escape hatch for today's unsynced capture and for pushing finished wiki entries to Reflect.
+- **Reflect as append-only archival** — Reflect's MCP has `create_note` and `append_to_daily_note` but no update or delete. That's a drawback for editing, but a feature for recovery: any wiki entry pushed via `/sync` and any insight written back to a daily note leaves a tamper-evident trail in Reflect's cloud. If an AI-driven operation corrupts or deletes something locally under `zk/`, the Reflect copy of whatever was synced at the time is still there to review. Local is authoritative; Reflect is the forensic mirror for the slice of state that crossed the sync boundary.
 - **Deterministic trust scoring** — TrustRank is a stdlib-only Python pass, not an LLM heuristic. The same input always produces the same score.
 - **Era-aware** — tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation)
 - **Bilingual** — handles English and Chinese notes, matches your language
