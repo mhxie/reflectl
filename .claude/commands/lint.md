@@ -13,6 +13,8 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Slug ↔ title alignment (filename stem matches slugified H1) | WARN | `scripts/lint.py` |
 | Manifest drift — dead entries (slug in manifest, no file on disk) | WARN | `scripts/lint.py` |
 | Unsynced wiki entries (file on disk, no manifest row) | INFO | `scripts/lint.py` |
+| Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
+| Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
 
 **Not checked:** cross-note `@anchor` date consistency. Per `protocols/wiki-schema.md`, `valid_at` is the day the marker was added to its home note, so the same source being anchored from two notes on different days is the normal case. `/lint` used to flag this and was wrong about it.
 

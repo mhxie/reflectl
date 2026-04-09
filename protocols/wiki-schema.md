@@ -33,7 +33,7 @@ One- to three-paragraph synthesis. Prose. No anchors here — the synthesis is a
 
 ### [C1] One-sentence claim text
 
-Optional body paragraph(s) elaborating the claim. Verbatim quotes from anchors should appear here, attributed.
+Optional body paragraph(s) elaborating the claim. Verbatim quotes from anchors should appear here, attributed. ^c1
 
 ```anchors
 @anchor: s2:gyongyi-vldb-2004 | valid_at: 2026-04-06
@@ -43,7 +43,7 @@ Optional body paragraph(s) elaborating the claim. Verbatim quotes from anchors s
 
 ### [C2] One-sentence claim text
 
-Body.
+Body. ^c2
 
 ```anchors
 @anchor: arxiv:2501.13956 | valid_at: 2026-04-06
@@ -59,6 +59,46 @@ Body.
 **Revision log ordering: latest entry first.** New rows go at the top of the list, not the bottom. The most recent change is almost always the one the reader needs; paging to the bottom of a long log to find it wastes attention. This is a human convention, not a parser-enforced rule — `scripts/trust.py` ignores the Revision Log entirely.
 
 The `# Title`, `## Summary`, `## Claims`, and `## Revision Log` headings are required. Topic tags (regular Obsidian-style hashtags) are allowed but not required and play no role in the trust engine.
+
+## Claim Block Identifiers (`^cn`)
+
+Wiki entries need two independent addressing mechanisms for each claim: one the trust parser reads, and one Obsidian's wikilink resolver reads. They live in the same claim block and do not interfere.
+
+**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] Lance tables are composed of immutable fragments...` has the literal text `[C1] Lance tables are composed of immutable fragments...`, not `C1`. A link written as `[[lance-mvcc-commit-protocol#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
+
+**The convention.** Each claim carries an Obsidian block identifier `^cn` (lowercase `c`, matching the claim number) placed inline at the end of the last body paragraph of the claim, immediately before the fenced `anchors` block. Per Obsidian's spec, block identifiers "can only consist of Latin letters, numbers, and dashes," so human-readable `^c1`, `^c2`, ... are valid and deliberately mirror the `[Cn]` heading numbering.
+
+```markdown
+### [C1] Lance tables are composed of immutable fragments; mutation is append-new-fragment plus manifest update
+
+A Lance table is a directory containing `data/`, `_versions/`, `_deletions/`, and `_transactions/`. Fragments are never rewritten in place. ^c1
+
+```anchors
+@anchor: url:https://lance.org/format/table/ | valid_at: 2026-04-08
+@pass: reviewer | status: verified | at: 2026-04-08
+```
+```
+
+The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced anchors block. Place it at the end of the last prose paragraph. Obsidian then resolves `[[lance-mvcc-commit-protocol#^c1]]` to that exact location and scrolls the reader to it.
+
+**Citing a claim from an alloy note.** Use the block-ID form: `[[wiki-entry#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `zk/` should point at a specific wiki claim when they want fine-grained navigation. The wiki-entry slug is the filename without the `.md` extension.
+
+**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `zk/wiki/<slug>.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
+
+**Citing a claim from another wiki entry's `@cite`.** Keep using the `#Cn` suffix defined in the `@cite` marker grammar below (e.g., `@cite: [[lance-mvcc-commit-protocol]] #C1`). That suffix is parsed by `scripts/trust.py`, which reads claim headings by position and is oblivious to block IDs. **Do not** write `@cite: ... #^c1` — the trust parser will not recognize it. `@cite` uses `#Cn`; Obsidian-visible backlinks from alloy notes use `#^cn`. The two notations address the same claim through different resolvers.
+
+**Parser impact: none.** `scripts/trust.py` walks claim headings structurally and ignores trailing `^cn` tokens in body text. The structural-integrity check treats a claim body containing `^c1` at the end exactly the same as one without. The schema contract is unchanged — adding `^cn` markers is purely additive for human navigation.
+
+**When `^cn` is recommended.** Any wiki entry that is (or is expected to be) cited at claim granularity from alloy notes should carry `^cn` markers on every claim. In practice: add them by default when authoring a new wiki entry. The cost is one line per claim; the benefit is that future backlinks work without retrofitting. **Absence is a `/lint` WARN, not an ERROR** — a wiki entry without `^cn` markers is still valid, still parses, still scores. The lint warning exists to nudge authors toward the convention so cross-note navigation keeps working, not to reject entries at ingestion time. Pre-existing entries without markers may be retrofitted opportunistically and are not schema violations.
+
+**`^cn` is the only block-ID family allowed in wiki entries.** No `^summary`, `^fig1`, `^table2`, `^revlog-2026-04-08`, or any other block-ID shape. The claim is the atomic unit of trust in the schema; everything else (Summary, Revision Log, anchors fence, any future structural element) is metadata around claims and does not get its own navigation handle. Rationale:
+
+- **Sub-claim granularity is a smell, not a feature.** If you find yourself wanting `^c1-part2` or `^c1a`, the claim is actually two claims and should be split. Splitting preserves the trust-graph granularity: each half gets its own anchors, its own Reviewer pass, its own score. A sub-block ID would let authors evade that pressure and produce "one big claim with five unrelated anchors" notes — precisely the pattern claim-level granularity exists to prevent.
+- **Summary doesn't need one.** The bare `[[wiki-entry]]` link already opens the note at the top. A `^summary` block ID would be redundant navigation to the same destination.
+- **Revision Log doesn't need one.** Revision log entries are historical metadata, not things anyone cites from elsewhere. If a specific revision matters enough to cite, promote its substance to a claim or a standalone note.
+- **Lint stays trivial.** A single regex (`\^c[0-9]+$`) validates every block ID in `zk/wiki/`. Mixing id families would force `/lint` to maintain a taxonomy of which shapes are allowed where.
+
+A block ID outside the `^cn` family in a wiki entry is a schema violation that `/lint` flags as ERROR (distinct from the WARN for merely missing `^cn` markers on claims).
 
 ## The Marker Vocabulary
 
