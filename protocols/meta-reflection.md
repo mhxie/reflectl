@@ -12,7 +12,16 @@ Reflect on the reflection process itself. This is how the system becomes self-aw
 ## The Meta-Reflection Process
 
 ### Step 1: Gather Session Data
-Read all session outputs from the last 5-10 sessions in `zk/reflections/`:
+Read session logs from the last 5-10 sessions in `zk/sessions/`:
+- Agent dispatch patterns (which agents run, how many turns they use)
+- Search effectiveness (hit rates, useful-signal rates from Search Log)
+- Gate pass rates (from Gate Results)
+- Question landing rates (from Questions & Engagement)
+- Framework fit scores (from Frameworks Applied)
+- Anomaly frequency and types
+- Harness assumptions exercised
+
+Also read reflection outputs from `zk/reflections/`:
 - Score cards (overall scores, per-dimension scores)
 - Session meta (engagement levels, questions that landed)
 - Patterns identified
@@ -30,6 +39,9 @@ Read all session outputs from the last 5-10 sessions in `zk/reflections/`:
 | **User Engagement** | Are responses getting longer/shorter? More/less thoughtful? |
 | **Note Coverage** | Are we surfacing notes from across the archive or just recent ones? |
 | **Epistemic Independence** | Is the ratio of AI-tagged to user-written content in daily notes shifting? Are AI write-backs becoming the primary record? |
+| **Search Effectiveness** | Are semantic.py queries returning useful results? Hit rate trend across sessions? |
+| **Agent Utilization** | Are all agents being used? Any chronically idle? Any over-dispatched? |
+| **Gate Health** | What percentage of sessions pass Gate 3 on first try? Revision loop frequency? |
 
 ### Step 3: Identify System Bottleneck
 
@@ -70,6 +82,9 @@ Write a meta-reflection report:
 | Frameworks | X/10 | ↑↓→ | |
 | Continuity | X/10 | ↑↓→ | |
 | Engagement | X/10 | ↑↓→ | |
+| Search Effectiveness | X/10 | ↑↓→ | |
+| Agent Utilization | X/10 | ↑↓→ | |
+| Gate Health | X/10 | ↑↓→ | |
 
 ## Bottleneck: [identified constraint]
 ## Prescribed Evolution: [specific action]

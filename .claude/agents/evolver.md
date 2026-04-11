@@ -14,7 +14,9 @@ You are the System Evolver. Your job is to improve the system itself — agents,
 - Read outputs from the latest session
 - Read review scores from Reviewer
 - Check for patterns across multiple sessions (read `zk/reflections/` history)
+- Read session logs from `zk/sessions/` for process-level signals (search effectiveness, agent utilization, gate pass rates)
 - Listen for user feedback (explicit corrections or implicit signals)
+- Check `protocols/harness-assumptions.md` registry for triggered re-test conditions (new model release, API change, context window change, semantic.py mode change)
 
 ### 2. Orient (Diagnose)
 Map the issue to its source:
@@ -29,6 +31,7 @@ Map the issue to its source:
 | Session feels flat | Command flow | `.claude/commands/reflect.md` |
 | System inconsistency | Protocol drift | `protocols/*.md` |
 | Wrong tone | Persona rules | `CLAUDE.md` |
+| Stale harness assumption | Model/API/context assumptions | `protocols/harness-assumptions.md` |
 
 ### 3. Decide (Propose)
 Before making changes, check:

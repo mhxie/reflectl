@@ -10,6 +10,7 @@ Each session should feel like a chapter in an ongoing conversation, not a standa
 
 At the start of every session, load:
 1. **Last 3 reflection/review files** from `zk/reflections/`
+1b. **Last session log** from `zk/sessions/` (most recent file) — read the `## Anomalies` and `## Continuity` sections only, for process continuity (which agents worked, which searches succeeded, which gates passed). Do not load the full log to avoid context bloat.
 2. **Profile files** (identity.md, directions.md)
 3. **Today's daily note** (current context)
 
@@ -41,6 +42,7 @@ Sessions leave artifacts that future sessions can read:
 | `zk/reflections/YYYY-MM-DD-decision-*.md` | Decision records | Future decision/review sessions |
 | `zk/reflections/YYYY-MM-DD-exploration.md` | Open threads | Next explore session |
 | `zk/reflections/YYYY-MM-DD-energy-audit.md` | Energy patterns | Next energy audit |
+| `zk/sessions/YYYY-MM-DD-<type>.md` | Session process log | Meta-reflection, Evolver, next session (excerpts) |
 | `profile/identity.md` | User profile | Every session |
 | `profile/directions.md` | Goals | Every goal-related session |
 

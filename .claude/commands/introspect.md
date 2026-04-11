@@ -153,6 +153,10 @@ Compare the three profile layers and flag tensions:
 
 Present divergences to the user — these are the interesting findings.
 
+### Session Log
+
+After writing profile files, emit a session log to `zk/sessions/YYYY-MM-DD-introspect.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
+
 ### Step 7: Report
 
 Tell the user what you found:

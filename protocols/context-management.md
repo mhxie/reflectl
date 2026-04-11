@@ -13,6 +13,7 @@ When loading context, prioritize in this order:
 1. **System instructions** (agent prompt, protocols) — always loaded
 2. **Profile files** (identity.md, directions.md) — always loaded for reflect/review
 3. **Today's context** (daily note, current reflection) — always loaded
+3b. **Last session log** (Anomalies + Continuity sections only) — loaded for process continuity
 4. **Recent context** (last 3-7 daily notes, recent reflections) — loaded if space permits
 5. **Searched context** (MCP search results, full note reads) — loaded on demand
 6. **Historical context** (older notes, old reflections) — loaded only if specifically relevant
@@ -27,6 +28,7 @@ When loading context, prioritize in this order:
 | Today's daily note | ~1-3K | Always |
 | Each additional note (full) | ~1-5K | On demand |
 | Each search result (excerpt) | ~200-500 | On demand |
+| Last session log (excerpts) | ~500-1K | Anomalies + Continuity sections only |
 | Previous reflections | ~2-5K each | Last 1-3 |
 
 ### When Context Gets Tight
@@ -62,7 +64,6 @@ When loading context, prioritize in this order:
 
 Agents don't share context windows. All inter-agent communication happens through:
 1. **Handoff blocks** (structured output passed via orchestrator)
-2. **Files** (zk/reflections/ directory, profile files)
-3. **MCP** (each agent can independently query Reflect)
+2. **Files** (`zk/reflections/`, `zk/sessions/`, profile files)
 
 **Rule:** Never assume another agent has context you didn't explicitly pass in the handoff.

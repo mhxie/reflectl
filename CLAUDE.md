@@ -111,6 +111,7 @@ The corresponding **data** lives under `zk/` (gitignored, the data layer), flat 
 - `zk/readwise/` — **L1→L3** Readwise mirror; inbox items are L1 raw, curated saves become L3 receipts when anchored.
 - `zk/daily-notes/` — **L2** daily free-writes synced from Reflect (the capture stream).
 - `zk/reflections/` — **L2** session reflection files written by `/reflect` and related commands.
+- `zk/sessions/` — **L2** session process logs written by the orchestrator at session end. Machine-readable complement to `zk/reflections/`. See `protocols/session-log.md`.
 - `zk/preprints/` — **L2** arxiv and other non-peer-reviewed papers awaiting L3 promotion, plus reading artifacts and paper review notes.
 - `zk/agent-findings/` — **L2** promoted scout briefs and other agent synthesis outputs that informed wiki entries (renamed from `research-briefs`).
 - `zk/drafts/` — **L2** working drafts of long notes before they land in their final location.
@@ -167,6 +168,8 @@ The `/reflect` command presents choices: daily reflection, goal review, weekly r
 ## Agent Teams
 
 This project uses Claude Code's experimental agent teams for parallel execution. Teams are enabled via `.claude/settings.json`. Agent definitions live in `.claude/agents/`.
+
+**Model assignments are harness assumptions.** The model column below reflects current best-fit assignments. These are not permanent; see `protocols/harness-assumptions.md` for the rationale behind each assignment and the trigger conditions for re-evaluation.
 
 ### Team Roster
 
@@ -262,6 +265,8 @@ The `protocols/` directory defines system behavior:
 | `epistemic-hygiene.md` | Validation-depth taxonomy (alloy → wiki entry under `zk/wiki/` → `#solo-flight`); failure modes the design is bounded by; the three habits |
 | `wiki-schema.md` | L4 wiki entry format for files under `zk/wiki/`: `## Claims`, `[Cn]` markers, `@anchor`/`@cite`/`@pass` structured markers, bi-temporal anchors, claim-level floor trust, structural-integrity rules |
 | `local-first-architecture.md` | Five-tier model (L1–L5), project layout, sync direction, migration strategy |
+| `session-log.md` | Session event log format, storage, query patterns |
+| `harness-assumptions.md` | Model-era assumption registry, audit checklist for Evolver |
 
 ## Frameworks
 

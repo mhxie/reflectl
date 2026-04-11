@@ -26,12 +26,16 @@ This is the entry point for all agents. When you need to know how to behave, sta
 ### After a session
 14. Read `meta-reflection.md` — assess system health
 15. Read `error-handling.md` — when things went wrong
+16. Read `session-log.md` — emit the session process log
+
+### During system evolution
+17. Read `harness-assumptions.md` — check for stale model-era assumptions
 
 ## By Agent
 
 | Agent | Must-read protocols |
 |-------|-------------------|
-| **Orchestrator** | orchestrator.md, quality-gates.md, escalation.md, session-continuity.md |
+| **Orchestrator** | orchestrator.md, quality-gates.md, escalation.md, session-continuity.md, session-log.md |
 | **Researcher** | agent-handoff.md, error-handling.md, context-management.md |
 | **Synthesizer** | agent-handoff.md, quality-gates.md, pattern-library.md, session-scoring.md |
 | **Reviewer** | quality-gates.md, agent-handoff.md, cognitive-bias-detection.md |
@@ -39,7 +43,7 @@ This is the entry point for all agents. When you need to know how to behave, sta
 | **Thinker** | pattern-library.md, context-management.md |
 | **Curator** | error-handling.md, agent-handoff.md |
 | **Librarian** | context-management.md, feedback-loops.md |
-| **Evolver** | meta-reflection.md, feedback-loops.md, session-scoring.md |
+| **Evolver** | meta-reflection.md, feedback-loops.md, session-scoring.md, harness-assumptions.md |
 
 ## Protocol Dependency Graph
 
@@ -62,4 +66,10 @@ pattern-library.md (recognizes patterns)
   └── integration.md (connects patterns to action)
 
 context-management.md (standalone — token budgets)
+
+session-log.md (session process recording)
+  └── meta-reflection.md (reads session logs for system health)
+
+harness-assumptions.md (model-era assumption registry)
+  └── evolver.md (checks during Observe phase)
 ```

@@ -88,6 +88,10 @@ After discussing, write a review file:
 [List of all notes cited during this review]
 ```
 
+## Session Log
+
+After writing the review file, emit a session log to `zk/sessions/YYYY-MM-DD-review.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
+
 ## Write-Back to Reflect
 
 After writing the review file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.

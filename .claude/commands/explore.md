@@ -78,6 +78,10 @@ Let the user pick which spark interests them. Then:
 - Surprise factor: yes / no
 ```
 
+## Session Log
+
+After writing the exploration file, emit a session log to `zk/sessions/YYYY-MM-DD-exploration.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
+
 ## Write-Back
 
 Optional: only if a genuine insight emerged. Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and framing. **Write-backs are always in English.** Use a descriptive heading and the `#exploration` topic tag. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`); the descriptive heading is the duplicate-detection signal.

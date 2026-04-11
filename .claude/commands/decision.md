@@ -126,6 +126,10 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 - Surprise factor: yes / no
 ```
 
+## Session Log
+
+After writing the decision file, emit a session log to `zk/sessions/YYYY-MM-DD-decision.md` following `protocols/session-log.md`. Local file write only; no MCP call; no user approval needed. If the write fails, warn and continue.
+
 ## Write-Back
 
 Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.

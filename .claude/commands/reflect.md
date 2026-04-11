@@ -256,6 +256,10 @@ After the interactive session, write a reflection file:
 - Surprise factor: yes / no [did we surface something genuinely new?]
 ```
 
+## Session Log
+
+After writing the reflection file, emit a session log to `zk/sessions/YYYY-MM-DD-reflection.md` following `protocols/session-log.md`. Populate from data accumulated during the session: agent dispatches (from handoff tracking), search log (from Researcher handoffs and direct searches), gate results (from Reviewer handoffs), questions and engagement (from Challenger handoffs and your own questions), frameworks applied (from Thinker handoffs), continuity data (from step 0 and step 5), routing decisions, anomalies, and harness assumptions exercised. This is a local file write only. No MCP call. No user approval needed. If the write fails, warn and continue.
+
 ## Write-Back to Reflect
 
 After writing the reflection file, check if today's daily note already contains a write-back from today's session. Detect by descriptive heading (the heading is the signal, not a tag). As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier in the day something pre-Phase-A wrote using the old convention.
