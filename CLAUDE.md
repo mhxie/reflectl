@@ -12,9 +12,9 @@ These rules apply to every turn, every agent. Violations are bugs.
 - Ask before writing to Reflect. Always get user approval before `create_note`, because the API has no update or delete operations.
 - Cite sources. Reference notes by [[Title]]. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
-- Never hardcode private names (org names, internal project names, private repo URLs, employer names, multi-word filename stems from `$ZK/`) in committed code, scripts, configs, protocols, or wiki entries. Use gitignored config files or environment variables for org-specific values. Violations leak private information and are irreversible once pushed. `scripts/privacy_check.py` (also wired into `/lint` Phase 0b) enforces the filename-stem half of this rule.
-- No H1 headings inside markdown files. Use the filename as the title (Obsidian renders it). Start file content with metadata or the first `##` section. Filenames should be space-separated and title-cased (e.g., `Note Title With Spaces.md`).
-- This file is inherited by all subagents. Keep it minimal. Details belong in agent definitions, command files, or protocols loaded on demand, because every line here costs N tokens times N agents per session.
+- Never hardcode private names (org names, internal projects, repo URLs, employers, multi-word filename stems from `$ZK/`) in committed files. Use gitignored config or env vars, because leaks are irreversible once pushed. Filename-stem half is enforced by `scripts/privacy_check.py` (wired into `/lint` Phase 0b).
+- No H1 headings inside markdown files. Obsidian renders the filename as the title, so an internal H1 duplicates it. Start content with metadata or the first `##`. Filenames are space-separated title-case (e.g., `Note Title With Spaces.md`).
+- Criteria-first dispatch. Before multi-step agent dispatches, state the success criterion the user can verify (e.g., "Success = X, verified by Y"). If the request admits multiple reasonable interpretations, surface 2-3 readings and your default before acting, because silent interpretation costs turns when we guess wrong. See `protocols/orchestrator.md` → "Criteria-First Dispatch".
 
 ## Identity
 
@@ -47,7 +47,7 @@ Sync: one-way Reflect to local for daily notes via `/sync`. Sharing a wiki entry
 
 Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$ZK/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
 
-MCP read escape hatches: `get_daily_note(date)` is callable by the orchestrator (for `/sync` and `/reflect`'s today-fetch fallback) and by the Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation). `get_note(id)` is orchestrator-only, for curator snapshot setup and for verifying a manual wiki-entry share (post-`create_note` empty-body check). No `search_notes`, no `list_tags` anywhere in the system.
+MCP read escape hatches are narrowly scoped (orchestrator + Curator only; no `search_notes`, no `list_tags`). See `protocols/orchestrator.md` → "MCP Read Escape Hatches".
 
 ## Writing Rules
 
@@ -55,7 +55,7 @@ Session reflections go to `$ZK/reflections/YYYY-MM-DD-*.md` (local files). Inclu
 
 Late-sleep rule: before 03:00 local, "today" = previous calendar day. Read both effective and calendar date notes when they differ.
 
-Reflect MCP writes: only `create_note` (params: `subject`, `contentMarkdown`) and `append_to_daily_note`. No update/delete API exists. Verify after creating (call `get_note` on returned ID; empty body = wrong param name). For full MCP write limitations and safety checklist, see the Curator agent definition. Delegate all note operations to the Curator.
+Reflect MCP is append-only: `create_note` and `append_to_daily_note`, no update or delete. Delegate all note operations to the Curator, because wrong params silently produce empty notes and mistakes are unrecoverable. Full rules in `.claude/agents/curator.md` → "MCP Limitations".
 
 ## Profile
 
@@ -120,4 +120,3 @@ Detailed specifications loaded on demand by agents that need them:
 - `sources/readwise.md`, `sources/scholar.md`, `sources/local-papers.md` — external corpus queries
 - `scripts/` — trust.py, lint.py, semantic.py, session_log.py
 - `personal/examples.md` — real write-back title examples (gitignored)
-- For system-evolution review: `bash scripts/review.sh` (see `.claude/commands/system-review.md`)

@@ -18,6 +18,31 @@ Before launching agents, the orchestrator performs these checks at session start
 2. **Focus Lock:** Check the declared focus (e.g., "Mastery through Career"). Researcher prioritizes notes in the focus domain. Challenger leans questions toward the focus direction. Changing focus requires a full `/review` session — don't allow mid-session switches.
 3. **Profile freshness:** Check `Last built:` timestamp in profile files. If older than 7 days, warn the user: "Your profile is stale. Consider running `/introspect` to refresh."
 
+## Criteria-First Dispatch
+
+Before any multi-step agent dispatch, state a success criterion the user can verify. Silent interpretation costs turns: when the orchestrator guesses which reading of an ambiguous request to run with, correction loops eat 1-3 turns.
+
+- State a success criterion for every multi-step dispatch. Vague goals ("make it work", "refactor X") force the user to clarify mid-flight.
+- Surface interpretations when the request admits multiple reasonable readings. Present 2-3 readings, name your default, and ask before acting. A wrong silent pick is more expensive than one clarifying question.
+- Use a verification-loop plan for multi-step work so the user can check progress at each step:
+
+```
+Success = [stateable outcome]
+Verified by = [what the user can check to confirm]
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+```
+
+Concrete transform, "Compact these notes" becomes: "Success = N notes in `zk/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `zk/cache/` → verify: snapshots exist on disk. 3. Curator produces compact → verify: Gate 4 passes (size < 15KB, verbatim preservation)."
+
+## MCP Read Escape Hatches
+
+The default read path is local (`Read`, `Grep`, `scripts/semantic.py`). Reflect MCP reads are narrowly scoped escape hatches, because MCP round-trips are slower and non-deterministic than local file access:
+
+- `get_daily_note(date)`: orchestrator (for `/sync` and `/reflect`'s today-fetch fallback when the local mirror lags) and Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation).
+- `get_note(id)`: orchestrator-only, for Curator snapshot setup (compact/merge fallback when a note is genuinely missing from the local mirror) and for verifying a manual wiki-entry share (post-`create_note` empty-body check).
+- No `search_notes`, no `list_tags` anywhere in the system. Discovery happens locally.
+
 ## Session Flow
 
 ### Phase 1: Gather (parallel where possible)

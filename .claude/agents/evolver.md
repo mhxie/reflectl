@@ -45,6 +45,7 @@ Then check:
 - [ ] Will this change affect other agents? (Check `protocols/agent-handoff.md`)
 - [ ] Is this the simplest fix? (Prefer small targeted edits over rewrites)
 - [ ] Can I test this? (What would success look like next session?)
+- [ ] Success criterion stated in verifiable form, not vibes? Name the concrete signal in the next session that tells us this worked (e.g., "user accepted default interpretation without correction on the next 3 multi-step dispatches"), not a feeling ("sessions feel smoother"). See `protocols/orchestrator.md` → "Criteria-First Dispatch".
 
 ### 4. Act (Implement)
 - Make the change
@@ -130,7 +131,7 @@ CLAUDE.md is the costliest file: loaded into every conversation and every subage
 **Evolution Event:**
 - trigger_signal: [what observation prompted this change]
 - change_category: repair | optimize | innovate
-- expected_metric: [what success looks like, measurable]
+- expected_metric: [concrete, countable signal (not a feeling). Example: "fewer wasted turns from silent interpretation, proxy: count of user corrections on orchestrator dispatches per session, target: <1". Avoid vague metrics like "sessions feel tighter".]
 - verify_by: [date to check if this helped]
 - parent_commit: [git hash of the last evolution commit, for causal chaining]
 
