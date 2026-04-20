@@ -140,7 +140,7 @@ The command finds notes about distributed locking in daily notes, agent findings
 
 ## Revision Log
 
-- 2026-04-11: Initial draft promoted from [[2026-04-08]] daily note and [[Lance MVCC deep dive]] agent finding. Candidate @cite edges: [[Sample Wiki Entry]] (shared S3 locking context), [[Related Wiki Entry B]] (shared two-phase commit concepts).
+- 2026-04-11: Initial draft promoted from [[2026-04-08]] daily note and [[Deep Dive Brief]] agent finding. Candidate @cite edges: [[Related Wiki Entry A]] (shared concept overlap), [[Related Wiki Entry B]] (shared mechanism overlap).
 ```
 
 ## Error Handling

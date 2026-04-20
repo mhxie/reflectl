@@ -109,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         "--slug",
         action="append",
         default=[],
-        help="Wiki entry slug (filename stem under zk/wiki/, e.g. 'Sample Wiki Entry').",
+        help="Wiki entry slug (filename stem under zk/wiki/, title-cased with spaces, matching the H1 of the original entry).",
     )
     p_plan.add_argument(
         "--note-id",

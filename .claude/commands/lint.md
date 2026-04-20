@@ -43,6 +43,32 @@ Bash: grep -c '\*\*' CLAUDE.md
 ```
 If count > 0, emit INFO: "CLAUDE.md contains [N] bold markers. Bold has no semantic weight for the model and wastes tokens. Consider removing."
 
+### Phase 0b: Privacy leak scan
+
+```
+Bash: uv run scripts/privacy_check.py --json
+```
+
+Parse the JSON. Shape:
+```json
+{
+  "zk_dir": "zk",
+  "titles_scanned": N,
+  "allowlist_size": N,
+  "hit_count": N,
+  "hits": [
+    { "file": "...", "line": N, "private_title": "..." }
+  ]
+}
+```
+
+Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem from the private `$ZK` vault that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
+
+- Replace the private title with a generic placeholder (e.g., `Sample Wiki Entry`, `Topic A`).
+- Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.
+
+The check is a blocking quality gate for any system-evolution commit that touches tracked files. Do not proceed to structural lint if Phase 0b returns hits.
+
 ### Phase 1a: Structural lint
 
 ```

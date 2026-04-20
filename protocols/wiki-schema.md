@@ -65,17 +65,18 @@ The `# Title`, `## Summary`, `## Claims`, and `## Revision Log` headings are req
 
 Wiki entries need two independent addressing mechanisms for each claim: one the trust parser reads, and one Obsidian's wikilink resolver reads. They live in the same claim block and do not interfere.
 
-**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] Lance tables are composed of immutable fragments...` has the literal text `[C1] Lance tables are composed of immutable fragments...`, not `C1`. A link written as `[[Sample Wiki Entry#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
+**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] The concept has structural property X...` has the literal text `[C1] The concept has structural property X...`, not `C1`. A link written as `[[Sample Wiki Entry#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
 
 **The convention.** Each claim carries an Obsidian block identifier `^cn` (lowercase `c`, matching the claim number) placed inline at the end of the last body paragraph of the claim, immediately before the fenced `anchors` block. Per Obsidian's spec, block identifiers "can only consist of Latin letters, numbers, and dashes," so human-readable `^c1`, `^c2`, ... are valid and deliberately mirror the `[Cn]` heading numbering.
 
 ```markdown
-### [C1] Lance tables are composed of immutable fragments; mutation is append-new-fragment plus manifest update
+### [C1] The concept has structural property X under condition Y
 
-A Lance table is a directory containing `data/`, `_versions/`, `_deletions/`, and `_transactions/`. Fragments are never rewritten in place. ^c1
+The mechanism description goes here: what the concept is, how it behaves,
+why the property holds. Prose runs for one or more paragraphs. ^c1
 
 ```anchors
-@anchor: url:https://lance.org/format/table/ | valid_at: 2026-04-08
+@anchor: url:https://example.com/source/ | valid_at: 2026-04-08
 @pass: reviewer | status: verified | at: 2026-04-08
 ```
 ```

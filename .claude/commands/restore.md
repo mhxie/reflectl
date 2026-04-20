@@ -32,7 +32,7 @@ If the user hesitates, stop. Suggest `git status` / `git log -- zk/wiki/` / `/li
 
 For each wiki entry to recover, ask the user for:
 
-- The target slug (e.g., `Sample Wiki Entry`).
+- The target slug (filename stem under `zk/wiki/`, title-cased with spaces; matches the H1 of the original entry).
 - The Reflect note ID (the user can copy this from Reflect's UI).
 
 ### Phase 3: Plan

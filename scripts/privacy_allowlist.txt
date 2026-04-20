@@ -1,0 +1,10 @@
+# Deliberate opt-outs for scripts/privacy_check.py.
+#
+# Each line is a multi-word filename stem under a private `zk/` directory
+# that you are OK with appearing as literal text in tracked files. Use
+# sparingly: the allowlist is for titles you have consciously decided to
+# expose (e.g., because the topic name is fully public and appears as an
+# illustrative example). Comments start with `#`; blank lines are ignored.
+#
+# Example:
+#   Sample Wiki Entry Title

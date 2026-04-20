@@ -11,6 +11,7 @@ Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only
 | `trust.py` | TrustRank for `zk/wiki/` — Personalized PageRank with external anchor seeds, claim-level granularity, bi-temporal filtering, floor trust | B | stdlib |
 | `lint.py` | Structural + corpus-level lint over `zk/wiki/` — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
 | `merge_daily.py` | Line-union merge of a local daily note with a Reflect-sourced copy; used by `/sync` | ops | stdlib |
+| `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0b | ops | stdlib |
 | `restore.py` | Emergency `/restore` planner (user supplies slug + Reflect note ID pairs) | ops | stdlib |
 | `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
 | `session_log.py` | Session event log skeleton generator — handles late-sleep date rule and collision auto-increment | E | stdlib |
