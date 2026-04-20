@@ -47,7 +47,7 @@ Sync: one-way Reflect to local for daily notes via `/sync`. Sharing a wiki entry
 
 Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$ZK/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
 
-Orchestrator-only MCP escape hatches: `get_daily_note(date)` for `/sync` (Reflect-to-local daily-note pull) and for `/reflect`'s today-fetch when the local file is missing or empty. `get_note(id)` for curator snapshot setup and for verifying a manual wiki-entry share (post-`create_note` empty-body check). No `search_notes`, no `list_tags` anywhere in the system.
+MCP read escape hatches: `get_daily_note(date)` is callable by the orchestrator (for `/sync` and `/reflect`'s today-fetch fallback) and by the Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation). `get_note(id)` is orchestrator-only, for curator snapshot setup and for verifying a manual wiki-entry share (post-`create_note` empty-body check). No `search_notes`, no `list_tags` anywhere in the system.
 
 ## Writing Rules
 

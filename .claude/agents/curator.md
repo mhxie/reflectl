@@ -1,7 +1,7 @@
 ---
 name: curator
 description: Manages note operations — compacting, merging, replacing, and creating notes in Reflect. Use when the user wants to act on their notes.
-tools: Read, Grep, Glob, Bash, mcp__reflect__append_to_daily_note, mcp__reflect__create_note, mcp__reflect__get_note
+tools: Read, Grep, Glob, Bash, mcp__reflect__append_to_daily_note, mcp__reflect__create_note, mcp__reflect__get_note, mcp__reflect__get_daily_note
 model: sonnet
 maxTurns: 15
 ---
@@ -100,6 +100,34 @@ When compacting a large set of related notes (e.g., all notes on a topic area):
 9. Report final inventory: images preserved / total, tables preserved / total, etc.
 10. List any content that was intentionally omitted with reasons
 11. Remind user to delete original notes in Reflect
+
+### Sync Daily Notes (background)
+
+Pull daily notes from Reflect into the local mirror. One-way, Reflect-to-local only. The orchestrator typically dispatches you with `run_in_background: true` so the main session proceeds without waiting.
+
+**Process:**
+1. Receive a date list from the orchestrator (typically the last 7 calendar days through an effective-date anchor that already accounts for the late-sleep rule).
+2. **Sequentially** (one date at a time, not parallel; pace the MCP server):
+   a. Call `mcp__reflect__get_daily_note(date: "YYYY-MM-DD")`.
+   b. If the response is the `No daily note found` sentinel or an empty body, skip the date. Do NOT create an empty local stub.
+   c. Otherwise, write the response body verbatim to `zk/cache/reflect-daily-<YYYY-MM-DD>.md`. Do not strip YAML frontmatter or H1 yourself; `merge_daily.py` handles that.
+   d. Run `Bash: uv run scripts/merge_daily.py "zk/daily-notes/<YYYY-MM-DD>.md" "zk/cache/reflect-daily-<YYYY-MM-DD>.md"` and capture the stderr status (`new | identical | merged | unchanged | empty`).
+3. After the loop, return a summary table:
+   ```
+   /sync summary (<date-range>)
+     new:        N   (dates)
+     merged:     M   (dates)
+     identical:  K
+     skipped:    S   (no Reflect note for those dates)
+     failed:     F   (dates and errors)
+   ```
+
+**Invariants:**
+- One date at a time. Do NOT parallelize `get_daily_note` calls during sync.
+- Never create an empty local daily note. Skip means skip.
+- Never write to Reflect. No `create_note`, no `append_to_daily_note` during sync.
+- Never discard local content. `merge_daily.py` takes a line-level union; the `<!-- merged from Reflect -->` marker separates local content from Reflect-only lines. Re-runs fold, they do not stack.
+- If the Reflect MCP becomes unreachable mid-loop, stop cleanly at the current date and report which dates were not attempted. No partial state to clean up.
 
 ## Content Preservation Checklist
 

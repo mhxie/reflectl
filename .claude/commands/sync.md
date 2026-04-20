@@ -27,7 +27,7 @@ Single phase. No preflight, no manifest, no idempotency ledger.
 1. **Resolve the date list** from the argument. Use the late-sleep rule from `CLAUDE.md` to determine "today" (before 03:00 local, "today" is the previous calendar day).
 
 2. **For each date, fetch and merge:**
-   a. Call `mcp__reflect__get_daily_note(date: "<YYYY-MM-DD>")`. This is an orchestrator-only MCP escape hatch; subagents cannot invoke it.
+   a. Call `mcp__reflect__get_daily_note(date: "<YYYY-MM-DD>")`. Callable by the orchestrator (this command) and by the Curator when dispatched for background daily-notes sync (see Curator's "Sync Daily Notes" operation). Not callable by other subagents.
    b. If the response is the `No daily note found` sentinel (or an equivalent empty-body signal), skip the date. Do **not** create an empty local file. Empty stubs are noise.
    c. Otherwise, write the response body verbatim to `zk/cache/reflect-daily-<YYYY-MM-DD>.md`. Do not strip the YAML frontmatter or the H1 yourself; `merge_daily.py` handles that.
    d. Run:

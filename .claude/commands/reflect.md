@@ -6,9 +6,39 @@ Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for
 
 If the user types `/reflect` with additional context, detect intent and route:
 - **Reading intent** (mentions an article, URL, [[Note Title]], or "read/discuss"): skip the menu and go to Read & Discuss using their input as the article to read.
-- **Meeting intent** (mentions "meeting", "standup", "1:1", or "meeting notes"): skip the menu and dispatch the **Meeting** agent directly.
+- **Meeting intent** (mentions "meeting", "standup", "1:1", or "meeting notes"): fire the background sync (see **Background Daily-Notes Sync** below), then skip the menu and dispatch the **Meeting** agent directly.
 - **Talk/transcript intent** (mentions "seminar", "talk", "transcript", "podcast", "video" or pastes a large block of transcript text): skip the menu and go to Read & Discuss, with Reader preprocessing the transcript format.
-- **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): skip the menu and go straight to Daily Reflection using their input as context.
+- **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): fire the background sync (see **Background Daily-Notes Sync** below), then skip the menu and go straight to Daily Reflection using their input as context.
+
+## Background Daily-Notes Sync
+
+Any time the session route is known to be non-Read and non-Learn, fire an async daily-notes sync so the local mirror is fresh by the time context-loading reads it. Fire-and-continue; never block on this.
+
+**Trigger points:**
+- Quick Start routed to **Meeting** or **Reflection** intent.
+- Step 1 mode selection returned **Reflect**, **Plan**, or **Act**.
+- Skip for Reading intent, Talk/transcript intent, Read mode, and Learn mode.
+
+**Dispatch:**
+
+Before constructing the prompt string, resolve two values inline:
+- `<effective-date>`: apply the late-sleep rule (if local time is before 03:00, effective-date = yesterday's calendar date; otherwise today).
+- `<YYYY-MM-DD-list>`: the 7 consecutive calendar dates ending on `<effective-date>`, comma-separated (e.g., `2026-04-14, 2026-04-15, 2026-04-16, 2026-04-17, 2026-04-18, 2026-04-19, 2026-04-20`).
+
+Then dispatch:
+
+```
+Agent(
+  description: "Background daily-notes sync",
+  subagent_type: "curator",
+  run_in_background: true,
+  prompt: "Run the Curator 'Sync Daily Notes' operation. Effective date is <effective-date>. Sync these 7 dates, one at a time (sequential, not parallel): <YYYY-MM-DD-list>. Write each response to `zk/cache/reflect-daily-<date>.md` and run `merge_daily.py` per date. Return the summary table."
+)
+```
+
+- Do NOT await the agent's return. The main session continues to Step 2 and Context Loading in parallel.
+- The existing targeted `get_daily_note` fallback inside Daily Reflection's Context Loading step (for today's note specifically, when the local file is missing or empty at read time) remains in place as a belt-and-suspenders guard. This fallback also mitigates a small race: `merge_daily.py` uses a non-atomic `write_text`, so a daily-note file read during the merge could be momentarily incomplete. If that happens, the fallback re-fetches that date.
+- Duplicate triggers within one session are harmless; `merge_daily.py` folds and does not stack.
 
 ## Step 1: Choose Mode
 
