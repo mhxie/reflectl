@@ -110,7 +110,7 @@ After successful creation, suggest next steps:
 
 1. **Add @cite edges:** If the lint report shows `shared-anchor-no-cite` findings involving the new entry, suggest specific @cite markers to add.
 2. **Request reviewer pass:** "Run a review session to add `@pass: reviewer | status: verified` markers, which unlocks the 0.1 trust floor."
-3. **Sync to Reflect:** "Run `/sync` to push the new entry to Reflect for mobile reading."
+3. **Share to Reflect (optional):** "Ask to share this entry to Reflect if you want a mobile-reading copy. That flow is manual per-note; no automated push exists."
 4. **Update the wiki index:** Already done in Phase 3 step 5.
 5. **Snapshot anchors to Readwise:** Save all `url:` anchors to Readwise with `anchor-evidence` + category tag, backfill `readwise:` document IDs.
 

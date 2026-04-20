@@ -59,7 +59,7 @@ L4 is the only tier where:
 - Bi-temporal anchors are tracked.
 - Structural-integrity lint applies.
 
-Wiki entries are **also displayed in Reflect**, but as a one-way push (see "Sync Direction" below). The Reflect copy is read-only-ish: it exists for mobile reading and visual continuity with daily notes, but the local file is the source of truth. Edits made in the Reflect UI are lost on the next sync.
+Wiki entries can optionally be shared to Reflect for mobile reading via a manual per-note operation (see "Sharing a wiki entry" below). The Reflect copy is a one-off display snapshot; the local file is always the source of truth. Edits made in the Reflect UI are not pulled back.
 
 ### L5 — Foundation (reserved)
 
@@ -113,18 +113,15 @@ reflectl/                           (the repo root — the only root)
 
 The trust engine and the wiki schema only see the `zk/wiki/` subtree. Everything else is alloy or receipts and the trust engine does not touch it. The whole `zk/` directory is opened as an Obsidian vault for visual browsing of the entire knowledge base; the editing flow for wiki entries goes through reflectl agents (Curator), not Obsidian directly. Obsidian is the read-only viewer for wiki entries, not their writer.
 
-## Sync Direction (Local → Reflect Display)
+## Sync Direction
 
-The sync is **one-way, local-to-Reflect, idempotent, and display-only.** Direction matters; pretending it could be bidirectional is what creates the corruption risk.
+Sync is asymmetric by design, split into two unrelated flows:
 
-The flow:
+1. **`/sync` (Reflect → local, for daily notes only).** The `/sync` command pulls a date range of daily notes from Reflect via `mcp__reflect__get_daily_note(date)`, stages each response under `zk/cache/reflect-daily-<date>.md`, and runs `scripts/merge_daily.py` to line-union merge the Reflect content with any local edits in `zk/daily-notes/<date>.md`. No content is discarded; local lines come first and Reflect-only lines follow under a `<!-- merged from Reflect -->` marker. `/sync` never writes to Reflect.
 
-1. Curator (Phase C) writes a wiki entry to `zk/wiki/<title>.md` first.
-2. After the local write succeeds and structural integrity passes, Curator pushes a flattened display version to Reflect via `create_note()`. The Reflect copy carries a header line that says: `<!-- mirror of zk/wiki/<title>.md — do not edit in Reflect -->`.
-3. The Reflect note's title matches the local file's title. Subsequent edits on the local file produce a new Reflect note with the same title; per the Reflect MCP behavior, `create_note()` with an existing title returns the existing note unchanged. **This is a known limitation:** display updates after the first push are lost until the user manually deletes the Reflect copy and re-syncs. v1 accepts this. v2 may add a delete-and-recreate workflow.
-4. Edits made directly in the Reflect UI are not pulled back. They are lost on the next intentional sync (if any). The user is told this in the `/sync` command output.
+2. **Sharing a wiki entry (local → Reflect, manual, per-note).** The user asks "share `[[Foo]]` to Reflect"; the orchestrator reads `zk/wiki/<Foo>.md`, dispatches the Curator with the body, and Curator calls `mcp__reflect__create_note(subject, contentMarkdown)`. The orchestrator verifies with `mcp__reflect__get_note(id)` that the body is non-empty. No manifest, no hash, no diff. If the user later edits the local wiki entry and wants the Reflect copy refreshed, they request the share again (after deleting the Reflect copy by hand, since `create_note` with an existing title returns the existing note unchanged).
 
-The `/sync` command (Phase C) is the user-facing entry point: it pushes a single note or all wiki entries. It is opt-in. Wiki entries do not auto-sync — the user decides when an entry is ready for the mobile display copy.
+There is no automated batch push from `zk/wiki/` to Reflect. Wiki entries are local-first; Reflect is a mobile-reading surface the user opts into one entry at a time.
 
 ## Migration Strategy: Opportunistic, Not Big-Bang
 
@@ -138,14 +135,14 @@ The expected steady-state ratio is roughly: hundreds of L1/L2 notes for every L4
 
 ## What Changes for Each Agent
 
-Phase A wired the read path. Phase B shipped `scripts/trust.py`. **Phase C (this milestone) drops Reflect read MCP from every subagent, moves Curator to local-first wiki writes, and adds `/sync` for one-way display push.** Phase D is `/lint`.
+Phase A wired the read path. Phase B shipped `scripts/trust.py`. Phase C dropped Reflect read MCP from every subagent and moved Curator to local-first wiki writes. Phase D shipped `/lint`. The former wiki-push `/sync` was retired in favor of a manual per-note share; the `/sync` command now pulls daily notes from Reflect to local.
 
 | Agent | L1 capture | L4 wiki (`zk/wiki/`) | L3 receipts |
 |---|---|---|---|
 | **Researcher** | **Local-only, semantic-primary.** `Bash: uv run scripts/semantic.py query` for content queries, `Grep` + `Read` for structural queries. No Reflect MCP tools in frontmatter. If today's daily note is not yet on disk, flags `needs: get_daily_note(today)` and the orchestrator fetches. | Reads `zk/wiki/` with grep directly. | Reads `zk/readwise/`, `zk/papers/` directly. |
-| **Curator** | Continues to write to daily notes via `append_to_daily_note` (write-side MCP retained). | **Phase C: drafts wiki entries as markdown proposals with `target_path: zk/wiki/<slug>.md`.** The orchestrator writes the file after user approval (subagents cannot Write). Then `scripts/trust.py --note <path>` verifies structural integrity and reports initial scores. | Unchanged. |
+| **Curator** | Continues to write to daily notes via `append_to_daily_note` (write-side MCP retained). Handles manual wiki-entry shares: orchestrator hands it the local file content, Curator calls `create_note(subject, contentMarkdown)`. | Drafts wiki entries as markdown proposals with `target_path: zk/wiki/<slug>.md`. The orchestrator writes the file after user approval (subagents cannot Write). Then `scripts/trust.py --note <path>` verifies structural integrity and reports initial scores. | Unchanged. |
 | **Synthesizer** | Reads capture-layer briefs from Researcher; writes session reflections to `zk/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
-| **Reviewer** | Continues to gate capture-layer write-backs. | Phase C: gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
+| **Reviewer** | Continues to gate capture-layer write-backs. Gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
 | **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `zk/agent-findings/` (not the ephemeral `zk/cache/`). |
 
 ## Cross-References

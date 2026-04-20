@@ -8,11 +8,12 @@ These rules apply to every turn, every agent. Violations are bugs.
 - No em dashes in written output. Use colons, semicolons, parentheses, or restructure, because the user's reading style rejects them.
 - Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep, because semantic search finds conceptual matches that keyword search misses. Grep is for structural queries only (known tags, exact strings, file presence).
 - Local-first reads. Read from `$ZK/` via Read + Grep + semantic.py. No Reflect MCP reads except orchestrator-only escape hatches (see Reading Rules), because local reads are faster, deterministic, and return full content.
-- Daily notes are read-only. The system never writes to `$ZK/daily-notes/`, because they are the user's personal capture stream.
+- Daily notes are user-authored. The system only writes during orchestrator-authorized sync (`/sync`, `/reflect` today-fetch) and only merges without discarding local content, because the daily note is the user's capture stream.
 - Ask before writing to Reflect. Always get user approval before `create_note`, because the API has no update or delete operations.
 - Cite sources. Reference notes by [[Title]]. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
 - Never hardcode private names (org names, internal project names, private repo URLs, employer names) in committed code, scripts, configs, protocols, or wiki entries. Use gitignored config files or environment variables for org-specific values. Violations leak private information and are irreversible once pushed.
+- No H1 headings inside markdown files. Use the filename as the title (Obsidian renders it). Start file content with metadata or the first `##` section. Filenames should be space-separated and title-cased (e.g., `Note Title With Spaces.md`).
 - This file is inherited by all subagents. Keep it minimal. Details belong in agent definitions, command files, or protocols loaded on demand, because every line here costs N tokens times N agents per session.
 
 ## Identity
@@ -33,7 +34,7 @@ Five-tier model. Directory is the tier; location carries the certification level
 | L2 | `$ZK/daily-notes/`, `$ZK/reflections/`, `$ZK/research/`, `$ZK/preprints/`, `$ZK/agent-findings/`, `$ZK/drafts/`, `$ZK/gtd/`, `$ZK/health/` | Working: free-writes, reflections, research, drafts |
 | L1 | Reflect UI, Readwise inbox, `$ZK/cache/`, `$ZK/readwise/` | Raw capture |
 
-Sync: one-way local to Reflect display via `/sync`. See `protocols/local-first-architecture.md` for the full tier model and project layout.
+Sync: one-way Reflect to local for daily notes via `/sync`. Sharing a wiki entry to Reflect is manual; the user requests it per-note and the Curator calls `create_note`. See `protocols/local-first-architecture.md` for the full tier model and project layout.
 
 ## Reading Rules
 
@@ -46,7 +47,7 @@ Sync: one-way local to Reflect display via `/sync`. See `protocols/local-first-a
 
 Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$ZK/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
 
-Orchestrator-only MCP escape hatches: `get_daily_note(today)` when today's file is missing/empty. `get_note(id)` for curator snapshot setup, `/sync` verification, and `/restore` recovery only. No `search_notes`, no `list_tags` anywhere in the system.
+Orchestrator-only MCP escape hatches: `get_daily_note(date)` for `/sync` (Reflect-to-local daily-note pull) and for `/reflect`'s today-fetch when the local file is missing or empty. `get_note(id)` for curator snapshot setup and for verifying a manual wiki-entry share (post-`create_note` empty-body check). No `search_notes`, no `list_tags` anywhere in the system.
 
 ## Writing Rules
 
@@ -80,7 +81,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/reflect` | Primary entry point with session type menu |
 | `/curate` | Goal-aware triage of Readwise inbox |
 | `/introspect` | Build self-model from notes |
-| `/sync` | Push `$ZK/wiki/` to Reflect for mobile display |
+| `/sync` | Pull daily notes from Reflect to local and merge with any local edits |
 | `/lint` | Structural + corpus-level checks on `$ZK/wiki/` |
 | `/promote` | Create L4 wiki entry from L2 sources |
 | `/prm` | Audit relationship health and support system robustness |

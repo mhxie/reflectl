@@ -1,19 +1,22 @@
-# /restore — Emergency recovery of wiki entries from Reflect
+## Purpose
 
-**Very rarely triggered.** This command exists for a single failure mode: an AI-driven operation (or a finger slip) deleted or corrupted one or more wiki entries under `zk/wiki/` locally, and the only surviving snapshot is the copy that was pushed to Reflect via a prior `/sync`. For ordinary file churn, use `git`.
+Emergency recovery of a wiki entry from Reflect when the local file under `zk/wiki/` is lost and git history cannot help. Very rarely triggered. The only remaining Reflect copies of wiki entries are the ones the user manually shared via Curator + `create_note`; there is no automated manifest to point at them.
 
-**Do not run this command reflexively.** It is not a sync verifier, not a daily check, not a health probe. The normal path when something looks wrong is `/lint` + `git status` + `git log`. `/restore` is the last resort after all of those.
+Do not run this command reflexively. It is not a sync verifier, not a daily check, not a health probe. The normal path when something looks wrong is `/lint` + `git status` + `git log`. `/restore` is the last resort after all of those.
 
-## The lossy-pipeline caveat — read before proceeding
+## Prerequisites
 
-`/sync` is lossy for wiki entries by design:
+- The user knows the Reflect note ID for the missing wiki entry. Reflect exposes note IDs via the URL or via its export/share UI; the user must supply them, because the system no longer tracks a local-to-Reflect mapping.
+- The missing local path is under `zk/wiki/<slug>.md` (slug = filename stem, title-cased with spaces).
 
-1. `scripts/sync_export.py` strips the fenced ` ```anchors ``` ` blocks (the machine-readable `@anchor`/`@cite`/`@pass` markers that `scripts/trust.py` scores on) and replaces them with a human-readable `**Sources:**` bullet list.
-2. Reflect mutates the body on ingestion: auto-prepends an H1, wraps bare URLs in `<...>`, normalizes `---` to `***`.
+## The lossy-pipeline caveat
 
-**What comes back from Reflect is degraded prose, not a drop-in replacement** for the original `zk/wiki/<slug>.md`. Byte-copying the Reflect body into place will fail `trust.py`'s structural-integrity check (missing `anchors` fences, items 5/6/7 of `protocols/wiki-schema.md`), and `/sync` will be blocked until the file is re-authored.
+What comes back from Reflect is **degraded prose**, not a drop-in replacement. Two sources of mutation:
 
-The user is expected to read the recovered prose, reconstruct the `anchors` fences from the `**Sources:**` bullets, and hand-author the final wiki entry. This is a reconstruction workflow, not an automated restore.
+1. Older wiki entries pushed by the retired wiki-push `/sync` had their fenced `anchors` blocks stripped and replaced with a human-readable `**Sources:**` bullet list. Manual-share entries (via Curator + `create_note`) preserve the raw file content.
+2. Reflect auto-mutates bodies on ingestion: prepends an H1, wraps bare URLs in `<...>`, normalizes `---` to `***`.
+
+Byte-copying the Reflect body into `zk/wiki/<slug>.md` will usually fail `scripts/trust.py`'s structural-integrity check. The user is expected to read the recovered prose, reconstruct the `anchors` fences (or confirm they survived intact), and hand-author the final wiki entry.
 
 ## Process
 
@@ -21,71 +24,73 @@ The user is expected to read the recovered prose, reconstruct the `anchors` fenc
 
 Before touching anything, ask the user:
 
-> "/restore is the last-resort recovery path for wiki entries that exist in the sync manifest but are missing locally. It pulls the (lossy) Reflect copy into `zk/cache/restore-<slug>.md` as a reference for hand-reconstruction. It will NOT write to `zk/wiki/`. Do you want to proceed? [y/N]"
+> "/restore is the last-resort recovery path for a wiki entry that is missing locally. It pulls the (possibly lossy) Reflect copy into `zk/cache/restore-<slug>.md` as a reference for hand-reconstruction. It will NOT write to `zk/wiki/`. Do you want to proceed? [y/N]"
 
 If the user hesitates, stop. Suggest `git status` / `git log -- zk/wiki/` / `/lint` first.
 
-### Phase 2: Diagnose
+### Phase 2: Collect slug + note ID pairs from the user
+
+For each wiki entry to recover, ask the user for:
+
+- The target slug (e.g., `Sample Wiki Entry`).
+- The Reflect note ID (the user can copy this from Reflect's UI).
+
+### Phase 3: Plan
 
 ```
-Bash: scripts/restore.py diagnose
+Bash: scripts/restore.py plan --slug "<slug>" --note-id "<id>" [--slug "<s2>" --note-id "<id2>" ...]
 ```
 
-Parse the JSON `plan`. If `missing_count == 0`, stop and report:
+Parse the JSON. Each entry has `present_locally`. Only entries where `present_locally: false` warrant recovery. If the local file is present, stop and tell the user — use git history to inspect, not `/restore`.
 
-> "Nothing to restore: every slug in the manifest has a local file. If a wiki entry looks wrong but is still on disk, use `git` to inspect history, not `/restore`."
+### Phase 4: Fetch from Reflect
 
-If `missing_count > 0`, present the list of missing slugs with their `reflect_note_id` and `synced_at` dates. Ask the user to confirm which slugs to recover — recovery is per-slug, not batch.
+For each slug to recover:
 
-### Phase 3: Fetch from Reflect
-
-For each confirmed slug:
-
-1. Call `get_note(id: <reflect_note_id>)` via the Reflect MCP. This is an **orchestrator-only** MCP escape hatch (already documented in CLAUDE.md as one of the three narrow allowed reads).
-2. If the note is missing or the body is empty, report the failure and skip. The user deleted the Reflect copy by hand, or `/sync` never actually pushed this slug.
+1. Call `mcp__reflect__get_note(id: "<reflect_note_id>")`. This is an orchestrator-only MCP escape hatch (documented in `CLAUDE.md`).
+2. If the note is missing or the body is empty, report the failure and skip. Either the Reflect note was never created, or the user deleted it.
 3. Write the body to `zk/cache/restore-<slug>.md` with a prepended header:
 
    ```
    # RECOVERY SNAPSHOT — not a valid wiki entry
 
    Source: Reflect note <reflect_note_id>
-   Synced at (per manifest): <synced_at>
    Fetched at: <today>
 
-   This file is degraded prose fetched from Reflect's append-only archive.
-   It is NOT a drop-in replacement for zk/wiki/<slug>.md because:
-     - The `anchors` fences were stripped on /sync (sync_export.py:strip_body)
-     - Reflect auto-mutated URLs, H1, and horizontal rules on ingestion
+   This file is possibly-degraded prose fetched from Reflect. It is NOT
+   guaranteed to be a drop-in replacement for zk/wiki/<slug>.md because
+   Reflect auto-mutates bodies on ingestion (adds an H1, wraps bare URLs
+   in <...>, normalizes --- to ***), and older entries pushed by the
+   retired wiki-push /sync had their `anchors` fences stripped.
 
    To recover the wiki entry:
-     1. Read the prose below
+     1. Read the prose below.
      2. Hand-author zk/wiki/<slug>.md with proper H1, `## Claims` sections,
-        `### [Cn]` headings, and `anchors` fences reconstructed from the
-        `**Sources:**` bullets below
-     3. Run `scripts/trust.py --note zk/wiki/<slug>.md` and `scripts/lint.py`
-        to confirm the rebuilt entry parses cleanly
+        `### [Cn]` headings, and `anchors` fences (reconstruct from any
+        `**Sources:**` bullet list if the fences were stripped).
+     3. Run `scripts/trust.py --note "zk/wiki/<slug>.md"` and
+        `scripts/lint.py` to confirm the rebuilt entry parses cleanly.
 
    ---
 
    <original reflect body>
    ```
 
-4. Never write directly to `zk/wiki/<slug>.md`. The cache file is a reference, not a restore.
+4. Never write directly to `zk/wiki/<slug>.md`. The cache file is a reference for hand-reconstruction, not an automatic restore.
 
-### Phase 4: Report
+### Phase 5: Report
 
 Tell the user which cache files were written and what to do next:
 
-> "Wrote `zk/cache/restore-<slug>.md` for N slugs. These are prose references, not valid wiki entries. Open each, reconstruct the `anchors` fences by hand from the `**Sources:**` bullets, and save the result to `zk/wiki/<slug>.md`. Then run `scripts/trust.py` and `scripts/lint.py` to verify before `/sync`."
+> "Wrote `zk/cache/restore-<slug>.md` for N slugs. These are prose references, not valid wiki entries. Open each, reconstruct or verify the `anchors` fences, and save the result to `zk/wiki/<slug>.md`. Then run `scripts/trust.py` and `scripts/lint.py` to verify."
 
 ## Rules
 
-1. **One-way.** `/restore` reads from Reflect, writes only to `zk/cache/`. It never writes to `zk/wiki/` and never updates the manifest.
-2. **Per-slug confirmation.** Never batch-restore without explicit per-slug approval. Recovery is a reconstruction task, not an import.
-3. **Prose is not schema.** What comes back is lossy. The user must re-author the `anchors` fences by hand. This is the whole point of the workflow and is documented in the cache file header.
-4. **Covers only `zk/wiki/`.** `/sync` only pushes wiki entries, so `/restore` only recovers wiki entries. L2 content (`zk/reflections/`, `zk/research/`, `zk/drafts/`, `zk/gtd/`, `zk/agent-findings/`, `zk/preprints/`) never crossed the sync boundary and has no Reflect copy to restore from. For that, use `git`.
-5. **Daily notes are out of scope.** Daily notes flow Reflect → local continuously as the primary capture path. If a local `zk/daily-notes/<date>.md` is lost, rerun the Obsidian/Reflect sync that populates the mirror, not `/restore`.
+1. **One-way.** `/restore` reads from Reflect, writes only to `zk/cache/`. It never writes to `zk/wiki/`.
+2. **Per-slug confirmation.** Never batch-recover without explicit per-slug approval. Recovery is a reconstruction task, not an import.
+3. **Prose is not schema.** What comes back may be lossy. The user must verify or re-author the `anchors` fences by hand.
+4. **Covers only `zk/wiki/`.** L2 content (`zk/reflections/`, `zk/research/`, `zk/drafts/`, `zk/gtd/`, `zk/agent-findings/`, `zk/preprints/`) and `zk/daily-notes/` never had a distinct Reflect copy of the wiki kind. For daily notes, rerun `/sync`. For L2 content, use git.
 
 ## When this has fired historically
 
-Never, as of 2026-04-07. The command exists as a standing insurance policy against a failure mode the append-only architecture was designed to recover from. If you find yourself running this for the first time, file a note in `zk/reflections/` about what caused the loss so the system can evolve.
+Never, as of the date this doc was written. The command exists as insurance against a failure mode the append-only Reflect archive happens to protect against. If you find yourself running this for the first time, file a note in `zk/reflections/` about what caused the loss so the system can evolve.

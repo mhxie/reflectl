@@ -55,7 +55,7 @@ Wiki entries are L4 knowledge: schema-structured, anchored, scored by `scripts/t
    - `## Revision Log` at the bottom
 3. **You cannot Write files yourself.** You do not have the `Write` tool in your frontmatter. Present the full content in your proposal with a `target_path: zk/wiki/<Title>.md` field (title-case with spaces, matching the H1). The **orchestrator** writes the file after user approval.
 4. **After the orchestrator writes the file,** it will run `Bash: scripts/trust.py --note "zk/wiki/<Title>.md"` and report the structural integrity result plus the initial claim scores back to you or the user. If parse errors appear, fix the draft and loop.
-5. Do not `create_note()` a Reflect copy of a wiki entry during drafting. Reflect-side mirroring is the `/sync` command's job, not yours.
+5. Do not `create_note()` a Reflect copy of a wiki entry during drafting. Sharing a wiki entry to Reflect is a separate manual flow the user requests per-note; when it fires, the orchestrator dispatches you with the local file content and you call `create_note(subject, contentMarkdown)`.
 
 **When NOT to create a wiki entry:** if the content is exploratory, unsourced, or a session insight, create an alloy Reflect note via `create_note()` instead. Wiki entries are for claims that have external receipts and will be reused.
 

@@ -18,9 +18,9 @@ Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with `$ZK
 
 **Learn** — Get reading recommendations or introspect to rebuild your self-model.
 
-**Wiki** — Crystallize validated thinking into `$ZK/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health; `/sync` pushes wiki entries to Reflect for mobile reading.
+**Wiki** — Crystallize validated thinking into `$ZK/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health. Wiki entries stay local by default; the user can manually share a specific entry to Reflect for mobile reading (orchestrator dispatches Curator for `create_note`).
 
-Session reflections are written to `$ZK/reflections/` as the durable session output. Daily notes are the user's capture stream and are read-only from the system's perspective. Compiled knowledge lives locally in `$ZK/wiki/` and syncs out one-way.
+Session reflections are written to `$ZK/reflections/` as the durable session output. Daily notes are the user's capture stream; the system only writes during an orchestrator-authorized `/sync` that merges Reflect's copy into the local file without discarding any local content. Compiled knowledge lives locally in `$ZK/wiki/`; the user can manually share a specific entry to Reflect for mobile reading.
 
 ## Getting Started
 
@@ -30,7 +30,7 @@ Session reflections are written to `$ZK/reflections/` as the durable session out
 - [uv](https://docs.astral.sh/uv/) — Python package manager
 
 **Optional — enhances the system but not required:**
-- [Reflect.app](https://reflect.app/) with the [MCP server](https://reflect.app/mcp) — enables mobile capture via daily notes and `/sync` push to Reflect for mobile reading. The system is local-first; everything works without Reflect, you just lose the mobile capture and display surface.
+- [Reflect.app](https://reflect.app/) with the [MCP server](https://reflect.app/mcp) — enables mobile capture via daily notes and a `/sync` pull-and-merge of those daily notes into `$ZK/daily-notes/`. The system is local-first; everything works without Reflect, you just lose mobile capture and the manual wiki-share surface.
 - [Codex CLI](https://github.com/openai/codex) — `npm i -g @openai/codex` — external code reviewer for system evolution audits
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli` — second external reviewer perspective
 
@@ -98,9 +98,9 @@ You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-
 | Command | What it does |
 |---|---|
 | `/promote` | Create an L4 wiki entry from L2 source notes: Researcher finds claims + anchors, Curator drafts schema-compliant entry. |
-| `/sync` | Push `$ZK/wiki/` entries to Reflect for mobile display. One-way, manifest-tracked, never pulls back. |
-| `/lint` | Corpus-level structural check over `$ZK/wiki/` and the sync manifest (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also checks harness health: CLAUDE.md size and formatting. |
-| `/restore` | Emergency wiki recovery from Reflect's append-only archive. Very rarely triggered. |
+| `/sync` | Pull daily notes from Reflect into `$ZK/daily-notes/` and line-union merge with any local edits. One-way, Reflect → local only. Sharing a wiki entry to Reflect is a separate manual per-note operation. |
+| `/lint` | Corpus-level structural check over `$ZK/wiki/` (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also checks harness health: CLAUDE.md size and formatting. |
+| `/restore` | Emergency wiki recovery from Reflect's append-only archive when the user supplies a note ID. Very rarely triggered. |
 
 ## The Team
 
@@ -117,11 +117,11 @@ Eleven agents work together during sessions. You don't need to manage them — t
 
 ```
 Capture sources                 Local data layer ($ZK/)              Display
-(Reflect, Readwise,  ─sync──>   L4  $ZK/wiki/         ──/sync──>  Reflect
- voice, mobile)                 (trust-scored)                   (mobile read)
+(Reflect, Readwise,             L4  $ZK/wiki/       ─manual share→  Reflect
+ voice, mobile)                 (trust-scored)                    (mobile read)
                                 L3  $ZK/papers/
-                                L2  $ZK/daily-notes/, reflections/,
-                                    research/, preprints/,
+(Reflect daily notes ─/sync──>  L2  $ZK/daily-notes/, reflections/,
+ merged line-union)                 research/, preprints/,
                                     agent-findings/, drafts/, ...
                                 L1  $ZK/cache/, $ZK/readwise/
 
@@ -144,13 +144,13 @@ Capture sources                 Local data layer ($ZK/)              Display
 
 **TrustRank over the wiki.** Wiki entries under `$ZK/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds; trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
 
-**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$ZK/reflections/`. Daily notes are the user's capture stream and are never written to by the system. All personal data under `$ZK/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
+**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$ZK/reflections/`. Daily notes are the user's capture stream; the only system writes are the `/sync` merge (line-union with Reflect's copy, never discards local content) and the orchestrator's today-fetch when the local file is missing or empty. All personal data under `$ZK/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
 
 **Harness engineering.** CLAUDE.md is kept minimal (~7KB) because it is inherited by every subagent; each line costs N tokens times N agents per session. Critical rules live at the top (primacy effect), detailed specifications are loaded on demand from protocols and agent definitions. The Evolver agent has a "subtract before adding" principle and a CLAUDE.md budget gate. `/lint` Phase 0 checks harness health (file size, formatting) alongside the wiki structural pass.
 
 Key design choices:
-- **Local-first**: the knowledge layer lives on disk, not in a remote app. MCP is used only as a narrow escape hatch for today's unsynced capture and for pushing finished wiki entries to Reflect.
-- **Reflect as append-only archival**: Reflect's MCP has `create_note` and `append_to_daily_note` but no update or delete. That's a drawback for editing, but a feature for recovery: any wiki entry pushed via `/sync` leaves a tamper-evident trail in Reflect's cloud. The rarely-triggered `/restore` command operationalizes this property.
+- **Local-first**: the knowledge layer lives on disk, not in a remote app. MCP is used only as narrow escape hatches: `/sync` pulls daily notes from Reflect into local, and the user can manually share a specific wiki entry to Reflect via the Curator.
+- **Reflect as append-only archival**: Reflect's MCP has `create_note` and `append_to_daily_note` but no update or delete. That's a drawback for editing, but a feature for recovery: any wiki entry the user has manually shared leaves a tamper-evident copy in Reflect's cloud. The rarely-triggered `/restore` command operationalizes this property.
 - **Deterministic trust scoring**: TrustRank is a stdlib-only Python pass, not an LLM heuristic. The same input always produces the same score.
 - **Era-aware**: tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation)
 - **Bilingual**: handles English and Chinese notes, matches your language
