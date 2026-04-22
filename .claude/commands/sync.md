@@ -29,12 +29,14 @@ Single phase. No preflight, no manifest, no idempotency ledger.
 2. **For each date, fetch and merge:**
    a. Call `mcp__reflect__get_daily_note(date: "<YYYY-MM-DD>")`. Callable by the orchestrator (this command) and by the Curator when dispatched for background daily-notes sync (see Curator's "Sync Daily Notes" operation). Not callable by other subagents.
    b. If the response is the `No daily note found` sentinel (or an equivalent empty-body signal), skip the date. Do **not** create an empty local file. Empty stubs are noise.
-   c. Otherwise, write the response body verbatim to `zk/cache/reflect-daily-<YYYY-MM-DD>.md`. Do not strip the YAML frontmatter or the H1 yourself; `merge_daily.py` handles that.
-   d. Run:
+   c. Otherwise, pipe the response body through `merge_daily.py --cache` to write the cache file and merge in one step:
       ```
-      Bash: uv run scripts/merge_daily.py "zk/daily-notes/<YYYY-MM-DD>.md" "zk/cache/reflect-daily-<YYYY-MM-DD>.md"
+      Bash: printf '%s' "$REFLECT_CONTENT" | uv run scripts/merge_daily.py "zk/daily-notes/<YYYY-MM-DD>.md" --cache "zk/cache/reflect-daily-<YYYY-MM-DD>.md"
       ```
+      This writes the raw Reflect content to the cache file (creating or overwriting it) and merges it with the local note in a single call. No separate cache-write step is needed.
       Collect the stderr status line. The script's statuses are `new`, `identical`, `merged`, `unchanged`, `empty`. A merged file has a `<!-- merged from Reflect -->` marker separating local content from Reflect-only lines.
+
+   The old two-step flow (Write cache file, then `merge_daily.py local cache`) still works but is not preferred. The `--cache` stdin mode avoids the Write tool's read-before-overwrite requirement that caused extra round-trips when cache files from a previous sync already existed.
 
 3. **Print a summary table** after the loop:
    ```
@@ -50,7 +52,7 @@ Single phase. No preflight, no manifest, no idempotency ledger.
 
 - **Reflect MCP unreachable:** stop cleanly at whichever date you were on. Report the dates that were not attempted. No partial state to clean up; `merge_daily.py` is a local-only operation and nothing was written to Reflect.
 - **Merge script error on a specific date:** log the date and the stderr from `merge_daily.py`, continue with the next date. One bad date should not block the rest.
-- **Cache write fails:** report the filesystem error and stop; local writes should never fail silently.
+- **Cache write fails:** `merge_daily.py --cache` will raise a Python exception if it cannot write the cache file. Report the error and continue with the next date; one filesystem failure should not block the rest of the sync.
 
 ## Invariants
 

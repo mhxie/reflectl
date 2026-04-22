@@ -7,8 +7,15 @@ files (Obsidian-style) skip the frontmatter and sometimes differ in H1. This
 script strips Reflect's frontmatter, then takes a line-level union so no
 captured content is lost from either side.
 
+Two input modes for Reflect content:
+  1. File mode (original): pass a cache file path as the second positional arg.
+  2. Stdin mode: pass --cache PATH. Reads Reflect content from stdin, writes it
+     to PATH as the cache file, then merges. This collapses the cache-write and
+     merge steps into one call, avoiding the orchestrator round-trip penalty
+     from the Write tool's read-before-overwrite requirement.
+
 Output modes: write to `--output` (default: overwrite local) or `--dry-run`.
-Prints a status marker on stderr: new / unchanged / identical / merged.
+Prints a status marker on stderr: new / unchanged / identical / merged / empty.
 
 Only touches the files the caller passes in. Enumerating dates and calling
 MCP is the orchestrator's job.
@@ -96,19 +103,34 @@ def merge(local: str, reflect: str) -> tuple[str, str]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("local", help="Path to local daily note (may not exist)")
-    ap.add_argument("reflect", help="Path to Reflect-sourced content file")
+    ap.add_argument("reflect", nargs="?", default=None,
+                     help="Path to Reflect-sourced content file (omit when using --cache with stdin)")
     ap.add_argument("-o", "--output", help="Output path (default: overwrite local)")
+    ap.add_argument("--cache", metavar="PATH",
+                     help="Read Reflect content from stdin, write it to PATH as a cache file, "
+                          "then merge. Replaces the separate cache-write + merge two-step.")
     ap.add_argument("--dry-run", action="store_true", help="Print merged content to stdout; do not write")
     args = ap.parse_args()
 
     local_path = Path(args.local)
-    reflect_path = Path(args.reflect)
+
+    if args.cache:
+        # Stdin mode: read Reflect content from stdin, persist to cache file.
+        cache_path = Path(args.cache)
+        reflect_text = sys.stdin.read()
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(reflect_text, encoding="utf-8")
+    elif args.reflect:
+        reflect_path = Path(args.reflect)
+        if not reflect_path.exists():
+            print(f"error: reflect file not found: {reflect_path}", file=sys.stderr)
+            return 2
+        reflect_text = reflect_path.read_text(encoding="utf-8")
+    else:
+        print("error: provide either a reflect file path or --cache PATH with stdin", file=sys.stderr)
+        return 2
 
     local_text = local_path.read_text(encoding="utf-8") if local_path.exists() else ""
-    if not reflect_path.exists():
-        print(f"error: reflect file not found: {reflect_path}", file=sys.stderr)
-        return 2
-    reflect_text = reflect_path.read_text(encoding="utf-8")
 
     # Treat MCP's "No daily note found" sentinel as empty Reflect content.
     if reflect_text.strip().lower().startswith("no daily note found"):
