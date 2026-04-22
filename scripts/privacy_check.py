@@ -37,12 +37,21 @@ from pathlib import Path
 ZK = Path(os.environ.get("ZK", "zk"))
 ALLOWLIST = Path(__file__).resolve().parent / "privacy_allowlist.txt"
 
-PRIVATE_DIRS = [
-    "wiki", "wiki-cn", "papers", "research", "agent-findings",
-    "preprints", "reflections", "drafts", "gtd", "handoffs",
-    "health", "finance", "luma", "travel", "planning",
-    "sessions", "profile", "daily-notes", "personal", "people",
-]
+_INFRA_DIRS = {"cache", "assets", ".obsidian"}
+
+
+def _discover_private_dirs(root: Path) -> list[str]:
+    """Auto-discover content subdirectories under $ZK/.
+
+    Skips infrastructure dirs (cache mirrors, binary assets, editor
+    config) that don't contain user-authored private identifiers.
+    """
+    if not root.is_dir():
+        return []
+    return [
+        p.name for p in sorted(root.iterdir())
+        if p.is_dir() and p.name not in _INFRA_DIRS and not p.name.startswith(".")
+    ]
 
 SKIP_STEMS = {"index", "README", "Note Title"}
 
@@ -63,9 +72,9 @@ def load_allowlist() -> set[str]:
     return out
 
 
-def collect_titles(root: Path, allowlist: set[str]) -> list[str]:
+def collect_titles(root: Path, allowlist: set[str], dirs: list[str]) -> list[str]:
     titles: set[str] = set()
-    for sub in PRIVATE_DIRS:
+    for sub in dirs:
         p = root / sub
         if not p.exists():
             continue
@@ -82,10 +91,9 @@ def collect_titles(root: Path, allowlist: set[str]) -> list[str]:
 def _is_private_wikilink(target: str) -> bool:
     """Heuristic: is this wiki-link target likely a private identifier?
 
-    Accepts multi-word targets (person names, note titles) and any
-    target containing non-ASCII characters (Chinese names/terms).
-    Rejects single ASCII words (system vocabulary like 'Reflect',
-    'Protocol', 'identity'), file paths, dates, and noise.
+    Accepts multi-word targets (person names, note titles) and non-ASCII
+    targets with enough specificity (3+ chars). Rejects single ASCII
+    words, file paths, dates, noise, and short generic CJK terms.
     """
     if len(target) < 2:
         return False
@@ -95,11 +103,12 @@ def _is_private_wikilink(target: str) -> bool:
         return False
     has_non_ascii = any(ord(c) > 127 for c in target)
     if has_non_ascii:
-        return True
+        non_ascii_count = sum(1 for c in target if ord(c) > 127)
+        return non_ascii_count >= 3
     return len(target.split()) >= 2
 
 
-def collect_wikilinks(root: Path, allowlist: set[str]) -> set[str]:
+def collect_wikilinks(root: Path, allowlist: set[str], dirs: list[str]) -> set[str]:
     """Extract [[wiki-link]] targets from vault files as private terms.
 
     Catches people names, note references, and concepts that may not
@@ -108,7 +117,7 @@ def collect_wikilinks(root: Path, allowlist: set[str]) -> set[str]:
     avoid false positives on single-word system terms.
     """
     targets: set[str] = set()
-    for sub in PRIVATE_DIRS:
+    for sub in dirs:
         p = root / sub
         if not p.is_dir():
             continue
@@ -203,10 +212,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     allowlist = load_allowlist()
-    titles = collect_titles(ZK, allowlist)
+    dirs = _discover_private_dirs(ZK)
+    titles = collect_titles(ZK, allowlist, dirs)
     files = tracked_files()
     repo_stems = committed_stems(files)
-    wikilinks = collect_wikilinks(ZK, allowlist)
+    wikilinks = collect_wikilinks(ZK, allowlist, dirs)
     wikilinks -= {t for t in wikilinks if t.lower() in repo_stems}
     all_terms = sorted(set(titles) | wikilinks)
     hits = scan(all_terms, files) if all_terms else []
