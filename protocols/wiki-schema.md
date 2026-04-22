@@ -142,7 +142,7 @@ Every `@anchor` marker claims "this external source existed and supported this c
 | `s2:` / `arxiv:` / `doi:` | `zk/papers/` (local PDF + review notes) | — | `sources/cite.py` |
 | `isbn:` | (no local evidence expected) | — | Manual verification |
 
-**The `readwise:` field.** Optional on all anchor types, recommended on `url:` and `gist:` anchors. Contains the Readwise Reader document ID (e.g., `01kk0zpka139am1v9jftnae9dw`). When present, the full source content can be retrieved via `readwise reader-get-document-details --document-id <id>` regardless of whether the URL is still live. Readwise snapshots web content at save time and stores it permanently.
+**The `readwise:` field.** Optional on all anchor types, recommended on `url:` and `gist:` anchors. Contains the Readwise document ID (e.g., `01kk0zpka139am1v9jftnae9dw`). When present, the full source content can be retrieved via `readwise reader-get-document-details --document-id <id>` regardless of whether the URL is still live. Readwise snapshots web content at save time and stores it permanently.
 
 **Authoring workflow.** When creating a wiki entry with `url:` anchors:
 1. Check if the URL is already in Readwise: `readwise reader-search-documents --query "<url>"`

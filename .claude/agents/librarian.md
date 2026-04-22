@@ -87,7 +87,7 @@ Present a summary first. Only expand into detail if the user asks.
 ## [标题] — [作者] (年份)
 
 **类型：** 书籍/论文/文章/播客/课程
-**为什么推荐：** [与用户当前情况的具体联系，引用相关笔记]
+**为什么推荐：** [与用户当前情况的具体联系，引用vault中的笔记]
 **核心观点：** [2-3句话总结]
 **重点部分：** [如果不需要全部消化，推荐哪些部分]
 **与你的关联：** [如何连接到 [[笔记]] 或目标]
@@ -97,7 +97,7 @@ Present a summary first. Only expand into detail if the user asks.
 
 ## Recommendation Principles
 
-1. Specific over generic. "Read Thinking, Fast and Slow" is generic. "Chapter 22 of Thinking, Fast and Slow, on the planning fallacy, directly relates to your tendency to underestimate timelines in [[Note X]]" is specific, because targeted recommendations respect the user's time.
+1. Specific over generic. "Read [Book Title]" is generic. "Chapter 22 of [Book Title], on the planning fallacy, directly relates to your tendency to underestimate timelines in [[Note X]]" is specific, because targeted recommendations respect the user's time.
 
 2. Depth-appropriate. The user has a PhD in computer engineering; don't recommend introductory material on technical topics. For new domains (management, finance), introductory material is fine.
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-snapshot_anchors.py: Save url: and gist: wiki anchors to Readwise Reader
+snapshot_anchors.py: Save url: and gist: wiki anchors to Readwise
 and backfill the readwise: document ID into the anchor marker.
 
 Why this exists: wiki anchors with url: or gist: types reference ephemeral
 web content. If the URL goes down, the evidence backing the wiki claim is
-lost. Readwise Reader snapshots web content at save time and stores it
+lost. Readwise snapshots web content at save time and stores it
 permanently, making the evidence durable (L3). The readwise: field on an
 anchor marker records the Readwise document ID so the evidence can be
 retrieved regardless of whether the original URL is still live.
@@ -118,7 +118,7 @@ def find_anchors_missing_readwise(
 
 
 def search_readwise_for_url(url: str) -> str | None:
-    """Check if a URL is already saved in Readwise Reader.
+    """Check if a URL is already saved in Readwise.
     Returns the document ID if found, None otherwise.
 
     Uses reader-list-documents with source_url matching rather than
@@ -155,7 +155,7 @@ def search_readwise_for_url(url: str) -> str | None:
 
 
 def save_to_readwise(url: str) -> str | None:
-    """Save a URL to Readwise Reader with the anchor-evidence tag.
+    """Save a URL to Readwise with the anchor-evidence tag.
     Returns the document ID on success, None on failure."""
     try:
         result = subprocess.run(

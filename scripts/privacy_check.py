@@ -217,7 +217,13 @@ def main(argv: list[str] | None = None) -> int:
     files = tracked_files()
     repo_stems = committed_stems(files)
     wikilinks = collect_wikilinks(ZK, allowlist, dirs)
-    wikilinks -= {t for t in wikilinks if t.lower() in repo_stems}
+
+    def _matches_committed(term: str) -> bool:
+        tl = term.lower()
+        return any(tl.startswith(s) or s.startswith(tl) for s in repo_stems)
+
+    titles = [t for t in titles if not _matches_committed(t)]
+    wikilinks -= {t for t in wikilinks if _matches_committed(t)}
     all_terms = sorted(set(titles) | wikilinks)
     hits = scan(all_terms, files) if all_terms else []
 

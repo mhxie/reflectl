@@ -87,7 +87,7 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 **Gate keeper:** Reviewer (Citation Accuracy + Honesty dimensions) + Challenger (blind spots)
 **Max retries:** 1 (present to user with caveats if still failing)
 
-## Gate 6: Deep Dive & Meeting Notes
+## Gate 6: Deep Dive & Meeting Transcripts
 
 **When:** Before write-back (Deep Dive) or before creating Reflect note (Meeting).
 

@@ -111,7 +111,7 @@ Note: Slugify the topic for the filename — lowercase, replace spaces with hyph
 ## Key Questions & Answers
 - [Question]: [User's response or open]
 
-## Related Notes
+## Linked Notes
 - [[Note Title]] — [relevance]
 
 ## Decision

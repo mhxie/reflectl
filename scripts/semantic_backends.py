@@ -746,7 +746,7 @@ class LanceStore:
 
 class ReadwiseSearcher:
     """
-    Searches the user's Readwise Reader library via CLI.
+    Searches the user's Readwise library via CLI.
 
     Not an Embedder or Store; this is a standalone search source that
     the Retriever merges with local results during federated queries.
@@ -760,7 +760,7 @@ class ReadwiseSearcher:
 
     @staticmethod
     def search(query: str, top_k: int = 10) -> List[SearchResult]:
-        """Search Readwise Reader and return normalized SearchResults."""
+        """Search Readwise and return normalized SearchResults."""
         import json
         import subprocess
 
