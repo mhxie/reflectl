@@ -14,7 +14,7 @@ Search for goal-related notes using multiple queries to cover both languages:
 
 1. `search_notes(query: "目标", limit: 20)` — Chinese goal notes
 2. `search_notes(query: "goal", limit: 20)` — English goal notes
-3. `search_notes(query: "小目标", limit: 20)` — Annual goal notes (e.g., "2026小目标")
+3. `search_notes(query: "小目标", limit: 20)` — Annual goal notes (e.g., "YYYY小目标")
 4. `search_notes(query: "objective", limit: 10)` — Additional goal notes
 
 Deduplicate results by note ID. Prioritize recent notes — use `editedAfter` filter to weight notes edited in the last 12 months. Also fetch older goal notes but flag them as potentially stale.

@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 """
-privacy_check.py: Detect private-vault filename leaks in the committed repo.
+privacy_check.py: Detect private-vault identifier leaks in committed files.
 
-Rationale: `zk/` is the user's private knowledge vault (gitignored). A
-multi-word filename stem like `Note Title With Spaces` is usually a
-unique topic label the user picked for a private note. If that exact
-string appears as literal text in a tracked file (CLAUDE.md, a
-protocol, a script, a command), the system has leaked the existence
-and title of the private note to the public git history.
+Two automated discovery sources, no manual denylist needed:
 
-CLAUDE.md's privacy rule prohibits leaking org/project/internal names.
-This script operationalizes the check against the vault itself: whatever
-multi-word filenames live under the private dirs below are treated as
-private identifiers.
+  1. Filename stems: multi-word `*.md` stems under PRIVATE_DIRS in `$ZK/`.
+  2. Wiki-link targets: `[[...]]` references extracted from vault content.
+     Catches person names, private note titles, and concepts that may not
+     have their own files. Filtered to multi-word ASCII targets and any
+     non-ASCII targets to avoid false positives on system vocabulary.
 
-What counts as private:
-  - `*.md` filename stems under the PRIVATE_DIRS list.
-  - 2+ words (single-word stems like `index` or `README` are skipped —
-    too many false positives).
-  - Explicit opt-out via `privacy_allowlist.txt` (newline-delimited
-    stems, relative paths or bare stems both accepted). Use this only
-    for stems the user is deliberately comfortable exposing.
+Auto-skip rules (all fully automated):
+  - Single ASCII words from wiki-links (too generic: Reflect, Protocol).
+  - Terms matching committed file stems (if `frameworks/foo-bar.md` is
+    tracked, "Foo Bar" is intentionally public).
+  - File paths (contain `/`), dates, noise patterns.
+  - Explicit opt-out via `privacy_allowlist.txt` for edge cases.
 
 CLI:
     uv run scripts/privacy_check.py            human report
@@ -34,6 +29,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -45,10 +41,14 @@ PRIVATE_DIRS = [
     "wiki", "wiki-cn", "papers", "research", "agent-findings",
     "preprints", "reflections", "drafts", "gtd", "handoffs",
     "health", "finance", "luma", "travel", "planning",
-    "sessions", "profile", "daily-notes", "personal",
+    "sessions", "profile", "daily-notes", "personal", "people",
 ]
 
-SKIP_STEMS = {"index", "README"}
+SKIP_STEMS = {"index", "README", "Note Title"}
+
+_WIKILINK_RE = re.compile(r'(?<!\!)\[\[([^\]]+)\]\]')
+_DATE_RE = re.compile(r'^\d{4}(-\d{2}(-\d{2})?)?$')
+_NOISE_RE = re.compile(r'^[.\s]+$')
 
 
 def load_allowlist() -> set[str]:
@@ -79,6 +79,53 @@ def collect_titles(root: Path, allowlist: set[str]) -> list[str]:
     return sorted(titles)
 
 
+def _is_private_wikilink(target: str) -> bool:
+    """Heuristic: is this wiki-link target likely a private identifier?
+
+    Accepts multi-word targets (person names, note titles) and any
+    target containing non-ASCII characters (Chinese names/terms).
+    Rejects single ASCII words (system vocabulary like 'Reflect',
+    'Protocol', 'identity'), file paths, dates, and noise.
+    """
+    if len(target) < 2:
+        return False
+    if '/' in target or target.endswith('.md'):
+        return False
+    if _DATE_RE.match(target) or _NOISE_RE.match(target):
+        return False
+    has_non_ascii = any(ord(c) > 127 for c in target)
+    if has_non_ascii:
+        return True
+    return len(target.split()) >= 2
+
+
+def collect_wikilinks(root: Path, allowlist: set[str]) -> set[str]:
+    """Extract [[wiki-link]] targets from vault files as private terms.
+
+    Catches people names, note references, and concepts that may not
+    have their own files but still appear as identifiers in the vault.
+    Filters to multi-word ASCII targets and any non-ASCII targets to
+    avoid false positives on single-word system terms.
+    """
+    targets: set[str] = set()
+    for sub in PRIVATE_DIRS:
+        p = root / sub
+        if not p.is_dir():
+            continue
+        for f in p.rglob("*.md"):
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            for m in _WIKILINK_RE.finditer(text):
+                target = m.group(1).split("|")[0].strip()
+                if target in SKIP_STEMS or target in allowlist:
+                    continue
+                if _is_private_wikilink(target):
+                    targets.add(target)
+    return targets
+
+
 def tracked_files() -> list[str]:
     res = subprocess.run(
         ["git", "ls-files"], capture_output=True, text=True
@@ -91,16 +138,36 @@ def tracked_files() -> list[str]:
     return [line for line in res.stdout.splitlines() if line.strip()]
 
 
-def scan(titles: list[str], files: list[str]) -> list[dict]:
+def committed_stems(files: list[str]) -> set[str]:
+    """Derive normalized stems from tracked .md files.
+
+    If `frameworks/immunity-to-change.md` is committed, then
+    "immunity to change" is intentionally public and should not
+    be flagged when it also appears as a vault wiki-link target.
+    """
+    stems: set[str] = set()
+    for f in files:
+        p = Path(f)
+        if p.suffix != ".md":
+            continue
+        raw = p.stem.replace("-", " ").replace("_", " ")
+        stems.add(raw.lower())
+    return stems
+
+
+def scan(terms: list[str], files: list[str]) -> list[dict]:
     hits: list[dict] = []
     for f in files:
-        path = Path(f)
         try:
-            content = path.read_text(encoding="utf-8", errors="ignore")
+            content = Path(f).read_text(encoding="utf-8", errors="ignore")
         except (OSError, UnicodeDecodeError):
             continue
-        lines = content.splitlines()
-        for t in titles:
+        lines: list[str] | None = None
+        for t in terms:
+            if t not in content:
+                continue
+            if lines is None:
+                lines = content.splitlines()
             for i, line in enumerate(lines, 1):
                 if t in line:
                     hits.append({
@@ -138,12 +205,18 @@ def main(argv: list[str] | None = None) -> int:
     allowlist = load_allowlist()
     titles = collect_titles(ZK, allowlist)
     files = tracked_files()
-    hits = scan(titles, files) if titles else []
+    repo_stems = committed_stems(files)
+    wikilinks = collect_wikilinks(ZK, allowlist)
+    wikilinks -= {t for t in wikilinks if t.lower() in repo_stems}
+    all_terms = sorted(set(titles) | wikilinks)
+    hits = scan(all_terms, files) if all_terms else []
 
     if args.json:
         print(json.dumps({
             "zk_dir": ZK.as_posix(),
-            "titles_scanned": len(titles),
+            "filename_stems": len(titles),
+            "wikilink_targets": len(wikilinks),
+            "terms_scanned": len(all_terms),
             "allowlist_size": len(allowlist),
             "hit_count": len(hits),
             "hits": hits,
@@ -151,8 +224,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         if not hits:
             print(
-                f"privacy_check: clean ({len(titles)} private titles "
-                f"scanned, 0 leaks)"
+                f"privacy_check: clean ({len(all_terms)} private terms "
+                f"scanned: {len(titles)} filename stems + "
+                f"{len(wikilinks)} wikilink targets, 0 leaks)"
             )
             return 0
         files_hit = sorted({h["file"] for h in hits})
@@ -164,10 +238,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {h['file']}:{h['line']}: {h['private_title']!r}")
         print()
         print(
-            "Each line shows a multi-word filename stem from your private "
-            "$ZK vault appearing in a tracked file. Replace with a generic "
-            "placeholder, or add the stem to scripts/privacy_allowlist.txt "
-            "if the exposure is deliberate."
+            "Each line shows a private identifier from your $ZK vault "
+            "(filename stem or [[wikilink]] target) appearing in a tracked "
+            "file. Replace with a generic placeholder, or add the term to "
+            "scripts/privacy_allowlist.txt if the exposure is deliberate."
         )
 
     return 1 if hits else 0

@@ -12,7 +12,7 @@ Audit the health and robustness of the user's social support system. Grounded in
 ## Data Sources
 
 - **People files:** `$ZK/archive/people/*.md` (each file has Bio, Notes, and Relationship sections with Dunbar layer tags [[DL0]] through [[DL5]])
-- **PRM template:** `$ZK/archive/templates/PRM: my Personal Relationship Management.md` (layer definitions and scoring rules)
+- **PRM template:** `$ZK/archive/templates/` PRM template file (layer definitions and scoring rules)
 - **Daily notes:** `$ZK/daily-notes/` (for interaction frequency detection)
 - **Profile:** `profile/identity.md` (Key People section, Active Life Areas: Social & Emotional)
 - **Prior reflections:** `$ZK/reflections/` (Support System Log sections from prior sessions)
