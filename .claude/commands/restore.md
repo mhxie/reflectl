@@ -47,7 +47,7 @@ Parse the JSON. Each entry has `present_locally`. Only entries where `present_lo
 
 For each slug to recover:
 
-1. Call `mcp__reflect__get_note(id: "<reflect_note_id>")`. This is an orchestrator-only MCP escape hatch (documented in `CLAUDE.md`).
+1. Call `mcp__reflect-notes__get_note(id: "<reflect_note_id>")`. This is an orchestrator-only MCP escape hatch (documented in `CLAUDE.md`).
 2. If the note is missing or the body is empty, report the failure and skip. Either the Reflect note was never created, or the user deleted it.
 3. Write the body to `zk/cache/restore-<slug>.md` with a prepended header:
 

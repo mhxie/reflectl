@@ -27,7 +27,7 @@ Single phase. No preflight, no manifest, no idempotency ledger.
 1. **Resolve the date list** from the argument. Use the late-sleep rule from `CLAUDE.md` to determine "today" (before 03:00 local, "today" is the previous calendar day).
 
 2. **For each date, fetch and merge:**
-   a. Call `mcp__reflect__get_daily_note(date: "<YYYY-MM-DD>")`. Callable by the orchestrator (this command) and by the Curator when dispatched for background daily-notes sync (see Curator's "Sync Daily Notes" operation). Not callable by other subagents.
+   a. Call `mcp__reflect-notes__get_daily_note(date: "<YYYY-MM-DD>")`. Callable by the orchestrator (this command) and by the Curator when dispatched for background daily-notes sync (see Curator's "Sync Daily Notes" operation). Not callable by other subagents.
    b. If the response is the `No daily note found` sentinel (or an equivalent empty-body signal), skip the date. Do **not** create an empty local file. Empty stubs are noise.
    c. Otherwise, pipe the response body through `merge_daily.py --cache` to write the cache file and merge in one step:
       ```
@@ -77,7 +77,7 @@ Sharing a wiki entry to Reflect is not part of `/sync`. It is a per-note manual 
 1. The user says "share `[[Foo]]` to Reflect" (or gives a path like `zk/wiki/Foo.md`).
 2. The orchestrator reads the local file at `zk/wiki/<Title>.md`.
 3. The orchestrator dispatches the Curator with the file content and title.
-4. The Curator calls `mcp__reflect__create_note(subject: "<H1 title>", contentMarkdown: "<body>")`.
-5. The orchestrator verifies with `mcp__reflect__get_note(<returned_id>)` that the body is non-empty (the silent-empty-note guard from `CLAUDE.md`).
+4. The Curator calls `mcp__reflect-notes__create_note(subject: "<H1 title>", contentMarkdown: "<body>")`.
+5. The orchestrator verifies with `mcp__reflect-notes__get_note(<returned_id>)` that the body is non-empty (the silent-empty-note guard from `CLAUDE.md`).
 
 No manifest. No hash. No diff. If the user later edits the local wiki entry and wants the Reflect copy refreshed, they request the share again. Reflect's `create_note` with an existing title returns the existing note unchanged; the user must delete the Reflect copy by hand first if a fresh push is needed.

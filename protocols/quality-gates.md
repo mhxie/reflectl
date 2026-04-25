@@ -46,15 +46,31 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
 
 **When:** After Reviewer scores, before presenting to user.
 
+Session and system reviews use different thresholds. System reviews are stricter because system changes compound across every future session while session reviews affect only one output. Canonical rubric lives in `.claude/agents/reviewer.md` (Scoring); this gate cites the verdicts, it does not define them.
+
+### Session Review (reflection and reading output)
+
 | Overall Score | Action |
 |--------------|--------|
-| 8-10 | APPROVED — deliver to user |
-| 6-7.9 | APPROVED_WITH_NOTES — deliver with caveats |
-| 4-5.9 | NEEDS_REVISION — send back to Synthesizer with specific fixes (max 2 rounds) |
-| 0-3.9 | REJECTED — start over or deliver with major caveats |
+| 8-10 | APPROVED: deliver to user |
+| 6-7.9 | APPROVED_WITH_NOTES: deliver with caveats |
+| 4-5.9 | NEEDS_REVISION: send back to Synthesizer with specific fixes (max 2 rounds) |
+| 0-3.9 | REJECTED: start over or deliver with major caveats |
+
+### System Review (Diff + Holistic modes)
+
+Apply rows top-to-bottom; first match wins. NEEDS_REVISION is the catch-all default.
+
+| Condition | Action |
+|-----------|--------|
+| Overall < 4 (catastrophic) | REJECTED: redesign |
+| Overall >= 8.5 AND no dimension <6 AND all required artifacts present | APPROVED: orchestrator may commit |
+| Otherwise (any dim <6, any artifact missing, or overall 4-8.4) | NEEDS_REVISION: fix and re-run |
+
+No APPROVED_WITH_NOTES for system reviews. See `.claude/agents/reviewer.md` -> Scoring for why weighted passes with a low single dimension conceal real flaws.
 
 **Gate keeper:** Reviewer
-**Max revision rounds:** 2 (after 2 failed revisions, deliver with all caveats noted)
+**Max revision rounds:** Session = 2 (after 2 failed revisions, deliver with all caveats). System = unlimited (Evolver may escalate to user after 2 rounds without progress).
 
 ## Gate 4: Note Operations (Compact/Merge)
 

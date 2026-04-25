@@ -124,8 +124,33 @@ If the source is a Readwise podcast, video, or article (user provides a Readwise
 3. Pass `cache_path: zk/cache/rw-<id>.md` to every Reader dispatch. The Reader agent knows this convention (see `.claude/agents/reader.md`, section "Readwise transcript cache").
 4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so Reader doesn't have to re-infer for citation.
 
-- **Read & Discuss:** Ask for the article/note. Run the Prefetch Step above if it's a Readwise source. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). This is the lightweight default — most reading sessions start here.
-- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Run the Prefetch Step above if it's a Readwise source. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). Use when the user knows what angle they want.
+#### Backup to Readwise (final step in every Read mode)
+
+After the reflection file is saved, fire one `readwise reader-create-document` call as a last-resort backup of the source. The reflection file in `zk/reflections/` remains the durable artifact; this is just so the source itself is preserved if its origin URL ever rots.
+
+**Skip conditions (do NOT call the CLI):**
+- Input was a Readwise URL or `document_id` (already in Readwise; the Prefetch Step handled it).
+- Input was a local `[[Note Title]]` (no source URL exists).
+- Input was a transcript paste with no accompanying URL (nothing to back up).
+- `readwise` CLI is not installed in the environment (`command -v readwise` returns nothing). Backup is best-effort; absence of the CLI is not a session error.
+
+**When it runs (orchestrator, not a separate agent):**
+
+```bash
+readwise reader-create-document \
+  --url "<canonical-source-url>" \
+  --tags "<comma-list>" \
+  --category "<article|pdf|video|podcast>"
+```
+
+- `--url`: canonical source URL. For arXiv use the abs page (`/abs/<id>`), not the PDF URL.
+- `--tags`: 3-5 tags derived from the paper/article topic. Orchestrator picks them; no user prompt.
+- `--category`: default `article`; use `pdf` for arXiv/PDF papers, `video` or `podcast` for transcripts.
+
+Print the resulting Readwise URL or `document_id` to the user as a one-liner confirmation. Do not pre-check for duplicates: if Readwise re-creates a doc, the second `document_id` is fine. Do not loop on errors; if the call fails (network, auth), report the error and continue, since the reflection file is already saved.
+
+- **Read & Discuss:** Ask for the article/note. Run the Prefetch Step above if it's a Readwise source. Dispatch 1 Reader (Critical lens) + 1 Researcher (find related notes). Present the analysis, then enter interactive discussion mode. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). After the article note is saved, run the Backup to Readwise step above. This is the lightweight default — most reading sessions start here.
+- **Focused Read:** Ask the user which article/note and which lens(es): Critical, Structural, Practical, or Dialectical. Run the Prefetch Step above if it's a Readwise source. Dispatch 1-2 Reader instances with the chosen lenses. Reader automatically handles transcript format (video/podcast) with preprocessing before applying the lens. Before write-back, dispatch **Reviewer** + **Challenger** in parallel to verify accuracy, then create a standalone article note (see Article Note step below). After the article note is saved, run the Backup to Readwise step above. Use when the user knows what angle they want.
 - **Multi-Lens Read:** Ask the user which article or note to read. Run the Prefetch Step above if it's a Readwise source. Then follow the Reading Hub flow below. Use for important articles worth deep multi-angle analysis.
 
 #### Reading Hub Flow (Multi-Lens Read)
@@ -159,6 +184,10 @@ If the source is a Readwise podcast, video, or article (user provides a Readwise
    - Write the reflection file to `zk/reflections/YYYY-MM-DD-reading-<slug>.md`
    - Include full source text under `### Full Text` (see source-text persistence rule in CLAUDE.md)
    - No write-back to daily notes. The reflection file is the durable output.
+
+6. **Backup to Readwise — Phase 6 (source preservation):**
+   - Run the Backup to Readwise step above (see Read sub-flows section).
+   - Skip if the input was already a Readwise source or a local `[[Note Title]]`.
 
 ### If Learn:
 

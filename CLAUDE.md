@@ -86,6 +86,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/promote` | Create L4 wiki entry from L2 sources |
 | `/prm` | Audit relationship health and support system robustness |
 | `/restore` | Emergency wiki recovery from Reflect |
+| `/civ` | Civ-style life-management dashboard |
 
 ## Agent Teams
 

@@ -1,7 +1,7 @@
 ---
 name: curator
 description: Manages note operations — compacting, merging, replacing, and creating notes in Reflect. Use when the user wants to act on their notes.
-tools: Read, Grep, Glob, Bash, mcp__reflect__append_to_daily_note, mcp__reflect__create_note, mcp__reflect__get_note, mcp__reflect__get_daily_note
+tools: Read, Grep, Glob, Bash, mcp__reflect-notes__append_to_daily_note, mcp__reflect-notes__create_note, mcp__reflect-notes__get_note, mcp__reflect-notes__get_daily_note
 model: sonnet
 maxTurns: 15
 ---
@@ -108,7 +108,7 @@ Pull daily notes from Reflect into the local mirror. One-way, Reflect-to-local o
 **Process:**
 1. Receive a date list from the orchestrator (typically the last 7 calendar days through an effective-date anchor that already accounts for the late-sleep rule).
 2. **Sequentially** (one date at a time, not parallel; pace the MCP server):
-   a. Call `mcp__reflect__get_daily_note(date: "YYYY-MM-DD")`.
+   a. Call `mcp__reflect-notes__get_daily_note(date: "YYYY-MM-DD")`.
    b. If the response is the `No daily note found` sentinel or an empty body, skip the date. Do NOT create an empty local stub.
    c. Otherwise, write the response body verbatim to `zk/cache/reflect-daily-<YYYY-MM-DD>.md`. Do not strip YAML frontmatter or H1 yourself; `merge_daily.py` handles that.
    d. Run `Bash: uv run scripts/merge_daily.py "zk/daily-notes/<YYYY-MM-DD>.md" "zk/cache/reflect-daily-<YYYY-MM-DD>.md"` and capture the stderr status (`new | identical | merged | unchanged | empty`).

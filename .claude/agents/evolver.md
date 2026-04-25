@@ -46,6 +46,7 @@ Then check:
 - [ ] Is this the simplest fix? (Prefer small targeted edits over rewrites)
 - [ ] Can I test this? (What would success look like next session?)
 - [ ] Success criterion stated in verifiable form, not vibes? Name the concrete signal in the next session that tells us this worked (e.g., "user accepted default interpretation without correction on the next 3 multi-step dispatches"), not a feeling ("sessions feel smoother"). See `protocols/orchestrator.md` → "Criteria-First Dispatch".
+- [ ] Antipattern self-check (Tier 2+ only): walk `protocols/antipatterns.md` and for each entry 1-9 mark FLAG or N/A-with-reason in your evolution report. This makes antipatterns visible before the Reviewer scans independently; it does not replace the Reviewer's pass.
 
 ### 4. Act (Implement)
 - Make the change

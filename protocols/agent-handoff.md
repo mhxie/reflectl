@@ -69,13 +69,23 @@ Required fields:
 - `goal_coverage`: `{score: 0-10, missing_categories: []}`
 - `honesty`: `{score: 0-10, flags: []}`
 - `staleness`: `{score: 0-10, warnings: []}`
-- `overall`: `{score: 0-10, verdict: "APPROVED" | "APPROVED_WITH_NOTES" | "NEEDS_REVISION" | "REJECTED", summary: ""}`
+- `mode`: `"session"` | `"system"` — selects the verdict enum below
+- `overall`: `{score: 0-10, verdict: <see mode>, summary: ""}`
+  - `mode: "session"` verdicts: `"APPROVED" | "APPROVED_WITH_NOTES" | "NEEDS_REVISION" | "REJECTED"`
+  - `mode: "system"` verdicts: `"APPROVED" | "NEEDS_REVISION" | "REJECTED"` (no notes-only verdict; canonical rubric in reviewer.md → Scoring)
 
-Score thresholds (aligned with quality-gates.md and reviewer.md):
+Session-mode score thresholds (aligned with quality-gates.md and reviewer.md):
 - 8-10: `APPROVED` — deliver to user
 - 6-7.9: `APPROVED_WITH_NOTES` — deliver with caveats
 - 4-5.9: `NEEDS_REVISION` — triggers revision loop (max 2 rounds)
 - 0-3.9: `REJECTED` — start over or deliver with major caveats
+
+System-mode score thresholds (canonical: reviewer.md → Scoring → System Review):
+- Overall < 4 → `REJECTED`
+- Any dim <6 OR artifact missing → `NEEDS_REVISION`
+- Overall >= 8.5, all dims >=6, artifacts present → `APPROVED`
+
+System-mode adds 4 dimension fields (replace the 4 session dims above): `contract_integrity`, `wiring_correctness`, `bug_absence`, `claim_fidelity`, each `{score: 0-10, issues: []}`.
 
 ## Contract: Challenger → User
 

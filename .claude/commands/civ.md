@@ -1,218 +1,225 @@
 # Civilization Report
 
-Read-only layered life dashboard with token economy. Single-pass render from vault signals. No new state files, no MCP calls.
+Read-only life dashboard. Single-pass render from vault signals. No new state files, no MCP calls.
 
-## Design Rationale
+## Architecture
 
-Life domains are not peers (VanderWeele 2017, PERMA+4 2022, GFS 2025). This dashboard uses a three-layer model:
-- **Foundation**: non-substitutable; collapse cascades upward
-- **Enablers**: multipliers; constraints that gate how tokens can be spent
-- **Expression**: where value is created and experienced
+Three conceptual layers, inspired by Civ 6:
 
-## Token Economy
+```
+Resources (7 inputs)  →  Civilizations (7 conversion engines)  →  Terminal Values (5 outputs)
+时气金识缘心誉           Health..Experience                       意义 成就 幸福 自由 健康
+```
 
-Five tokens model accumulated life resources. Like Civ 6's gold counter, each shows a **real stock value** (your actual position) plus a **yield** (weekly change signal). Stocks are sourced from the most recent vault data; if the data is stale (>30 days), the system prompts the user to update.
+**Resources** are what you spend. **Civs** are where you invest them. **Terminal Values** are what you're optimizing for. The dashboard shows all three and whether your resource allocation is actually producing terminal value.
 
-| Token | Stock (what it measures) | Unit | How to read from vault |
+## Resources (7 layers)
+
+Spendable, tradeable inputs. Lower layers supply upper ones. From the user's resource framework note: 金钱, 时间, 能量, 技能 are Tier-1 instrumental; 声誉/信任 is Tier-2. 连接 is instrumental (not terminal), pending Test 1.
+
+| Layer | Token | What it is | Renewable | Compounds | Vault signal |
+|---|---|---|---|---|---|
+| 0 | **时 Time** | Hours/week allocated | No | No | Not directly tracked; inferred from reflection density per civ |
+| 1 | **气 Energy** | Physical + mental reserves | Yes (rest, exercise) | Yes (health habits) | Weight plan progress, sleep signal, exercise mentions |
+| 2 | **金 Money** | Financial position | Yes (income) | Yes (investment) | Most recent NW figure from financial plan/reflection |
+| 3 | **识 Skills/Knowledge** | Human capital | Yes | Strongly | Wiki count + reading sessions (30d) |
+| 4 | **缘 Social Capital** | Relationship goodwill, network | Yes (fragile) | Yes (network effects) | Interaction count estimate (30d) + DL0 from PRM |
+| 5 | **心 PsyCap** | Self-efficacy + resilience + hope + optimism (HERO) | Yes (practice) | Yes (mutual reinforcement) | Qualitative: from reflection tone, self-knowledge entries |
+| 6 | **誉 Reputation/Optionality** | Trust, credibility, future options | Slowest | Yes | Ownership areas, publications, credentials, role level |
+
+### Stock Sourcing
+
+Each stock from a **specific vault artifact** with a known date. If >30 days stale, flag and prompt for update.
+
+- **金**: Most recent explicit NW/asset figure from financial plan or reflection. Report value + source date.
+- **气**: Weight from plan file or daily notes. Sleep pattern (regular/drifting/unknown). Exercise frequency estimate.
+- **识**: Wiki count (`ls zk/wiki/*.md | wc -l`) + reading sessions in 30d. Note bulk-sync caveat.
+- **缘**: Estimate: distinct social interactions in daily notes + reflections (30d). DL0 count from PRM.
+- **心**: Qualitative read from recent reflections: evidence of self-efficacy, resilience, hope, optimism. Report as `high/stable/fragile/unknown`.
+- **誉**: Role level + tenure + ownership areas + publications/reviews. From profile + career reflections.
+- **时**: Not stockpiled; shown as allocation % across civs based on reflection density.
+
+### Trade Rules (from the user's resource framework note)
+
+- **Instrumental ↔ instrumental OK**: 金 ↔ 时 (buy services), 识 ↔ 时 (learning costs time), 缘 ↔ 时 (invest in people)
+- **Never trade terminal for instrumental**: no 健康 for productivity; no 意义 for 金钱 premium; no 自由 for external validation
+- **Irreversibility hierarchy**: 健康 (post-60 irreversible) > 父母陪伴 (finite quota) > 备孕 window > relationship depth before transitions > green card process
+
+## Terminal Values (5 outputs)
+
+From the user's resource framework note (provisional, 2026-04-19). The optimization target.
+
+| # | Value | Current weight | Measured by |
 |---|---|---|---|
-| 金 Capital | Net worth / family assets | Dollar amount | Most recent financial plan or reflection with NW figure |
-| 气 Vitality | Body state | Weight (kg) + sleep regularity | Most recent weight check-in; sleep signal from daily notes |
-| 势 Momentum | Career standing | Role level + tenure + ownership count | profile/identity.md career section + career reflections |
-| 识 Insight | Knowledge base | Wiki entry count + reading sessions (30d) | `ls zk/wiki/*.md \| wc -l` + reflection scan |
-| 缘 Connection | Relationship health | Interaction frequency estimate (30d) | Daily notes + reflections for social events; PRM DL0 count |
+| 1 | **意义 Meaning** | Highest | Identity coherence: are you building what matters to you? Evidence: reflectl, systems research identity, "consumer vs creator" |
+| 2 | **成就感 Achievement** | Very high (coupled with 意义) | Craft mastery, not external validation. Evidence: ownership, wiki compound, "bugs others would miss" |
+| 3 | **幸福感 Wellbeing** | High | Eudaimonic-heavy: relational depth + intellectual engagement + exploration. Evidence: reading sessions, social interactions, flow states |
+| 4 | **自由 Autonomy** | High | Optionality, self-determination. Evidence: career mobility, financial runway, epistemic sovereignty |
+| 5 | **健康/长寿 Health** | Medium explicit, high instrumental | Physical foundation. Evidence: weight progress, sleep, exercise, medical actions |
 
-**Immigration** is not a token; it is a **strategic resource** (like Civ 6's iron/niter) that gates how other tokens can be spent. Without green card progress, 金 cannot buy a house, 势 cannot switch employers, 缘 cannot advance family timeline.
+**连接 (Connection)** is instrumental (Tier-1), not terminal. It supports 幸福感 + some 意义. Three consistency tests pending (see the user's resource framework note).
 
-### Stock Sourcing Rules
+**Stage weighting** (Rule 4): the user's current life stage biases the terminal-value weighting per `profile/identity.md`. The Researcher reads identity.md for the actual stage label, age range, and weighting; re-evaluate at major stage transitions.
 
-Each stock must come from a **specific vault artifact** with a known date. The Researcher records what file the value came from and when.
+### Terminal Value Signals
 
-- **金**: Search reflections and plan files for the most recent explicit NW or asset figure. Report the value and the source date. If >30 days stale: flag `金 stale: last updated YYYY-MM-DD. Update your financial snapshot.`
-- **气**: Primary: most recent weight check-in (from weight plan file, daily notes, or reflections). Secondary: sleep pattern signal (regular/drifting/unknown). If no weight data in 30 days: flag stale. If no weight data ever: report `no baseline`.
-- **势**: Composite from profile: current role level + days at employer + count of distinct ownership areas claimed in career reflections (last 30d). This does not go stale quickly; update when role changes.
-- **识**: Wiki count (countable, always fresh) + reading sessions in last 30d (countable from reflections). Note if wiki mtime is bulk-synced.
-- **缘**: **Estimate** (collection layer not fully built). Count distinct social interactions mentioned in daily notes and reflections over last 30d (dinners, gaming, calls, meetups, partner planning sessions). Add DL0 count from most recent PRM reflection. Report as `~N interactions/30d, DL0: M`. Flag if PRM data >60 days stale.
+The Researcher assesses each terminal value qualitatively from recent reflections:
 
-### Yield (weekly change)
+- **意义**: Is the user doing identity-coherent work? Building, not just consuming? Evidence of craft, creation, or "constraint creates meaning" moments.
+- **成就感**: Craft milestones, ownership earned, technical depth built. Not promotions or titles.
+- **幸福感**: Flow states, intellectual engagement, relational warmth, exploration. Diverse sources, not monocultural.
+- **自由**: Options expanding or contracting? Job lock, financial constraints, immigration gates.
+- **健康/长寿**: Trend toward or away from targets. Sleep, weight, medical actions.
 
-Yield is not a separate count; it is the **delta** visible when comparing the current stock to the prior reading. For tokens without numeric stocks (势, 缘), yield is qualitative: `+` (evidence of growth), `=` (maintenance), `-` (decay/neglect), `?` (insufficient signal).
+Report each as: `rising` | `stable` | `declining` | `neglected` | `unknown`
 
-### Spend Targets
+## Civilizations (7 conversion engines)
 
-The Researcher maps from directions.md what each token is currently being invested toward. These are not hardcoded; derive them from the active near-term and mid-term goals per civ.
+Civs convert resources into terminal values. Each civ has a primary terminal output.
+
+| Civ | Layer | Primary terminal output | Key resources consumed |
+|---|---|---|---|
+| **Health** | Foundation | 健康/长寿 | 时, 气, 金 (medical) |
+| **Finance** | Foundation | 自由 (optionality) | 时, 金, 识 (financial literacy) |
+| **Immigration** | Enabler | 自由 (gates mobility, housing, family) | 时, 金 (legal fees), 誉 (credentials for EB-1B) |
+| **Relationships** | Enabler | 幸福感 (instrumental 连接 → terminal 幸福) | 时, 气, 缘 |
+| **Career** | Expression | 成就感 + 意义 | 时, 气, 识, 缘, 誉 |
+| **Learning** | Expression | 意义 + 成就感 | 时, 气, 识 |
+| **Experience** | Expression | 幸福感 + 意义 (memories) | 时, 金, 气 |
 
 ## Civ 6 Mechanics
 
 ### Governors (♛/○)
 
-A civ is **governed** (♛) if it has a dedicated system or plan artifact in the vault (e.g., a health plan, a finance system, a relationship management system). **Ungoverned** (○) civs lack infrastructure and are less stable. The Researcher checks for plan files referenced in directions.md or created in reflections.
+**Governed** (♛) = has a dedicated plan/system artifact. **Ungoverned** (○) = no infrastructure. The Researcher checks for plan files referenced in directions.md or reflections.
 
 ### Ages (per civ)
 
-Each civ is classified into an Age based on recent trajectory + achievement density:
-
 | Age | Condition | Symbol |
 |---|---|---|
-| **Golden** | Accelerating trajectory + at least 1 wonder in window | `★` |
-| **Normal** | Steady trajectory, or accelerating but no wonder | `·` |
+| **Golden** | Accelerating + at least 1 wonder in window | `★` |
+| **Normal** | Steady, or accelerating without wonder | `·` |
 | **Dark** | Coasting/declining/blocked, or declared goal with 0 activity | `◆` |
-| **Heroic** | Was Dark last period, now accelerating with a wonder (the comeback) | `✦` |
-
-Since the vault is young (~1 month), "last period" comparison may not be available. In that case, classify based on current signals only (no Heroic possible without a prior Dark reading).
+| **Heroic** | Was Dark last period, now accelerating with wonder | `✦` |
 
 ### Era Score
 
-Era Score measures progress toward the next Golden Age at the **era level** (not per-civ). It accumulates through the current era and is evaluated at era transitions or quarterly reviews.
+Self-estimated composite percentile vs peer cohort (late-20s, PhD, tech, Bay Area, dual-income, first-gen immigrant). Not competition; a self-check on whether you're living up to your own potential in context.
 
-**Earning Era Score:**
+| Tier | Percentile | Era | Meaning |
+|---|---|---|---|
+| **Legendary** | Top 1% | Heroic `✦` | Across-the-board excellence; rare and unsustainable long-term |
+| **Elite** | Top 5% | Golden `★` | Strong in most areas; firing on most cylinders |
+| **Strong** | Top 20% | Normal+ `·` | Solid foundation; clear growth trajectory |
+| **Average** | Top 50% | Normal `·` | Holding ground; no major wins or losses |
+| **Below** | Under 50% | Dark `◆` | Falling behind your own baseline or peer trajectory |
 
-| Event | Points | Source |
-|---|---|---|
-| Wonder completed (goal achieved, system built) | +3 | Strikethrough lines, Completed Goals, milestone reflections |
-| Governor established (new plan/system for a civ) | +2 | New plan file created |
-| Emergency resolved before deadline | +2 | Deadline passed with evidence of action |
-| Dedication alignment (quarterly focus matches top activity civ) | +1/week | 知行合一 check |
-| Token stock increase (any token measurably improved) | +1 | Stock comparison vs prior reading |
+**Anchoring with hard data where available:**
+- 金: Use actual percentile data (NW percentile from the user's percentile data note, income from tax returns)
+- 誉: Role level + tenure vs age cohort; publication count for field
+- 气: BMI/weight vs age-cohort norms; sleep quality vs guidelines
+- 识/缘/心: Self-assessed; no external benchmark. Update estimate when running `/civ`.
 
-**Losing Era Score:**
+**The Researcher proposes a tier** based on: resource stocks, terminal value trends, civ ages, wonders, emergencies, and 知行 alignment. The user confirms or overrides. The system never assigns a tier silently.
 
-| Event | Points | Source |
-|---|---|---|
-| Stale goal (declared >1yr, no evidence) | -1 each | Stale Goals section in directions.md |
-| Ungoverned Dark civ (no plan + declining) | -2 each | Governor + Age check |
-| Emergency missed (deadline passed, no action) | -3 | Deadline check |
-| 知行 gap (declared priority, 0 activity) | -2 | Alignment diagnostic |
+**Signals that push tier up:**
+- Multiple terminal values rising
+- Wonders completed; governors established
+- Emergencies resolved before deadline
+- Dedication alignment (focus matches activity)
 
-**Thresholds** (calibrate over time; initial values):
-- Golden Era: score >= 15
-- Normal Era: 5 <= score < 15
-- Dark Era: score < 5
-
-Report: current score, trajectory to threshold, and what would move the needle most.
+**Signals that push tier down:**
+- Terminal values declining or neglected
+- Ungoverned Dark civs
+- Emergencies missed; stale goals accumulating
+- 知行 gap (declared priority, 0 activity)
 
 ### Emergencies (⚡)
 
-Time-limited critical events with hard deadlines. Triggered when a deadline from directions.md or reflections is <90 days out.
-
-The Researcher scans directions.md and recent reflections for:
-- Explicit dates (YYYY-MM-DD or month references)
-- Deadline language ("by", "before", "due", "expires", "deadline")
-- Expiration signals ("PTEP", "visa expires", "window closes")
-
-Report each emergency as: `description (Nd remaining) → affected civs`
+Deadlines <90 days from today. Scan directions.md and reflections for dates + deadline language. Report: `description (Nd) → affected civs`
 
 ### Dedications
 
-The quarterly focus from directions.md (`focus_this_quarter`) is the current Dedication. Activity aligned with the Dedication earns bonus Era Score (+1/week). The 知行合一 check evaluates Dedication adherence.
+Quarterly focus = current Dedication. Aligned activity is a positive era signal. 知行合一 check evaluates adherence.
 
 ## Prerequisites
 
-1. If `profile/identity.md` missing: "Run `/introspect` first." Stop.
-2. If `profile/directions.md` missing: "Run `/introspect` first." Stop.
-3. `Last built:` older than 7 days: warn, continue.
+1. `profile/identity.md` missing → "Run `/introspect` first." Stop.
+2. `profile/directions.md` missing → "Run `/introspect` first." Stop.
+3. `Last built:` >7 days → warn, continue.
 
-## Dispatch Pattern
+## Dispatch
 
 Single pass, two dispatches:
-1. **Researcher**: gathers signals, reads tokens, computes era score, returns brief.
-2. **Synthesizer**: renders compact tree. No write.
+1. **Researcher**: gathers signals, reads stocks, computes era score, assesses terminal values.
+2. **Synthesizer**: renders compact tree.
 
-## Data Contract (brief the Researcher with this)
+## Data Contract
 
-All reads local. Grep + Read. Semantic search only for concept-shaped retrieval.
+All reads local. No hardcoded regex; derive terms from profile files at runtime.
 
-### 1. Profile Context
+### Researcher collects:
 
-Read `profile/directions.md` and `profile/identity.md` in full. Extract era, goals, completed goals, stale goals, key insights, employer/start date, partner name, key people.
+1. **Profile context**: era, goals, completed, stale, insights, employer, partner, key people.
+2. **Term derivation**: per civ, extract nouns from goal lines, build ephemeral regex.
+3. **Resource stocks**: read each of 7 tokens per Stock Sourcing rules. Flag stale.
+4. **Per-civ signals**: goal inventory, reflection scan (30d/60d), governor check, age classification.
+5. **Terminal value assessment**: qualitative read of each of 5 values from recent reflections.
+6. **Emergencies**: deadlines <90d from today.
+7. **Era score**: propose a tier (Legendary/Elite/Strong/Average/Below) per the Era Score percentile table; list signals_up and signals_down from the bullet lists in that section. The user confirms or overrides the proposed tier.
+8. **Constraints**: directed edges between civs. Immigration as strategic resource.
+9. **Wonders** (60d): 3-5 accomplishments from strikethrough, completed goals, milestone language.
+10. **知行合一**: declared focus vs actual activity distribution.
 
-### 2. Term Derivation
-
-Do NOT use hardcoded regex. For each civ:
-1. Extract goal lines and life area descriptions from profile files.
-2. Pull 5-10 key nouns/phrases (English + Chinese), including proper nouns.
-3. Build ephemeral grep regex.
-
-### 3. Token Stock Reading
-
-For each of the 5 tokens, find the **current stock value** and its **source date**:
-
-- **金**: Search reflections and plan files for most recent explicit NW/asset figure. Check financial plan files referenced in directions.md. Report: value, source, date. Flag if >30d stale.
-- **气**: Check weight plan file; scan daily notes for weight/sleep. Report: weight (or "no baseline"), sleep pattern, source date. Flag if >30d stale.
-- **势**: From profile: role level, employer start date, ownership areas from career reflections (30d).
-- **识**: Wiki count (`ls zk/wiki/*.md | wc -l`) + reading sessions (30d). Note bulk-sync caveat.
-- **缘**: Estimate: count distinct social interactions in daily notes + reflections (30d). PRM DL0 count. Flag as estimate.
-
-### 4. Per-Civ Signals + Governor + Age
-
-For each of the 7 civs:
-1. **Goal inventory** from directions.md.
-2. **Reflection scan** (30d default; 60d for Immigration, Experience).
-3. **Governor check**: does a dedicated plan/system file exist for this civ? (e.g., weight plan, financial plan, PRM system, career thesis, frontier labs pipeline, travel plan). Report ♛ or ○.
-4. **Age classification**: apply the Age rules based on trajectory + wonders.
-5. **Supplemental sources**: plan notes referenced in goals.
-
-### 5. Emergencies
-
-Scan directions.md and recent reflections for deadlines <90 days from today. For each:
-- What is the deadline and what happens if missed?
-- Which civs are affected?
-- Is there evidence of action toward it?
-
-### 6. Era Score Calculation
-
-Count events per the Era Score table. Sum positives and negatives. Report:
-- Current score with itemized breakdown
-- Distance to Golden threshold
-- Single highest-leverage action to gain points
-
-### 7. Constraints + Wonders + 知行合一
-
-Same as before: directed edges, 3-5 wonders (60d), alignment diagnostic.
-
-## Researcher Handoff Format
+### Handoff Format
 
 ```
-era: { current, theme, dedication (quarterly focus), phase_context }
+era: { current, theme, dedication, phase_context }
 
-tokens:
-  金: { value, source, as_of, stale, spend_target }
-  气: { weight, sleep, source, as_of, stale, spend_target }
-  势: { level, day, ownership_areas, spend_target }
-  识: { wiki, reading_sessions_30d, bulk_synced, spend_target }
-  缘: { interactions_30d_est, dl0, prm_date, stale, spend_target }
+resources:
+  时: { allocation: { civ: N% per civ based on reflection density } }
+  气: { weight, sleep, exercise_freq, source, as_of, stale }
+  金: { value, source, as_of, stale }
+  识: { wiki, reading_sessions_30d, bulk_synced }
+  缘: { interactions_30d_est, dl0, prm_date, stale }
+  心: { level: high/stable/fragile/unknown, evidence }
+  誉: { level, day, ownership_areas, publications }
+
+terminal_values:
+  意义: { status: rising/stable/declining/neglected, evidence }
+  成就感: { status, evidence }
+  幸福感: { status, evidence }
+  自由: { status, evidence }
+  健康: { status, evidence }
 
 civilizations:
-  [per civ]: { layer, age (★·◆✦), governor (♛/○), goals, key_evidence (2-3 lines), wins }
+  [per civ]: { layer, age, governor, key_evidence (2-3 lines), wins, terminal_output }
 
 strategic_resource:
   immigration: { status, constraints_on, evidence }
 
-emergencies: [ { description, deadline, days_remaining, affected_civs, action_evidence } ]
+emergencies: [{ description, deadline, days_remaining, affected_civs, action_evidence }]
 
-era_score:
-  total: N
-  breakdown: { wonders: +N, governors: +N, emergencies_resolved: +N, dedication_weeks: +N, token_gains: +N, stale: -N, ungoverned_dark: -N, emergencies_missed: -N, 知行_gap: -N }
-  threshold: { golden: 15, current_age_projection: "Golden/Normal/Dark" }
-  highest_leverage: "..."
+era_score: { proposed_tier, reasoning (2-3 sentences), signals_up: [...], signals_down: [...] }
 
 constraints: [directed edges]
 wonders: [...]
-alignment: { dedication, top_alignment, top_gap, undeclared_activity }
+alignment: { dedication, top_alignment, top_gap, undeclared }
 gaps: [...]
 ```
 
-## Synthesizer Instructions
+## Synthesizer: Compact Tree
 
-Produce a **compact tree** (~25 lines). The orchestrator handles drill-down.
-
-### Compact Tree Template
+~25 lines. Orchestrator handles drill-down from brief in context.
 
 ```
 ## Civ Report (YYYY-MM-DD)
-_Era · Phase · Dedication: [quarterly focus]_
+_Era · Phase · Dedication: [focus]_
 
-金 $NNK (MM-DD)  气 NNkg (MM-DD)  势 LN·DayN·Nown  识 Nw·Nr  缘 ~Ni·DL0:N (est)
+Resources:  金 $NNK (MM-DD)  气 NNkg·[sleep]  识 Nw·Nr  缘 ~Ni·DL0:N  心 [level]  誉 LN·Nown
 [stale flags if any]
+
+Terminal Values:  意义 [↑→↓]  成就 [↑→↓]  幸福 [↑→↓]  自由 [↑→↓]  健康 [↑→↓]
 
 Foundation
 ├─ Health       [age][gov]  [≤8 words]
@@ -223,73 +230,66 @@ Enabler
 └─ Relationships [age][gov]  [≤8 words]
 
 Expression
-├─ Career       [age][gov]  [≤8 words]
-├─ Learning     [age][gov]  [≤8 words]
-└─ Experience   [age][gov]  [≤8 words]
+├─ Career       [age][gov]  [≤8 words]  → 成就+意义
+├─ Learning     [age][gov]  [≤8 words]  → 意义+成就
+└─ Experience   [age][gov]  [≤8 words]  → 幸福+意义
 
-⚡ Emergencies: [description (Nd)] · [description (Nd)]
-Era Score: N/15 → [projected age]. [+action to gain most points]
-知行: [dedication] → [aligned] | gap: [gap civ]
+⚡ [emergency (Nd)] · [emergency (Nd)]
+Era: [proposed tier] (Top N%). [1-line reasoning]. Confirm? [highest-leverage action to tier up]
+知行: [dedication] → [aligned] | gap: [gap]
 Next: [foundation] → [enabler] → [expression]
 
-> Name a civ, token, or "era score" to expand.
+> Expand: civ name, resource, terminal value, "era score", "constraints", "wonders"
 ```
 
-Format: `★♛` = Golden + governed. `◆○` = Dark + ungoverned. `·♛` = Normal + governed.
+### Drill-Down Templates
 
-### Drill-Down: Civ
-
+**Civ:**
 ```
-### [Civ] [age][gov] ([layer])
-**Goals:** [list]
-**Evidence:** [2-3 sentences citing [[Sources]]]
-**Wins:** [list or "none"]
-**Governor:** [plan name] or "none (ungoverned: +2 era score if you build one)"
-**Constraints:** [edges]
-**Next:** [one action]
-```
-
-### Drill-Down: Token
-
-```
-### [Token] (气/金/势/识/缘)
-**Stock:** [value] (as of MM-DD)
-**Spending on:** [targets from directions.md]
-**Trend:** [delta vs prior or qualitative +/=/-/?]
-**Bottleneck:** [what limits this token, if any]
+### [Civ] [age][gov] ([layer]) → [terminal output]
+Goals: [list]
+Evidence: [2-3 sentences citing [[Sources]]]
+Wins: [list or "none"]
+Governor: [plan name] or "none (signal_up if built)"
+Resources consumed: [which tokens]
+Terminal output: [which values, rising/stable/declining]
+Next: [one action]
 ```
 
-### Drill-Down: Era Score
-
+**Resource:**
 ```
-### Era Score: N/15
-**Earning:**
-  Wonders: +N ([list])
-  Governors: +N ([list of governed civs])
-  Emergencies resolved: +N
-  Dedication alignment: +N (N weeks aligned)
-  Token gains: +N ([which tokens improved])
-**Costing:**
-  Stale goals: -N ([list])
-  Ungoverned Dark civs: -N ([list])
-  Emergencies missed: -N
-  知行 gap: -N ([which])
-**To reach Golden (15):** [what specific actions would earn the most points]
+### [Token] ([Chinese name])
+Stock: [value] (as of MM-DD) [stale flag if applicable]
+Trades: [what this resource can be exchanged for]
+Spending on: [current civ allocations]
+Bottleneck: [what limits this resource]
 ```
 
-Other sections (Constraint Map, Wonders list, full 知行) on request. Keep drill-downs under 15 lines.
+**Terminal Value:**
+```
+### [Value] ([Chinese])
+Status: [rising/stable/declining/neglected]
+Fed by: [which civs produce this]
+Evidence: [2-3 sentences from recent reflections]
+Risk: [what would cause decline]
+```
 
-## Style Constraints
+**Era Score:** Proposed tier with reasoning, signals_up and signals_down lists, and "to reach next tier: [specific actions]"
+
+Other sections (constraints, wonders, full 知行) on request. Each drill-down ≤15 lines.
+
+## Style
 
 - No em dashes. Colons, semicolons, parentheses, or restructure.
 - No H1. Start with `##`.
-- Citations in drill-downs only, as `[[Title]]`.
-- Default English. Chinese token names (气金势识缘) inline. Civ names English.
+- Citations (`[[Title]]`) in drill-downs only.
+- Default English. Chinese for token/value names and natural expressions.
+- No vibes-based scores. Stocks are grounded in artifacts; terminal values in reflection evidence.
 
 ## Frequency
 
 Ad hoc. Identical output on unchanged vault.
 
-## Evolution Note
+## Evolution
 
-Persistent era score ledger and historical token snapshots are out of scope. If repeated use shows demand, evolve toward a `zk/civ/` state directory with weekly snapshots.
+Persistent era score ledger and historical snapshots are out of scope. If demand emerges, evolve toward `zk/civ/` state directory. The 3 pending consistency tests in the user's resource framework note may change the terminal value structure; the dashboard adapts when those resolve.

@@ -26,22 +26,24 @@ Default to **Session Review** if no mode is specified.
 
 ## System Diff Review Mode
 
-Read the diff with `git diff` (or `git diff <base>..HEAD` for committed changes). Score each changed file 0-10:
+Read the diff with `git diff` (or `git diff <base>..HEAD` for committed changes). Score each dimension 0-10:
 
-| Check | What to look for |
-|-------|-----------------|
-| Broken contracts | Do changes maintain consistency with referenced files (handoff types, agent names, protocol refs)? |
-| Missing wiring | Are there references to things that don't exist (agents, protocols, handoff types, tools)? |
-| Introduced bugs | Any logical errors, contradictions, or broken flows? |
-| Overclaims | Does the text promise more than the system can deliver? |
+| Dimension | What to look for |
+|-----------|-----------------|
+| Contract integrity | Do changes maintain consistency with referenced files (handoff types, agent names, protocol refs)? |
+| Wiring correctness | Are there references to things that don't exist (agents, protocols, handoff types, tools)? |
+| Bug absence | Any logical errors, contradictions, or broken flows? |
+| Claim fidelity | Does the text promise only what the system can deliver (no overclaims)? |
 
-**Output:** Score card per file + overall verdict (same APPROVED/NEEDS_REVISION thresholds as session review).
+Then apply the Adversarial Mandate (below): antipattern scan, pre-mortem, scope clarifier, minimum concern floor. Missing any of these artifacts forces NEEDS_REVISION regardless of dimension scores.
+
+**Output:** 4-dim score card + required artifacts + overall verdict (see Scoring - System modes below for the stricter thresholds).
 
 ---
 
 ## System Holistic Review Mode
 
-Read all changed files in **full** (not just the diff). Check the global consistency checklist:
+Read all changed files in **full** (not just the diff). Walk the global consistency checklist:
 
 - [ ] Agent counts consistent across CLAUDE.md, README.md, orchestrator.md
 - [ ] All agents referenced in workflows have corresponding `.claude/agents/*.md` files
@@ -52,7 +54,31 @@ Read all changed files in **full** (not just the diff). Check the global consist
 - [ ] New capabilities are reachable from `/reflect` menu
 - [ ] Coaching style rules in CLAUDE.md are reflected in agent behavior definitions
 
-**Output:** Checklist pass/fail + holistic health score 0-10 + specific inconsistencies found.
+Then score the same 4 dimensions as Diff mode (contract integrity, wiring correctness, bug absence, claim fidelity) but at global scope - judging the whole system after the change lands, not just the patch. Apply the Adversarial Mandate (below).
+
+**Output:** Checklist pass/fail + 4-dim score card + required artifacts + overall verdict (see Scoring - System modes below).
+
+---
+
+## Adversarial Mandate (System Diff + Holistic)
+
+Presence-oriented review rubber-stamps. These four required artifacts force attack orientation. Missing any one forces NEEDS_REVISION regardless of dimension scores, because system changes compound across every future session and undetected flaws get harder to unwind over time.
+
+### Antipattern scan
+Walk `protocols/antipatterns.md` in full. For each entry 1-9, output either:
+- `FLAG: <file:line> - <specific finding>`
+- `N/A: <one-line reason this change does not touch this class>`
+
+Silent skips are treated as a failed scan. Reviewer does its own scan independent of the Evolver's self-check, because an independent pass is what makes the scan more than a ritual.
+
+### Minimum concern floor
+Produce at least 3 concrete issues (BLOCKER, SHOULD-FIX, or NICE-TO-HAVE) with `file:line` pointers. If you find fewer, add a `## Hunted but not found` section listing what you looked for and why the code is clean. "No issues" with no hunt log is itself a flag, because silent passes are indistinguishable from shallow reads.
+
+### Pre-mortem
+One line: `If this fails within 30 days, the most likely cause is: <concrete failure mode>`. Name a mechanism, not a feeling. Weak: "might cause confusion". Strong: "the new floor blocks legit APPROVED_WITH_NOTES passes because weighted average 7.8 with a 5 on Claim Fidelity is now auto-rejected when the reviewer was right".
+
+### Scope clarifier
+One block: `What this change does NOT do:` listing what a reader might assume is solved but isn't. Forces making the gap visible so the next change has a known starting point.
 
 ---
 
@@ -122,14 +148,32 @@ The default mode. Scores session output on 5 dimensions.
 
 ## Scoring
 
-**Overall Score** = weighted average of all dimensions.
+Two verdict tables: session review (unchanged) and system review (stricter floor and threshold). System changes compound across every future session, so the bar is higher.
+
+### Session Review verdict (default, used for reflection and reading output)
+
+**Overall Score** = weighted average of the 5 session dimensions.
 
 | Overall | Verdict |
 |---------|---------|
-| 8-10 | `APPROVED` — ready for user |
-| 6-7.9 | `APPROVED_WITH_NOTES` — minor issues flagged |
-| 4-5.9 | `NEEDS_REVISION` — specific fixes required |
-| 0-3.9 | `REJECTED` — fundamental problems |
+| 8-10 | `APPROVED`: ready for user |
+| 6-7.9 | `APPROVED_WITH_NOTES`: minor issues flagged |
+| 4-5.9 | `NEEDS_REVISION`: specific fixes required |
+| 0-3.9 | `REJECTED`: fundamental problems |
+
+### System Review verdict (used for Diff + Holistic modes)
+
+**Overall Score** = equal-weighted average of the 4 system dimensions (Contract integrity, Wiring correctness, Bug absence, Claim fidelity).
+
+Apply rows top-to-bottom; first match wins. NEEDS_REVISION is the catch-all default; APPROVED requires all three conditions to hold; REJECTED is the catastrophic floor.
+
+| Condition | Verdict |
+|-----------|---------|
+| Overall < 4 (catastrophic: multiple dims at floor or fundamental contract break) | `REJECTED` |
+| Overall >= 8.5 AND no dimension <6 AND all required artifacts present (antipattern scan, pre-mortem, scope clarifier, concern floor) | `APPROVED` |
+| Otherwise (any dim <6, OR any artifact missing, OR overall in the 4-8.4 mid-band) | `NEEDS_REVISION` |
+
+No `APPROVED_WITH_NOTES` for system reviews. A weighted pass with a 4/10 on one dimension conceals a real flaw; the floor routes the flaw into the fix path instead of the ignore path. Issues logged here compound across future sessions, so they go out as NEEDS_REVISION to get fixed, not as notes to defer.
 
 ## Output Format
 
@@ -162,6 +206,37 @@ gaps: <issues found>
 
 **What worked well:**
 - [Positive observation — reinforce good patterns]
+
+### System Review Output (Diff + Holistic modes)
+
+Use this format instead of the Review Check table above for System modes.
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| Contract integrity | X/10 | [specific issues or "clean"] |
+| Wiring correctness | X/10 | [broken refs or "reachable"] |
+| Bug absence | X/10 | [logical issues or "sound"] |
+| Claim fidelity | X/10 | [overclaims or "accurate"] |
+| **Overall** | **X/10** | **VERDICT** |
+
+**Antipattern scan** (from `protocols/antipatterns.md`):
+1. Premature abstraction: FLAG/N/A + reason
+2. Rule duplication: FLAG/N/A + reason
+3. Happy-path-only design: FLAG/N/A + reason
+4. Implicit contracts: FLAG/N/A + reason
+5. Monotonic growth: FLAG/N/A + reason
+6. Shadow state: FLAG/N/A + reason
+7. Behavior coupled to location: FLAG/N/A + reason
+8. Scope creep past the stated criterion: FLAG/N/A + reason
+9. Placebo guard: FLAG/N/A + reason
+
+**Concerns** (>=3 required, or "Hunted but not found" block):
+- [BLOCKER|SHOULD-FIX|NICE-TO-HAVE] file:line - issue
+
+**Pre-mortem:** If this fails within 30 days, the most likely cause is: [concrete failure mode].
+
+**What this change does NOT do:**
+- [gap a reader might assume is solved but isn't]
 
 ## Reading Session Adjustments
 

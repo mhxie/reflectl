@@ -24,7 +24,7 @@ If the working tree is clean, stop and tell the user there is nothing to review.
 
 Send a **single** assistant message containing both tool calls:
 
-- **Internal reviewer** — `Agent` tool, `subagent_type: reviewer`. Prompt: "Run System Diff Review + System Holistic Review on the uncommitted bundle. Walk `git diff` and `git status` yourself. Include the Phase scope brief (what moved, what was deferred). Return a scored rubric (0-10 on consistency, internal coherence, completeness, forward compatibility) and an issues list by severity (BLOCKER / SHOULD-FIX / NICE-TO-HAVE) with file:line pointers. Overall verdict: APPROVED / APPROVED_WITH_NOTES / NEEDS_REVISION / REJECTED."
+- **Internal reviewer** — `Agent` tool, `subagent_type: reviewer`. Prompt: "Run System Diff Review + System Holistic Review on the uncommitted bundle. Walk `git diff` and `git status` yourself. Include the Phase scope brief (what moved, what was deferred). Return: (a) 4-dim score card (Contract integrity, Wiring correctness, Bug absence, Claim fidelity, each 0-10); (b) antipattern scan walking all 9 entries in `protocols/antipatterns.md` with FLAG or N/A-with-reason for each; (c) concern list with severity (BLOCKER / SHOULD-FIX / NICE-TO-HAVE) and `file:line` pointers, minimum 3 or a 'Hunted but not found' section; (d) pre-mortem one-liner; (e) scope clarifier block. Overall verdict per reviewer.md Scoring: APPROVED / NEEDS_REVISION / REJECTED (no APPROVED_WITH_NOTES for system reviews; any dim <6 or missing artifact forces NEEDS_REVISION)."
 
 - **External reviewers (codex + gemini)** — one `Bash` call, `timeout: 600000`:
   ```bash
@@ -44,25 +44,37 @@ This is a contract at the *invoker* level, not enforced by the script. The scrip
 
 ### 4. Synthesize
 
-Only after both dispatches have returned. Read the two report files under `zk/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present:
+Only after both dispatches have returned. Read the two report files under `zk/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
+
+**External verdict mapping for system reviews:** External reviewers (codex, gemini) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
+
+Synthesis output:
 
 ```
 ## System Review — Phase <N>
 
 ### Verdict
-<worst verdict wins: REJECTED > NEEDS_REVISION > APPROVED_WITH_NOTES > APPROVED>
+<worst verdict wins: REJECTED > NEEDS_REVISION > APPROVED>
+
+Floor check: any internal dim <6 OR any required artifact missing -> NEEDS_REVISION regardless of overall score.
+
+### Required artifacts (internal reviewer)
+- Antipattern scan: [complete 9/9 | missing entries: ...]
+- Concern floor: [N surfaced | hunted-but-not-found rationale]
+- Pre-mortem: "If this fails within 30 days, most likely cause is: ..."
+- Scope clarifier: "What this change does NOT do: ..."
 
 ### Blockers
-- [source] file:line — issue
+- [source] file:line - issue
 
 ### Convergent findings
 - issue (flagged by: internal, codex, gemini)
 
 ### Divergent findings
-- issue (internal: yes, codex: no) — resolution: ...
+- issue (internal: yes, codex: no) - resolution: ...
 
 ### Scores
-- Internal reviewer: X/10 on <dimensions>
+- Internal reviewer: X/10 avg across 4 dims; dim floor [passed | BREACHED on <dim>]
 - Codex: <one-line summary>
 - Gemini: <one-line summary>
 ```

@@ -4,13 +4,13 @@
   },
   "permissions": {
     "allow": [
-      "mcp__reflect__search_notes",
-      "mcp__reflect__get_note",
-      "mcp__reflect__get_daily_note",
-      "mcp__reflect__list_tags",
-      "mcp__reflect__append_to_daily_note",
-      "mcp__reflect__create_note",
-      "mcp__reflect__delete_tag"
+      "mcp__reflect-notes__search_notes",
+      "mcp__reflect-notes__get_note",
+      "mcp__reflect-notes__get_daily_note",
+      "mcp__reflect-notes__list_tags",
+      "mcp__reflect-notes__append_to_daily_note",
+      "mcp__reflect-notes__create_note",
+      "mcp__reflect-notes__delete_tag"
     ]
   }
 }
