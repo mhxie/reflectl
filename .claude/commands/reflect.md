@@ -2,43 +2,65 @@
 
 Your reflection system. Uses a two-step decision tree with `AskUserQuestion` for native scroll-and-select UI.
 
-## Quick Start
+## Routing & Dispatch
 
-If the user types `/reflect` with additional context, detect intent and route:
-- **Reading intent** (mentions an article, URL, [[Note Title]], or "read/discuss"): skip the menu and go to Read & Discuss using their input as the article to read.
-- **Meeting intent** (mentions "meeting", "standup", "1:1", or "meeting notes"): fire the background sync (see **Background Daily-Notes Sync** below), then skip the menu and dispatch the **Meeting** agent directly.
-- **Talk/transcript intent** (mentions "seminar", "talk", "transcript", "podcast", "video" or pastes a large block of transcript text): skip the menu and go to Read & Discuss, with Reader preprocessing the transcript format.
-- **Reflection intent** (everything else, e.g., "/reflect I had a tough day"): fire the background sync (see **Background Daily-Notes Sync** below), then skip the menu and go straight to Daily Reflection using their input as context.
+### Intent Routing (when user types `/reflect <context>`)
 
-## Background Daily-Notes Sync
+Detect intent from `<context>`, skip the Step 1 menu, route directly:
 
-Any time the session route is known to be non-Read and non-Learn, fire an async daily-notes sync so the local mirror is fresh by the time context-loading reads it. Fire-and-continue; never block on this.
+| Intent | Trigger words / format | Action |
+|---|---|---|
+| Reading | article URL, `[[Note Title]]`, "read/discuss" | Read & Discuss with input as article |
+| Meeting | "meeting", "standup", "1:1", "meeting notes" | Dispatch Meeting agent |
+| Talk/transcript | "seminar", "talk", "transcript", "podcast", "video", or large transcript paste | Read & Discuss (Reader preprocesses transcript) |
+| Reflection | anything else (e.g., "/reflect I had a tough day") | Daily Reflection with input as context |
 
-**Trigger points:**
-- Quick Start routed to **Meeting** or **Reflection** intent.
-- Step 1 mode selection returned **Reflect**, **Plan**, or **Act**.
-- Skip for Reading intent, Talk/transcript intent, Read mode, and Learn mode.
+If no `<context>`, fall through to Weekly Cue Check, then Step 1 menu.
 
-**Dispatch:**
+### Background Daily-Notes Sync
 
-Before constructing the prompt string, resolve two values inline:
-- `<effective-date>`: apply the late-sleep rule (if local time is before 03:00, effective-date = yesterday's calendar date; otherwise today).
-- `<YYYY-MM-DD-list>`: the 7 consecutive calendar dates ending on `<effective-date>`, comma-separated (e.g., `2026-04-14, 2026-04-15, 2026-04-16, 2026-04-17, 2026-04-18, 2026-04-19, 2026-04-20`).
+| Mode | When | `run_in_background` |
+|---|---|---|
+| Async (default) | Intent = Meeting/Reflection; OR Step 1 mode = Reflect/Plan/Act AND the resolved Step 2 action is **not** Weekly Review | `true` (fire and continue) |
+| Synchronous (override) | Any path that lands on `weekly.md` — Weekly Cue Check accepted (hard floor or soft cue), OR Step 2 selection = Weekly Review under Step 1 = Reflect | `false` (await before routing, so past-7-day mirror is fresh and `weekly.md`'s per-day fallback does not race with an in-flight Curator sync) |
+| Skip | Reading / Talk-transcript / Read mode / Learn mode | n/a |
 
-Then dispatch:
+Resolve inline before dispatch:
+- `<effective-date>`: if local time < 03:00, use yesterday's calendar date; else today.
+- `<YYYY-MM-DD-list>`: 7 consecutive dates ending on `<effective-date>`, comma-separated (e.g., `2026-04-19, 2026-04-20, 2026-04-21, 2026-04-22, 2026-04-23, 2026-04-24, 2026-04-25`).
 
 ```
 Agent(
   description: "Background daily-notes sync",
   subagent_type: "curator",
-  run_in_background: true,
+  run_in_background: true,  # set to false for synchronous override
   prompt: "Run the Curator 'Sync Daily Notes' operation. Effective date is <effective-date>. Sync these 7 dates, one at a time (sequential, not parallel): <YYYY-MM-DD-list>. Write each response to `zk/cache/reflect-daily-<date>.md` and run `merge_daily.py` per date. Return the summary table."
 )
 ```
 
-- Do NOT await the agent's return. The main session continues to Step 2 and Context Loading in parallel.
-- The existing targeted `get_daily_note` fallback inside Daily Reflection's Context Loading step (for today's note specifically, when the local file is missing or empty at read time) remains in place as a belt-and-suspenders guard. This fallback also mitigates a small race: `merge_daily.py` uses a non-atomic `write_text`, so a daily-note file read during the merge could be momentarily incomplete. If that happens, the fallback re-fetches that date.
-- Duplicate triggers within one session are harmless; `merge_daily.py` folds and does not stack.
+Async dispatches do NOT await; the targeted `get_daily_note` fallback inside Daily Reflection's Context Loading is the belt-and-suspenders guard for today's note when routing to Daily Reflection (mitigates `merge_daily.py`'s non-atomic write race). **For the synchronous-override route (Weekly Cue Check accepted → `weekly.md`), Daily Reflection's Context Loading does not run; the second line of defense is `weekly.md`'s per-day MCP fallback (Context Loading step 3), which covers any of the past 7 days that is missing/empty/truncated.** Synchronous dispatches await completion before routing. Duplicate triggers within a session are harmless; `merge_daily.py` folds and does not stack.
+
+### Weekly Cue Check (before Step 1 menu, only when no `<context>` routed away)
+
+```
+# macOS/BSD `date -j -f`. Linux: replace with `date -d "$latest_date" +%s`
+Bash: latest_weekly=$(ls zk/reflections/*-weekly.md 2>/dev/null | sort | tail -1)
+if [ -n "$latest_weekly" ]; then
+  latest_date=$(basename "$latest_weekly" | cut -c1-10)
+  days_since=$(( ($(date +%s) - $(date -j -f '%Y-%m-%d' "$latest_date" +%s)) / 86400 ))
+else
+  days_since=999  # no weekly ever; treat as far past hard floor
+fi
+echo "days_since=$days_since latest=$latest_weekly"
+```
+
+| Condition | Branch | Action |
+|---|---|---|
+| `days_since` >10, or no weekly ever | Hard floor | "上次 weekly 是 N 天前 (or 还没跑过). 这周已经积累了 Apple Health / 信号 / 健康 cadence checks 没补齐. 建议先跑 `/weekly`. 现在跑吗?" Yes: synchronous sync, then route to `weekly.md`. No: proceed to Step 1. |
+| `days_since` >6 AND today is Sun or Mon | Soft cue | "提示: 上次 weekly 是 N 天前. 想现在跑 `/weekly` 把这周补齐吗?" Yes: synchronous sync, then route to `weekly.md`. No: proceed to Step 1 (mode selection handles its own sync trigger). |
+| Otherwise | Fresh | Skip silently. Proceed to Step 1. |
+
+Surface at most once per `/reflect` invocation. Do not nag. This is the only non-user-typed reason the orchestrator may suggest a different mode than the user implicitly chose.
 
 ## Step 1: Choose Mode
 

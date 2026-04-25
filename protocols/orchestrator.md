@@ -39,7 +39,7 @@ Concrete transform, "Compact these notes" becomes: "Success = N notes in `zk/` r
 
 The default read path is local (`Read`, `Grep`, `scripts/semantic.py`). Reflect MCP reads are narrowly scoped escape hatches, because MCP round-trips are slower and non-deterministic than local file access:
 
-- `get_daily_note(date)`: orchestrator (for `/sync` and `/reflect`'s today-fetch fallback when the local mirror lags) and Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation).
+- `get_daily_note(date)`: orchestrator (for `/sync`, `/reflect`'s today-fetch fallback when the local mirror lags, and `/weekly`'s per-day fallback for any of the past 7 days that is missing/empty/truncated — `/weekly` may be invoked from `/reflect`'s hard-floor cue route while a Background Sync is mid-merge) and Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation).
 - `get_note(id)`: orchestrator-only, for Curator snapshot setup (compact/merge fallback when a note is genuinely missing from the local mirror) and for verifying a manual wiki-entry share (post-`create_note` empty-body check).
 - No `search_notes`, no `list_tags` anywhere in the system. Discovery happens locally.
 

@@ -2,6 +2,35 @@
 
 Review progress on near/mid/long-term goals. Surface what's progressing, what's neglected, and what has shifted.
 
+## Cadence
+
+| Type | Frequency | What |
+|---|---|---|
+| **Full review** | Quarterly (start of Q1 / Q2 / Q3 / Q4, i.e., early Jan / Apr / Jul / Oct) | Walk every goal in `directions.md`, decide keep / shift / drop. Retire >1y stale goals. Trend table vs. prior reviews. |
+| **Light pulse** | Monthly | 5-min check inside `/weekly` or standalone: any goal materially advanced? Any neglected? Any newly born? No file write required if nothing surfaced. |
+| **Annual reset** | Yearly (Jan or birthday) | Full rebuild anchored to `<year>小目标`. Touches `directions.md` directly. Often paired with `/introspect`. |
+
+Inspect the last full review and the last pulse-equivalent so the monthly cadence does not produce duplicate pulses within 30 days. A pulse-equivalent is either a standalone `*-review-pulse.md` OR a `*-weekly.md` (because `/weekly` §6 Honest Assessment doubles as the monthly pulse — see Cadence table). Take whichever is most recent:
+
+```
+Bash: last_full=$(ls zk/reflections/*-review.md 2>/dev/null | grep -v -- '-review-pulse' | sort | tail -1)
+Bash: last_pulse=$( (ls zk/reflections/*-review-pulse.md 2>/dev/null; ls zk/reflections/*-weekly.md 2>/dev/null) | sort | tail -1)
+```
+
+Note: a no-change pulse intentionally skips writing a file (per Output → Pulse write gate), so `last_pulse` may understate by up to 30 days. That's tolerable — the cost of suggesting one extra pulse during the gap is far lower than the cost of a missed pulse.
+
+Decision rules align with the cadence table above (full = quarterly = 90 days, light pulse = monthly = 30 days). Branch on `last_full` first, then refine with `last_pulse`:
+
+- **No prior full review** → run the **full quarterly form** to establish the baseline. Lookback = 90 days for Context Loading. First-run case.
+- **<30 days since last full review** → no review needed; tell user "last full review was N days ago, full quarterly cadence not due yet, no monthly pulse needed yet either". Offer full only if user explicitly asks.
+- **30-89 days since last full review** → check `last_pulse`:
+  - If **<30 days since last pulse** → no pulse needed yet ("monthly pulse already done N days ago"). Offer full only if user explicitly asks.
+  - Otherwise (no pulse or ≥30 days) → **light pulse default**. The full quarterly cadence has not yet rolled over; offer full only if user explicitly asks.
+- **90-120 days since last full review (on cadence)** → full quarterly form. The canonical quarterly review.
+- **>120 days since last full review (overdue)** → full quarterly form with an honest gap note ("last full review was N days ago, X days past the quarterly cadence").
+
+Stale-goal floor: if `directions.md` lists goals older than 1 year with no progress evidence (currently the 3 "Stale Goals" listed there), every full review must explicitly resolve them (retire or re-commit). Do not let stale goals roll over silently.
+
 ## Prerequisites
 
 1. Check if `profile/identity.md` exists. If not, tell the user: "No profile found. Run `/introspect` first to build your self-model." and stop.
@@ -13,10 +42,10 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
    - `profile/identity.md` — reflection context
    - `profile/directions.md` — goals with categories and metrics
 
-2. **Read all reflections from the last 30 days** from the `zk/reflections/` directory. If none exist, note this is the first review.
+2. **Read all reflections from the lookback window** from the `zk/reflections/` directory. Lookback depends on the form chosen from Cadence: **90 days for full quarterly review**, **30 days for light pulse**. If none exist, note this is the first review.
 
-3. **Pull goal-related updates from the local mirror, bounded to the last 30 days.** Do NOT issue an unbounded `Grep(path: "zk/")` — the old `editedAfter`-bounded MCP query was recency-scoped on purpose, and an unbounded grep will pull stale historical matches that skew the review. Use `find -print0 | xargs -0 grep` so recency actually binds:
-   - `Bash: find zk/daily-notes zk/reflections zk/gtd zk/wiki -type f -name "*.md" -mtime -30 -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
+3. **Pull goal-related updates from the local mirror, bounded to the lookback window.** Do NOT issue an unbounded `Grep(path: "zk/")` — the old `editedAfter`-bounded MCP query was recency-scoped on purpose, and an unbounded grep will pull stale historical matches that skew the review. Use `find -print0 | xargs -0 grep` so recency actually binds. Substitute `<N>` with the lookback (90 for full, 30 for pulse):
+   - `Bash: find zk/daily-notes zk/reflections zk/gtd zk/wiki -type f -name "*.md" -mtime -<N> -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
    - `Read zk/daily-notes/<today>.md` for today's context (fall through to `get_daily_note(date: "<today>")` only if today's file hasn't synced yet).
 
 4. **Read key goal notes in full** by `Read`-ing the matching files directly. The files are already on disk. If a referenced note is genuinely missing from the local mirror, report the gap — there is no generic Reflect read fallback in Phase C.
@@ -49,7 +78,9 @@ Present the review interactively, category by category. For each finding, cite t
 
 After discussing, write a review file:
 
-**File:** `zk/reflections/YYYY-MM-DD-review.md`
+**File:** `zk/reflections/YYYY-MM-DD-review.md` for **full** reviews; `zk/reflections/YYYY-MM-DD-review-pulse.md` for **monthly light pulse** runs. The distinct suffix lets the Cadence Bash check (above) tell them apart so a pulse does not silently defer the next quarterly review.
+
+**Pulse write gate**: skip the pulse file write entirely if the pulse surfaced no material change (no goal advanced, none neglected newly, none newly born). Tell the user "no material change this month" and exit without a file. Empty pulse artifacts pollute the longitudinal record and confuse the next cadence check. Full reviews always write a file (even if findings are mostly "still on track") because the quarterly cadence anchor matters.
 ```markdown
 # Goal Review — YYYY-MM-DD
 
@@ -98,6 +129,11 @@ After writing the review file, emit a session log:
 
 The review file in `zk/reflections/` is the durable session output. No write-back to daily notes — daily notes are the user's capture stream, read-only from the system's perspective. Tell the user the review has been saved and where to find it.
 
+Suggest follow-ups:
+- `/reflect` for daily check-ins between reviews
+- `/weekly` for lighter weekly check-ins
+- `/decision` if any goal needs a decision about continuing or stopping
+
 ## Trend Analysis (if prior reviews exist)
 
 If previous review files exist in `zk/reflections/`, compare:
@@ -111,10 +147,3 @@ Present trend as:
 | [goal] | Progressing | Progressing | Sustained momentum |
 | [goal] | Neglected | Neglected | Chronic neglect — needs decision |
 | [goal] | Progressing | Neglected | Lost momentum — investigate |
-
-## Wrap Up
-
-Tell the user the review has been saved. Suggest:
-- `/project:reflect` for daily check-ins between reviews
-- `/project:weekly` for lighter weekly check-ins
-- `/project:decision` if any goal needs a decision about continuing/stopping
