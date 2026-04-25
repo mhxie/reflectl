@@ -20,6 +20,23 @@ git diff --stat
 
 If the working tree is clean, stop and tell the user there is nothing to review.
 
+### 1b. Privacy gate (blocking)
+
+```bash
+uv run scripts/privacy_check.py --json
+```
+
+Parse stdout as JSON. The script's `--json` mode emits the JSON document on every run regardless of exit code; `exit 1` is the script's normal "hits found" signal, not a script error. Decision logic:
+
+- If JSON parses AND `hit_count > 0` → abort with `NEEDS_REVISION`. Present each entry in `hits` verbatim (`file:line` + `private_title`). Do not dispatch reviewers; fix the leaks first, then re-run `/system-review`.
+- If JSON parses AND `hit_count == 0` → proceed to Step 2.
+- If JSON parses AND `zk_missing: true` → soft-skip the gate; note "privacy gate skipped (vault not available)" in the synthesis. Proceed to Step 2.
+- If JSON does NOT parse OR exit code >= 2 OR stdout is empty → real script error. Surface stderr, soft-skip, note "privacy gate skipped (script error)" in the synthesis.
+
+The script scans tracked files PLUS untracked-but-not-ignored files (per `tracked_files()` in `scripts/privacy_check.py`), so a brand-new command file with a leak is caught before it is staged.
+
+Rationale: privacy leaks are a hard veto regardless of score. Catching them deterministically before dispatching the expensive external reviewers saves tokens and prevents NEEDS_REVISION cycles caused by mechanical issues a script already knows. Mirrors `/lint` Phase 0b.
+
 ### 2. Dispatch in parallel (one message, multiple tool calls)
 
 Send a **single** assistant message containing both tool calls:

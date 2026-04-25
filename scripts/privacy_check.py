@@ -136,15 +136,29 @@ def collect_wikilinks(root: Path, allowlist: set[str], dirs: list[str]) -> set[s
 
 
 def tracked_files() -> list[str]:
-    res = subprocess.run(
-        ["git", "ls-files"], capture_output=True, text=True
-    )
-    if res.returncode != 0:
-        sys.stderr.write(
-            f"privacy_check: `git ls-files` failed: {res.stderr}\n"
-        )
-        sys.exit(2)
-    return [line for line in res.stdout.splitlines() if line.strip()]
+    """Files tracked by git PLUS untracked-but-not-ignored files.
+
+    The privacy gate cares about content about to enter the repo, not just
+    content already in HEAD. A brand-new file (e.g., a fresh command under
+    .claude/commands/) must be scanned before it is staged, otherwise the
+    gate has a trivial bypass: add a leak in a new file and it is invisible
+    to `git ls-files`.
+    """
+    out: set[str] = set()
+    for cmd in (
+        ["git", "ls-files"],
+        ["git", "ls-files", "-o", "--exclude-standard"],
+    ):
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode != 0:
+            sys.stderr.write(
+                f"privacy_check: `{' '.join(cmd)}` failed: {res.stderr}\n"
+            )
+            sys.exit(2)
+        for line in res.stdout.splitlines():
+            if line.strip():
+                out.add(line)
+    return sorted(out)
 
 
 def committed_stems(files: list[str]) -> set[str]:

@@ -69,6 +69,8 @@ Apply rows top-to-bottom; first match wins. NEEDS_REVISION is the catch-all defa
 
 No APPROVED_WITH_NOTES for system reviews. See `.claude/agents/reviewer.md` -> Scoring for why weighted passes with a low single dimension conceal real flaws.
 
+The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0b) precedes scoring; non-empty `scripts/privacy_check.py` hits force NEEDS_REVISION before dispatch, regardless of any score the reviewers would otherwise emit.
+
 **Gate keeper:** Reviewer
 **Max revision rounds:** Session = 2 (after 2 failed revisions, deliver with all caveats). System = unlimited (Evolver may escalate to user after 2 rounds without progress).
 

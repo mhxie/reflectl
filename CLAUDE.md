@@ -12,7 +12,7 @@ These rules apply to every turn, every agent. Violations are bugs.
 - Ask before writing to Reflect. Always get user approval before `create_note`, because the API has no update or delete operations.
 - Cite sources. Reference notes by [[Title]]. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
-- Never hardcode private names (org names, internal projects, repo URLs, employers, multi-word filename stems from `$ZK/`) in committed files. Use gitignored config or env vars, because leaks are irreversible once pushed. Filename-stem half is enforced by `scripts/privacy_check.py` (wired into `/lint` Phase 0b).
+- Never hardcode private names (org names, internal projects, repo URLs, employers, multi-word filename stems from `$ZK/`) in committed files. Use gitignored config or env vars, because leaks are irreversible once pushed. Filename-stem half is enforced by `scripts/privacy_check.py` (wired into `/lint` Phase 0b and `/system-review` Phase 1b).
 - No H1 headings inside markdown files. Obsidian renders the filename as the title, so an internal H1 duplicates it. Start content with metadata or the first `##`. Filenames are space-separated title-case (e.g., `Note Title With Spaces.md`).
 - Criteria-first dispatch. Before multi-step agent dispatches, state the success criterion the user can verify (e.g., "Success = X, verified by Y"). If the request admits multiple reasonable interpretations, surface 2-3 readings and your default before acting, because silent interpretation costs turns when we guess wrong. See `protocols/orchestrator.md` → "Criteria-First Dispatch".
 
@@ -87,6 +87,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/prm` | Audit relationship health and support system robustness |
 | `/restore` | Emergency wiki recovery from Reflect |
 | `/civ` | Civ-style life-management dashboard |
+| `/dine` | Recommend 3 restaurants based on context, history, and credit-burn opportunities |
 
 ## Agent Teams
 

@@ -306,7 +306,37 @@ A lightweight check-in on the user's interpersonal interactions and support syst
 
 Keep this step under 2 minutes of conversation time. The value is in the longitudinal record, not the daily depth.
 
-### 6. Close with Concrete Prompt
+### 6. Dining Pulse (brief, every session)
+
+Lightweight capture of dining experiences for personal preference learning + future `/dine` recommendations. Skip silently if user has nothing to share.
+
+**Trigger question** (one shot, only if dining didn't already come up in conversation):
+
+> "今天有没有去新餐厅打卡, 或重访旧餐厅? 如有, 体验如何?"
+
+**If user has dining to share, capture quickly** (do not deep-dive):
+- 餐厅名 (中/英文均可)
+- 评分 1-10 (8+ = top, 6-7 = good, 4-5 = ok, ≤3 = avoid)
+- 再去? (Y / N / Maybe)
+- **健康 flags** (per-visit, 依赖所点菜): 油重 / 盐重 / 油炸 / 肥肉多 / 蔬菜少 / 高糖 / 加工肉 / 高蛋白 / balanced / 清淡 / 蔬菜多 — 多 flag 用 · 分隔, 空白 = 未观察。Restaurant ordering 是健康管理重要部分, 不能省
+- 1-2 句话: 必点菜, 服务/ambiance, 同行
+- 推断 from context (else 1-line confirm): City / 类型 / Platform (OT/R/W/DD) / Credit used
+
+**Append to the dining log**:
+Use the `Edit` tool to add one row to the user's dining-log table under `zk/travel/`, with all columns filled (评分 + 再去 mandatory; the dash placeholder only for missing data the user can't recall). This is a local-file row append, not a Reflect MCP write; the Curator delegate-rule applies to MCP operations (where mistakes are unrecoverable), not local edits backed by git history.
+
+**Cross-doc sync triggers** (silent unless flagged for user):
+- If 评分 ≥ 8 AND 再去 = Y AND restaurant NOT in the regional catalog rotation → flag user: "Add to rotation?"
+- If Credit = credit-perks tier (e.g., Resy / OpenTable / partner-network) → also flag: "Update perks ledger cycle subtotal?"
+- If restaurant on the credit-perks catalog → mark ✅ + date in Cycle Tracking
+
+**If user has nothing to share**: respond "记下了, 没新餐厅" and move to Close. Don't push.
+
+**Output to reflection file** (new "Dining" section, see Output template below).
+
+Keep this step under 60s of conversation time. Goal is consistent capture, not depth.
+
+### 7. Close with Concrete Prompt
 One specific, actionable next step tied to a goal. Not generic advice — something the user can do today or this week.
 
 ## Output
@@ -341,6 +371,16 @@ After the interactive session, write a reflection file:
 - Concentration flag: [any person carrying 3+ support types?]
 - New connection this week: yes / no
 - Observation: [one-line pattern note for longitudinal tracking]
+
+## Dining
+| Restaurant | Score (/10) | 再去 | 健康 flags | 必点·备注 |
+|---|---|---|---|---|
+| [Name] | [1-10] | Y/N/Maybe | [油重/balanced/etc] | [必点 + 1 line] |
+
+- Captured to: the dining log (count of new rows appended)
+- Cross-doc updates triggered: [Bay Area rotation add? Perks Ledger update? Exclusive Tables ✓?]
+- 健康 trend: [if multiple recent entries flag 油重/盐重 → surface as health observation in Next Action]
+- (omit table entirely if no dining captured)
 
 ## Session Meta
 - User engagement: high / medium / low
