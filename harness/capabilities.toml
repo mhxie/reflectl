@@ -1,0 +1,98 @@
+# Runtime capability registry.
+#
+# Shared protocols should name capabilities. Runtime-specific tools stay in
+# adapter fields.
+
+[capabilities.read_file]
+description = "Read local project, protocol, and vault files."
+claude_code = ["Read"]
+codex = ["local file read"]
+
+[capabilities.search_text]
+description = "Search local files with path scoping."
+claude_code = ["Grep", "Glob"]
+codex = ["rg", "rg --files"]
+
+[capabilities.run_shell]
+description = "Run deterministic project scripts and shell commands."
+claude_code = ["Bash"]
+codex = ["shell"]
+
+[capabilities.semantic_query]
+description = "Run conceptual local search over the Zettelkasten mirror."
+claude_code = ["Bash: uv run scripts/semantic.py query"]
+codex = ["shell: uv run scripts/semantic.py query"]
+
+[capabilities.web_search]
+description = "Search the web for external context."
+claude_code = ["WebSearch"]
+codex = ["web search when enabled"]
+
+[capabilities.web_fetch]
+description = "Fetch and read external pages."
+claude_code = ["WebFetch"]
+codex = ["web fetch or browser when enabled"]
+
+[capabilities.note_read_escape_hatch]
+description = "Read Reflect only for narrow orchestrator-approved gaps."
+claude_code = ["mcp__reflect-notes__get_note", "mcp__reflect-notes__get_daily_note"]
+codex = ["configured Reflect MCP or unavailable"]
+
+[capabilities.note_create]
+description = "Create a new Reflect note after explicit user approval."
+claude_code = ["mcp__reflect-notes__create_note"]
+codex = ["configured Reflect MCP or unavailable"]
+
+[capabilities.daily_note_append]
+description = "Append to a Reflect daily note after explicit user approval."
+claude_code = ["mcp__reflect-notes__append_to_daily_note"]
+codex = ["configured Reflect MCP or unavailable"]
+
+[capabilities.write_local_file]
+description = "Write local reflection, cache, or harness files."
+claude_code = ["Write", "Edit"]
+codex = ["apply_patch", "local file edit"]
+
+[capabilities.spawn_role]
+description = "Delegate a role to a subagent or emulate it sequentially."
+claude_code = ["Agent"]
+codex = ["Codex subagent when permitted", "sequential emulation"]
+
+[capabilities.ask_user]
+description = "Ask the user to choose among workflow branches."
+claude_code = ["AskUserQuestion"]
+codex = ["plain question", "numbered options"]
+
+[agents.researcher]
+requires = ["read_file", "search_text", "run_shell", "semantic_query"]
+
+[agents.synthesizer]
+requires = ["read_file", "search_text", "run_shell", "write_local_file"]
+
+[agents.reviewer]
+requires = ["read_file", "search_text", "run_shell"]
+
+[agents.challenger]
+requires = ["read_file", "search_text", "run_shell", "semantic_query"]
+
+[agents.thinker]
+requires = ["read_file", "search_text", "web_search", "web_fetch"]
+
+[agents.evolver]
+requires = ["read_file", "search_text", "run_shell", "write_local_file", "spawn_role"]
+
+[agents.curator]
+requires = ["read_file", "search_text", "run_shell", "note_read_escape_hatch", "note_create", "daily_note_append"]
+
+[agents.scout]
+requires = ["read_file", "search_text", "run_shell", "web_search", "web_fetch", "write_local_file"]
+
+[agents.reader]
+requires = ["read_file", "search_text", "run_shell", "web_search", "web_fetch"]
+
+[agents.meeting]
+requires = ["read_file", "search_text"]
+
+[agents.librarian]
+requires = ["read_file", "search_text", "run_shell", "web_search", "web_fetch"]
+

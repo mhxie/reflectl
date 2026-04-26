@@ -1,0 +1,94 @@
+# Portable agent registry.
+#
+# Claude Code uses `.claude/agents/*.md` as native subagent specs.
+# Codex uses this registry plus `scripts/reflectl.py agents` and
+# `scripts/reflectl.py agent-prompt <agent>` to discover and emulate roles.
+
+[agents.challenger]
+source = ".claude/agents/challenger.md"
+model_profile = "reflective_challenge"
+capability_profile = "challenger"
+status = "portable-adapted"
+description = "Presents probing questions to affirm or challenge the user's latest thoughts and feelings."
+codex_prompt = "Emulate the Challenger role using `.claude/agents/challenger.md` and the runtime adapter protocol."
+
+[agents.curator]
+source = ".claude/agents/curator.md"
+model_profile = "note_operations"
+capability_profile = "curator"
+status = "portable-adapted"
+description = "Manages note operations: compacting, merging, replacing, and creating notes in Reflect."
+codex_prompt = "Emulate the Curator role using `.claude/agents/curator.md` and the runtime adapter protocol."
+
+[agents.evolver]
+source = ".claude/agents/evolver.md"
+model_profile = "system_evolution"
+capability_profile = "evolver"
+status = "portable-adapted"
+description = "Improves the reflection system itself: agents, commands, frameworks, and methodology."
+codex_prompt = "Emulate the Evolver role using `.claude/agents/evolver.md` and the runtime adapter protocol."
+
+[agents.librarian]
+source = ".claude/agents/librarian.md"
+model_profile = "recommendations"
+capability_profile = "librarian"
+status = "portable-adapted"
+description = "Recommends readings, resources, and thinkers relevant to the user's interests and goals."
+codex_prompt = "Emulate the Librarian role using `.claude/agents/librarian.md` and the runtime adapter protocol."
+
+[agents.meeting]
+source = ".claude/agents/meeting.md"
+model_profile = "meeting_extraction"
+capability_profile = "meeting"
+status = "portable-adapted"
+description = "Processes work meeting transcripts into structured notes with action items and decisions."
+codex_prompt = "Emulate the Meeting role using `.claude/agents/meeting.md` and the runtime adapter protocol."
+
+[agents.reader]
+source = ".claude/agents/reader.md"
+model_profile = "deep_reading"
+capability_profile = "reader"
+status = "portable-adapted"
+description = "Reads articles and notes through critical, structural, practical, and dialectical lenses."
+codex_prompt = "Emulate the Reader role using `.claude/agents/reader.md` and the runtime adapter protocol."
+
+[agents.researcher]
+source = ".claude/agents/researcher.md"
+model_profile = "deep_reflection"
+capability_profile = "researcher"
+status = "portable-adapted"
+description = "Gathers raw context from the user's local Zettelkasten vault."
+codex_prompt = "Emulate the Researcher role using `.claude/agents/researcher.md` and the runtime adapter protocol."
+
+[agents.reviewer]
+source = ".claude/agents/reviewer.md"
+model_profile = "mechanical_review"
+capability_profile = "reviewer"
+status = "portable-adapted"
+description = "Quality-checks reflection outputs and system evolution changes."
+codex_prompt = "Emulate the Reviewer role using `.claude/agents/reviewer.md` and the runtime adapter protocol."
+
+[agents.scout]
+source = ".claude/agents/scout.md"
+model_profile = "web_research"
+capability_profile = "scout"
+status = "portable-adapted"
+description = "Gathers external context from the web: articles, discussions, research, and recent developments."
+codex_prompt = "Emulate the Scout role using `.claude/agents/scout.md` and the runtime adapter protocol."
+
+[agents.synthesizer]
+source = ".claude/agents/synthesizer.md"
+model_profile = "synthesis"
+capability_profile = "synthesizer"
+status = "portable-adapted"
+description = "Reads gathered context and produces structured reflections, summaries, and insights."
+codex_prompt = "Emulate the Synthesizer role using `.claude/agents/synthesizer.md` and the runtime adapter protocol."
+
+[agents.thinker]
+source = ".claude/agents/thinker.md"
+model_profile = "framework_reasoning"
+capability_profile = "thinker"
+status = "portable-adapted"
+description = "Thinks independently using structured frameworks and outside-view reasoning."
+codex_prompt = "Emulate the Thinker role using `.claude/agents/thinker.md` and the runtime adapter protocol."
+

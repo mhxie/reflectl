@@ -23,19 +23,21 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 
 ### Model Assignments
 
-| Agent | Current Model | Rationale | Re-test When |
-|-------|--------------|-----------|-------------|
-| Researcher | Opus | Deep reading comprehension over large note sets | Sonnet matches Opus on reading comprehension benchmarks |
-| Synthesizer | Opus | Pattern recognition across multiple sources | Sonnet matches Opus on synthesis quality |
-| Reviewer | Sonnet | Mechanical checklist work, cost efficiency | Haiku becomes capable enough for rubric scoring |
-| Challenger | Opus | Nuance for question taxonomy and emotional register | Sonnet improves on open-ended question quality |
-| Thinker | Opus | Independent framework application, meta-cognitive checks | Sonnet matches on framework reasoning |
-| Evolver | Opus | System-level reasoning across many files | Sonnet matches on multi-file coherence |
-| Curator | Sonnet | Structured note operations, checklist execution | Haiku becomes capable for preservation checks |
-| Scout | Sonnet | Web search aggregation, structured output | Haiku becomes capable for search + format |
-| Reader | Opus | Deep analytical reading with 4 lenses | Sonnet matches on analytical reading quality |
-| Meeting | Sonnet | Transcript extraction, structured output | Haiku becomes capable for transcript processing |
-| Librarian | Sonnet | Resource recommendation, structured Chinese output | Haiku becomes capable for bilingual recommendations |
+`harness/models.toml` is the source of truth for which model runs which role and *why* a profile was chosen — see the `[profiles.*.rationale]` fields. `harness_lint.py` (`models-claude-drift`) catches frontmatter↔toml drift. The table below is the audit-trigger registry only: which profile each agent uses, and what staleness signal would force a re-evaluation. To learn *why* a profile fits a role, read the rationale in `harness/models.toml`.
+
+| Agent | Profile (see `harness/models.toml`) | Re-test When |
+|-------|-------------------------------------|-------------|
+| Researcher | `deep_reflection` | Sonnet matches Opus on reading comprehension benchmarks |
+| Synthesizer | `synthesis` | Sonnet matches Opus on synthesis quality |
+| Reviewer | `mechanical_review` | Haiku becomes capable enough for rubric scoring |
+| Challenger | `reflective_challenge` | Sonnet improves on open-ended question quality |
+| Thinker | `framework_reasoning` | Sonnet matches on framework reasoning |
+| Evolver | `system_evolution` | Sonnet matches on multi-file coherence |
+| Curator | `note_operations` | Haiku becomes capable for preservation checks |
+| Scout | `web_research` | Haiku becomes capable for search + format |
+| Reader | `deep_reading` | Sonnet matches on analytical reading quality |
+| Meeting | `meeting_extraction` | Haiku becomes capable for transcript processing |
+| Librarian | `recommendations` | Haiku becomes capable for bilingual recommendations |
 
 ### Token/Context Budgets
 

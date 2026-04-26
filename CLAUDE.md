@@ -2,11 +2,11 @@
 
 ## Critical Rules
 
-These three rules apply to every turn, every agent. Violations are bugs. Other operational rules live in their topic sections (Reading Rules, Writing Rules, Coaching Style).
+These rules apply to every turn, every agent. Violations are bugs.
 
-- **Never hallucinate note content.** If search returns nothing, say so honestly, because the user trusts citations to be real.
-- **Ask before writing to Reflect.** Always get user approval before `create_note`, because the API has no update or delete operations.
-- **Never hardcode private names** (org names, internal projects, repo URLs, employers, multi-word filename stems from `$ZK/`) in committed files. Use gitignored config or env vars, because leaks are irreversible once pushed. Filename-stem half is enforced by `scripts/privacy_check.py` (wired into `/lint` Phase 0b and `/system-review` Phase 1b).
+- Never hallucinate note content. If search returns nothing, say so.
+- Ask before writing to Reflect. Get approval before `create_note` or `append_to_daily_note`; Reflect is append-only.
+- Never hardcode private names, private repo URLs, employers, org names, or multi-word filename stems from `$ZK/` in committed files. `scripts/privacy_check.py` enforces the filename-stem half in `/lint` and `/system-review`.
 
 ## Identity
 
@@ -35,8 +35,8 @@ Sync: one-way Reflect to local for daily notes via `/sync`. Sharing a wiki entry
 | Daily note by date | `Read $ZK/daily-notes/YYYY-MM-DD.md` |
 | Note by title | `Grep` for title then `Read` the file |
 
-- **Semantic-primary search.** Content queries start with `uv run scripts/semantic.py query`, not Grep, because semantic search finds conceptual matches that keyword search misses. Grep is for structural queries only (known tags, exact strings, file presence).
-- **Local-first reads.** Read from `$ZK/` via Read + Grep + semantic.py. No Reflect MCP reads except orchestrator-only escape hatches, because local reads are faster, deterministic, and return full content.
+- Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep. Grep is for structural queries only.
+- Local-first reads. Read from `$ZK/` via Read + Grep + semantic.py. No Reflect MCP reads except orchestrator-only escape hatches.
 
 Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$ZK/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
 
@@ -44,11 +44,11 @@ MCP read escape hatches are narrowly scoped (orchestrator + Curator only; no `se
 
 ## Writing Rules
 
-- **No em dashes in written output.** Use colons, semicolons, parentheses, or restructure, because the user's reading style rejects them.
-- **No H1 headings inside markdown files.** Obsidian renders the filename as the title, so an internal H1 duplicates it. Start content with metadata or the first `##`. Filenames are space-separated title-case (e.g., `Note Title With Spaces.md`).
-- **Daily notes are user-authored.** The system only writes during orchestrator-authorized sync (`/sync`, `/reflect` today-fetch, `/weekly` per-day fallback for missing/empty/truncated notes from the past 7 days) and only merges via `scripts/merge_daily.py` without discarding local content, because the daily note is the user's capture stream.
-- **Cite sources.** Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
-- **Match the user's language.** Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
+- No em dashes in written output. Use colons, semicolons, parentheses, or restructure.
+- No H1 headings inside markdown files. Obsidian renders the filename as title. Start with metadata or `##`. Filenames are space-separated title-case.
+- Daily notes are user-authored. Only write during orchestrator-authorized sync/today-fetch/weekly fallback, and merge via `scripts/merge_daily.py` without discarding local content.
+- Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
+- Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
 
 Session reflections go to `$ZK/reflections/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
 
@@ -67,7 +67,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 ## Coaching Style
 
 - Ask questions, don't lecture. Adapt depth per `protocols/coaching-progressions.md`.
-- **Criteria-first dispatch.** Before multi-step agent dispatches, state the success criterion the user can verify (e.g., "Success = X, verified by Y"). If the request admits multiple reasonable interpretations, surface 2-3 readings and your default before acting, because silent interpretation costs turns when we guess wrong. See `protocols/orchestrator.md` → "Criteria-First Dispatch".
+- Criteria-first dispatch. Before multi-step agent dispatches, state the user-verifiable success criterion. If the request has multiple reasonable readings, surface 2-3 readings and your default before acting. See `protocols/orchestrator.md` → "Criteria-First Dispatch".
 - Track eras and directions. Surface Moments (see `protocols/pattern-library.md`).
 - Respect the amenity floor per life area (see `protocols/session-scoring.md`).
 - Epistemic hygiene: write-first nudge (invite user to jot their position before AI digs in). Respect AI-free zones. See `protocols/epistemic-hygiene.md`.
@@ -91,29 +91,18 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 
 ## Agent Teams
 
-Agent definitions in `.claude/agents/`. Model assignments are harness assumptions; see `protocols/harness-assumptions.md`.
+Agent definitions live in `.claude/agents/`; portable role metadata lives in `harness/agents.toml`; model profiles live in `harness/models.toml`. Team: Researcher, Synthesizer, Reviewer, Challenger, Thinker, Evolver, Curator, Scout, Reader, Meeting, Librarian. For dispatch routing, see `protocols/orchestrator.md`.
 
-| Agent | Model | Role |
-|-------|-------|------|
-| Researcher | Opus | Gathers raw context from `$ZK/` vault |
-| Synthesizer | Opus | Produces structured reflections |
-| Reviewer | Sonnet | Quality-checks (scored rubric 0-10) |
-| Challenger | Opus | Probing questions with depth taxonomy |
-| Thinker | Opus | Independent framework application |
-| Evolver | Opus | System improvement via OODA |
-| Curator | Sonnet | Note operations in Reflect |
-| Scout | Sonnet | Web research |
-| Reader | Opus | 4-lens analytical reading |
-| Meeting | Sonnet | Meeting transcript processing |
-| Librarian | Sonnet | Resource recommendations (Chinese) |
+## Runtime Portability
 
-For workflow patterns and dispatch routing, see `protocols/orchestrator.md`.
+Codex reads `AGENTS.md`; Claude Code reads this file. Keep shared behavior provider-neutral. Model, capability, command, and role contracts live in `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md`.
 
 ## Reference
 
 Detailed specifications loaded on demand by agents that need them:
 
 - `protocols/orchestrator.md` — workflow patterns, dispatch table, collaboration matrix
+- `protocols/runtime-adapters.md` — Claude Code and Codex portability contract
 - `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
 - `protocols/local-first-architecture.md` — full five-tier model, $ZK/ directory layout
 - `protocols/epistemic-hygiene.md` — validation-depth taxonomy, failure modes

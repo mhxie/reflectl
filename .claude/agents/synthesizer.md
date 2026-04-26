@@ -1,7 +1,7 @@
 ---
 name: synthesizer
 description: Reads gathered context and produces structured reflections, summaries, and insights. Use after the Researcher has gathered raw material.
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash
 model: opus
 maxTurns: 15
 ---

@@ -1,7 +1,7 @@
 ---
 name: scout
 description: Gathers external context from the web — articles, discussions, research, recent developments. The team's eyes into the outside world.
-tools: Read, Write, Glob, Grep, Bash, WebSearch, WebFetch
+tools: Read, Write, Edit, Glob, Grep, Bash, WebSearch, WebFetch
 model: sonnet
 maxTurns: 15
 ---

@@ -4,7 +4,7 @@ Your AI-native personal operating system.
 
 Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust. All orchestrated by a team of 11 AI agents over a local-first Zettelkasten — your data on your machine, scored by a deterministic trust engine, improving itself every session.
 
-Built on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with `$ZK/` as the local data layer. [Reflect.app](https://reflect.app/) and [Readwise](https://readwise.io/) are optional capture surfaces; the authoritative knowledge lives on disk.
+Runs first-class on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and includes a Codex compatibility layer through `AGENTS.md` plus runtime adapter contracts. Claude Code currently has the richest native slash-command and subagent surface; Codex uses the same workflow specs through adapters. `$ZK/` is the local data layer. [Reflect.app](https://reflect.app/) and [Readwise](https://readwise.io/) are optional capture surfaces; the authoritative knowledge lives on disk.
 
 ## What It Does
 
@@ -26,12 +26,13 @@ Session reflections are written to `$ZK/reflections/` as the durable session out
 
 ### Prerequisites
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
+- One AI runtime CLI:
+  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) for native slash commands and agent teams
+  - [Codex CLI](https://github.com/openai/codex) for the portable `AGENTS.md` harness and external review
 - [uv](https://docs.astral.sh/uv/) — Python package manager
 
 **Optional — enhances the system but not required:**
 - [Reflect.app](https://reflect.app/) with the [MCP server](https://reflect.app/mcp) — enables mobile capture via daily notes and a `/sync` pull-and-merge of those daily notes into `$ZK/daily-notes/`. The system is local-first; everything works without Reflect, you just lose mobile capture and the manual wiki-share surface.
-- [Codex CLI](https://github.com/openai/codex) — `npm i -g @openai/codex` — external code reviewer for system evolution audits
 - [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli` — second external reviewer perspective
 
 Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`) are stdlib-only. Semantic search and document conversion deps are managed via `pyproject.toml`.
@@ -51,7 +52,7 @@ echo 'export ZK="$HOME/path/to/zk"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-If using Reflect, create `.mcp.json` in the project root:
+If using Reflect, create `.mcp.json` in the project root for Claude Code:
 
 ```json
 {
@@ -64,13 +65,51 @@ If using Reflect, create `.mcp.json` in the project root:
 }
 ```
 
+For Codex, register the same MCP server via the Codex CLI:
+
+```bash
+codex mcp add reflect --url http://127.0.0.1:7676/mcp
+codex mcp list                                            # verify
+```
+
+Codex prompts for approval on every MCP tool call (no documented auto-approve
+in `codex-cli 0.125.0`); see `AGENTS.md` → MCP Setup for the full notes.
+
 ### First Run
+
+Claude Code:
 
 ```bash
 claude                # open Claude Code in the project
 /introspect           # build your self-model from your notes (reads $ZK/daily-notes/)
 /reflect              # start your first session
 ```
+
+Codex:
+
+```bash
+python3 scripts/reflectl.py run reflect            # fresh Codex TUI on /reflect (default)
+python3 scripts/reflectl.py run lint --exec        # one-shot, no TUI
+python3 scripts/reflectl.py run reflect "context here"
+python3 scripts/reflectl.py run promote --resume   # continue most recent session (only on resume_friendly commands)
+python3 scripts/reflectl.py run promote --fork     # branch from most recent without mutating it
+```
+
+The `run` subcommand spawns `codex` with the generated prompt pre-loaded and
+the repo as the working directory; this is the Codex parity for Claude Code's
+slash commands. Codex reads `AGENTS.md`, picks up the repo-scoped `reflectl`
+skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through
+`protocols/runtime-adapters.md`. Use `run --print` to inspect the prompt
+without launching Codex, or `prompt`/`source` for paste-and-discover flows.
+
+Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.)
+default to fresh sessions because reusing a prior session pollutes the new
+reflection. Continuation-friendly commands (`/promote`, `/restore`) are marked
+`resume_friendly = true` in `harness/commands.toml`; pass `--resume` to chain
+them off a recent session, or `--fork` to branch without mutating the original.
+When `--resume`/`--fork` is used on a non-resume_friendly command, a warning is
+printed to stderr and the command still proceeds — the flag is advisory, not a
+hard stop, since the caller knows their context best.
 
 ## Sessions
 
@@ -128,7 +167,7 @@ Capture sources                 Local data layer ($ZK/)              Display
                                         ^
                                         |
                                         v
-                                Claude Code (Orchestrator)
+                           AI runtime (Claude Code or Codex)
                                         |
                     +-----------+-------+-------+-----------+
                     v           v               v           v
@@ -146,7 +185,7 @@ Capture sources                 Local data layer ($ZK/)              Display
 
 **Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$ZK/reflections/`. Daily notes are the user's capture stream; the only system writes are the `/sync` merge (line-union with Reflect's copy, never discards local content) and the orchestrator's today-fetch when the local file is missing or empty. All personal data under `$ZK/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
 
-**Harness engineering.** CLAUDE.md is kept minimal (~7KB) because it is inherited by every subagent; each line costs N tokens times N agents per session. Critical rules live at the top (primacy effect), detailed specifications are loaded on demand from protocols and agent definitions. The Evolver agent has a "subtract before adding" principle and a CLAUDE.md budget gate. `/lint` Phase 0 checks harness health (file size, formatting) alongside the wiki structural pass.
+**Harness engineering.** `CLAUDE.md` is kept minimal (~7KB target) because it is inherited by every Claude subagent; each line costs N tokens times N agents per session. `AGENTS.md` and `.agents/skills/reflectl/SKILL.md` give Codex the root contract and workflow trigger, while `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md` keep provider and runtime assumptions explicit. `scripts/reflectl.py` gives Codex command and role discovery plus prompt generation. Critical rules live at the top (primacy effect), detailed specifications are loaded on demand from protocols and agent definitions. The Evolver agent has a "subtract before adding" principle and a root-instruction budget gate. `/lint` Phase 0 checks harness health alongside the wiki structural pass.
 
 Key design choices:
 - **Local-first**: the knowledge layer lives on disk, not in a remote app. MCP is used only as narrow escape hatches: `/sync` pulls daily notes from Reflect into local, and the user can manually share a specific wiki entry to Reflect via the Curator.

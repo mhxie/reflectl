@@ -2,7 +2,7 @@
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `scripts/trust.py` pattern.
 
-**Scope:** Two passes. (1) Structural: everything under `zk/wiki/`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`, `zk/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
+**Scope:** Three passes. (0) Harness portability and privacy checks. (1) Structural: everything under `zk/wiki/`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`, `zk/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
@@ -18,6 +18,7 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Technical term in claim body not in vocabulary allowlist and not matching any wiki entry title (`unfounded-term`) | INFO | `scripts/lint.py` — add term to `scripts/wiki_vocabulary.txt` if common knowledge, or add a wiki entry, or add a parenthetical definition inline |
 | Chinese shadow missing in `zk/wiki-cn/` (`cn-shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the CN shadow manually |
 | Chinese shadow older than English source (`cn-shadow-stale`) | WARN | `scripts/lint.py` — re-translate the CN shadow to match the updated English source |
+| Claude/Codex harness portability (`missing-agents-md`, `models-agent-missing`, `capability-agent-missing`, `agents-registry-entry-missing`, `commands-entry-missing`, `skill-missing`, etc.) | ERROR/WARN/INFO | `scripts/harness_lint.py` |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
 
@@ -28,6 +29,22 @@ Exit code: 0 if no ERROR-level findings, 1 otherwise. WARN and INFO never fail t
 ## Process
 
 ### Phase 0: Harness health
+
+```
+Bash: python3 scripts/harness_lint.py --json
+```
+
+Parse the JSON. Shape:
+```json
+{
+  "counts": { "error": 0, "warn": 0, "info": 0 },
+  "findings": [
+    { "severity": "ERROR|WARN|INFO", "code": "...", "where": "...", "message": "..." }
+  ]
+}
+```
+
+Any ERROR-level finding blocks the run until the harness contract is fixed. WARN and INFO findings are advisory.
 
 ```
 Bash: wc -c CLAUDE.md

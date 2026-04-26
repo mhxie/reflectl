@@ -10,12 +10,24 @@ Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only
 | `semantic_backends.py` | Backend implementations for semantic.py (LanceDB embedding backend, lexical fallback) | B.5 | `lancedb`, `sentence-transformers` (optional) |
 | `trust.py` | TrustRank for `zk/wiki/` — Personalized PageRank with external anchor seeds, claim-level granularity, bi-temporal filtering, floor trust | B | stdlib |
 | `lint.py` | Structural + corpus-level lint over `zk/wiki/` — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
+| `harness_lint.py` | Claude Code and Codex portability lint — root instructions, model profiles, capability mappings, command and agent registries | ops | stdlib |
+| `harness_smoke.py` | Smoke test for the portable harness helper and lint JSON surfaces | ops | stdlib |
+| `reflectl.py` | Portable command/agent discovery and Codex prompt generation from `harness/*.toml` | ops | stdlib |
 | `merge_daily.py` | Line-union merge of a local daily note with a Reflect-sourced copy; used by `/sync` | ops | stdlib |
 | `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0b | ops | stdlib |
 | `restore.py` | Emergency `/restore` planner (user supplies slug + Reflect note ID pairs) | ops | stdlib |
 | `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
+| `todos.py` | Aggregate open TODOs from `zk/gtd/` and reflection Next Action sections; computes priority from `due:` / `priority:` / age; flags closure candidates from daily-note language; powers `/reflect` Step 0 digest | ops | stdlib |
 | `session_log.py` | Session event log skeleton generator — handles late-sleep date rule and collision auto-increment | E | stdlib |
 | `review.sh` | External reviewer wrapper (codex + gemini in parallel) for system-evolution diffs | ops | `codex`, `gemini` CLIs |
+
+## Portable Harness
+
+`scripts/reflectl.py status` summarizes the Claude/Codex registry state.
+Use `commands`, `agents`, `prompt`, and `agent-prompt` subcommands to discover
+portable workflows without scraping `harness/*.toml` directly.
+Run `scripts/harness_smoke.py` after harness edits to verify the helper and JSON
+surfaces end to end without touching `$ZK/`.
 
 ## `trust.py` — quick reference
 

@@ -1,0 +1,104 @@
+# Model profile registry.
+#
+# Provider-specific names stay here so agent and workflow docs can refer to
+# stable role profiles instead of fixed model choices.
+
+[profiles.deep_reflection]
+rationale = "Broad vault reading, pattern discovery, and ambiguous personal context."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.synthesis]
+rationale = "Combine multiple briefs into a grounded, user-facing reflection."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.reflective_challenge]
+rationale = "Generate probing questions with emotional nuance and assumption tests."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.framework_reasoning]
+rationale = "Apply thinking frameworks without overfitting to the user's notes."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.system_evolution]
+rationale = "Reason across repo-wide harness changes and protocol consistency."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.mechanical_review]
+rationale = "Checklist-heavy review, scorecards, and structured verification."
+claude_code = "sonnet"
+codex = "openai/gpt-5.4"
+
+[profiles.note_operations]
+rationale = "Structured note operations with strict preservation and approval gates."
+claude_code = "sonnet"
+codex = "openai/gpt-5.4"
+
+[profiles.web_research]
+rationale = "External context gathering and source triage."
+claude_code = "sonnet"
+codex = "openai/gpt-5.4"
+
+[profiles.deep_reading]
+rationale = "Close reading through critical, structural, practical, and dialectical lenses."
+claude_code = "opus"
+codex = "openai/gpt-5.5"
+
+[profiles.meeting_extraction]
+rationale = "Extract action items, decisions, owners, and next steps from transcripts."
+claude_code = "sonnet"
+codex = "openai/gpt-5.4"
+
+[profiles.recommendations]
+rationale = "Curate resources with bilingual summaries and fit filtering."
+claude_code = "sonnet"
+codex = "openai/gpt-5.4"
+
+[agents.researcher]
+profile = "deep_reflection"
+claude_code_model = "opus"
+
+[agents.synthesizer]
+profile = "synthesis"
+claude_code_model = "opus"
+
+[agents.reviewer]
+profile = "mechanical_review"
+claude_code_model = "sonnet"
+
+[agents.challenger]
+profile = "reflective_challenge"
+claude_code_model = "opus"
+
+[agents.thinker]
+profile = "framework_reasoning"
+claude_code_model = "opus"
+
+[agents.evolver]
+profile = "system_evolution"
+claude_code_model = "opus"
+
+[agents.curator]
+profile = "note_operations"
+claude_code_model = "sonnet"
+
+[agents.scout]
+profile = "web_research"
+claude_code_model = "sonnet"
+
+[agents.reader]
+profile = "deep_reading"
+claude_code_model = "opus"
+
+[agents.meeting]
+profile = "meeting_extraction"
+claude_code_model = "sonnet"
+
+[agents.librarian]
+profile = "recommendations"
+claude_code_model = "sonnet"
+

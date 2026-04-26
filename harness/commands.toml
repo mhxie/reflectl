@@ -1,0 +1,128 @@
+# Portable command registry.
+#
+# Claude Code uses `.claude/commands/*.md` as native slash-command specs.
+# Codex uses this manifest plus `scripts/reflectl.py prompt <command>` to
+# discover the same workflows without depending on undocumented custom slash
+# command behavior.
+
+[commands.reflect]
+source = ".claude/commands/reflect.md"
+category = "session"
+status = "portable-adapted"
+description = "Primary menu for reflection, planning, action, reading, and learning sessions."
+codex_prompt = "Run the /reflect workflow using `.claude/commands/reflect.md` and the runtime adapter protocol."
+
+[commands.weekly]
+source = ".claude/commands/weekly.md"
+category = "session"
+status = "portable-adapted"
+description = "Structured weekly review over the past seven effective days."
+codex_prompt = "Run the /weekly workflow using `.claude/commands/weekly.md` and the runtime adapter protocol."
+
+[commands.review]
+source = ".claude/commands/review.md"
+category = "session"
+status = "portable-adapted"
+description = "Goal review for quarterly full reviews and monthly light pulses."
+codex_prompt = "Run the /review workflow using `.claude/commands/review.md` and the runtime adapter protocol."
+
+[commands.decision]
+source = ".claude/commands/decision.md"
+category = "session"
+status = "portable-adapted"
+description = "Structured decision journal with framework cross-validation."
+codex_prompt = "Run the /decision workflow using `.claude/commands/decision.md` and the runtime adapter protocol."
+
+[commands.energy-audit]
+source = ".claude/commands/energy-audit.md"
+category = "session"
+status = "portable-adapted"
+description = "Assessment of physical, mental, emotional, and social energy patterns."
+codex_prompt = "Run the /energy-audit workflow using `.claude/commands/energy-audit.md` and the runtime adapter protocol."
+
+[commands.explore]
+source = ".claude/commands/explore.md"
+category = "session"
+status = "portable-adapted"
+description = "Open-ended exploration for forgotten connections and emerging themes."
+codex_prompt = "Run the /explore workflow using `.claude/commands/explore.md` and the runtime adapter protocol."
+
+[commands.prm]
+source = ".claude/commands/prm.md"
+category = "session"
+status = "portable-adapted"
+description = "Personal relationship management audit grounded in local relationship notes."
+codex_prompt = "Run the /prm workflow using `.claude/commands/prm.md` and the runtime adapter protocol."
+
+[commands.introspect]
+source = ".claude/commands/introspect.md"
+category = "profile"
+status = "portable-adapted"
+description = "Build or refresh profile files from local notes and reading patterns."
+codex_prompt = "Run the /introspect workflow using `.claude/commands/introspect.md` and the runtime adapter protocol."
+
+[commands.curate]
+source = ".claude/commands/curate.md"
+category = "knowledge"
+status = "portable-adapted"
+description = "Goal-aware content curation and inbox triage."
+codex_prompt = "Run the /curate workflow using `.claude/commands/curate.md` and the runtime adapter protocol."
+
+[commands.promote]
+source = ".claude/commands/promote.md"
+category = "knowledge"
+status = "portable-adapted"
+description = "Promote L2 working notes into a schema-compliant L4 wiki entry."
+codex_prompt = "Run the /promote workflow using `.claude/commands/promote.md` and the runtime adapter protocol."
+resume_friendly = true
+
+[commands.sync]
+source = ".claude/commands/sync.md"
+category = "ops"
+status = "portable-adapted"
+description = "Pull Reflect daily notes into the local mirror and merge line-union."
+codex_prompt = "Run the /sync workflow using `.claude/commands/sync.md` and the runtime adapter protocol."
+
+[commands.lint]
+source = ".claude/commands/lint.md"
+category = "ops"
+status = "portable-adapted"
+description = "Run harness, privacy, structural, and staleness checks."
+codex_prompt = "Run the /lint workflow using `.claude/commands/lint.md` and the runtime adapter protocol."
+
+[commands.restore]
+source = ".claude/commands/restore.md"
+category = "ops"
+status = "portable-adapted"
+description = "Plan last-resort recovery of a missing wiki entry from Reflect."
+codex_prompt = "Run the /restore workflow using `.claude/commands/restore.md` and the runtime adapter protocol."
+resume_friendly = true
+
+[commands.system-review]
+source = ".claude/commands/system-review.md"
+category = "ops"
+status = "portable-adapted"
+description = "Review system-evolution changes with internal and external reviewers."
+codex_prompt = "Run the /system-review workflow using `.claude/commands/system-review.md` and the runtime adapter protocol."
+
+[commands.civ]
+source = ".claude/commands/civ.md"
+category = "dashboard"
+status = "portable-adapted"
+description = "Read-only life dashboard over resources, civilizations, and terminal values."
+codex_prompt = "Run the /civ workflow using `.claude/commands/civ.md` and the runtime adapter protocol."
+
+[commands.dine]
+source = ".claude/commands/dine.md"
+category = "dashboard"
+status = "portable-adapted"
+description = "Restaurant recommendation flow using local context and credit-burn signals."
+codex_prompt = "Run the /dine workflow using `.claude/commands/dine.md` and the runtime adapter protocol."
+
+[commands.perks]
+source = ".claude/commands/perks.md"
+category = "dashboard"
+status = "portable-adapted"
+description = "Read-only perks and trip status dashboard over local trackers."
+codex_prompt = "Run the /perks workflow using `.claude/commands/perks.md` and the runtime adapter protocol."
+
