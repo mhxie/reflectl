@@ -1,0 +1,549 @@
+#!/usr/bin/env python3
+"""
+todos.py: Aggregate open TODOs from GTD files and reflection Next Actions.
+
+Sources scanned:
+- zk/gtd/*.md            checkbox lines (+ [ ] / - [ ])
+- zk/reflections/*.md    bullets under "## Next Action" / "## Next Actions"
+                         (skipping "不做" / "Parked" sub-sections)
+
+States (markdown markers, GTD only):
+  [ ]  open      [x]  done       [~]  killed       [/]  wip
+
+Reflection-bullet closure marker (no checkbox in reflection bullets):
+  Items prefixed with "DONE <date>: " or "DONE: " are excluded from open scans.
+  /reflect's wrap-up writes this prefix when the user confirms closure mid-session.
+
+Inline metadata (optional, anywhere on the item line):
+  due:YYYY-MM-DD   priority:Pn (P0-P3)   area:#tag
+
+Computed priority (when no explicit priority:):
+  P0  overdue (due < today)
+  P1  due within 7 days
+  P3  stale (>=30 days no movement, by git blame)
+  P2  default
+
+Subcommands:
+  list                              all open TODOs grouped by computed priority
+  list --area #capacity             filter by area tag
+  list --json                       structured output
+  stale [--days 30]                 items >=N days no movement
+  closure-candidates [--days 14]    flag items with closure language nearby
+  digest [--days 7]                 concise output for /reflect Step 0
+
+Paths are project-relative. Run from repo root.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from dataclasses import asdict, dataclass
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
+GTD_DIR = Path("zk/gtd")
+REFLECTIONS_DIR = Path("zk/reflections")
+DAILY_NOTES_DIR = Path("zk/daily-notes")
+
+CHECKBOX_RE = re.compile(r"^\s*[+\-*]\s*\[([ xX~/])\]\s+(.*)$")
+LIST_ITEM_RE = re.compile(r"^(\s*)(?:[-*+]\s+|\d+\.\s+)(.*)$")
+SUBSECTION_RE = re.compile(r"^\s*\*\*([^*]+?)\*\*\s*[:：]?\s*$")
+# Daily notes are `YYYY-MM-DD.md`; reflections are `YYYY-MM-DD-<slug>.md`.
+# Accept either: stem ends with the date, or date is followed by `-` then slug.
+FILENAME_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:-|\.)")
+
+INLINE_META = {
+    "due": re.compile(r"\bdue:(\d{4}-\d{2}-\d{2})\b"),
+    "priority": re.compile(r"\bpriority:(P[0-3])\b"),
+    "area": re.compile(r"\barea:(#[\w\-]+)\b"),
+}
+
+STATE_MAP = {" ": "open", "x": "done", "X": "done", "~": "killed", "/": "wip"}
+
+NEXT_ACTION_HEADERS = ("## Next Action", "## Next Actions")
+SKIP_SUBSECTIONS = ("不做", "不要做", "Parked", "Skip", "Don't")
+
+# Closure-language patterns. Group 1 captures the phrase mentioning the target.
+# Chinese-only by design: English `done`/`finished` patterns produced too many
+# false positives against quoted English text in reading reflections. The
+# primary closure mechanism is the user editing [ ] -> [x] in source files;
+# this scan is a best-effort secondary signal for daily-note mentions.
+# `了?` after each verb consumes the perfective particle so it does not bleed
+# into the captured noun (e.g. `已完成了申请` -> capture `申请`, not `了申请`).
+CLOSURE_PATTERNS = [
+    re.compile(r"已完成了?\s*([^\s。，,；;、/]+)"),
+    re.compile(r"完成了\s*([^\s。，,；;、/]+)"),
+    re.compile(r"搞定了?\s*([^\s。，,；;、/]+)"),
+    re.compile(r"做完了?\s*([^\s。，,；;、/]+)"),
+    re.compile(r"已经?做了?\s*([^\s。，,；;、/]+)"),
+]
+
+CLOSURE_STOP_WORDS = {
+    "了", "的", "和", "也", "都", "就", "会", "也是", "还", "可", "可以",
+    "一", "二", "三", "几", "些", "些", "这", "那", "其",
+}
+
+
+@dataclass
+class Todo:
+    text: str
+    source: str
+    line: int
+    state: str
+    section: str | None = None
+    due: str | None = None
+    priority: str | None = None
+    area: str | None = None
+    age_days: int = -1  # -1 = not loaded
+
+    def computed_priority(self) -> str:
+        if self.priority:
+            return self.priority
+        if self.due:
+            try:
+                d = date.fromisoformat(self.due)
+                days = (d - date.today()).days
+                if days < 0:
+                    return "P0"
+                if days <= 7:
+                    return "P1"
+            except ValueError:
+                pass
+        if self.age_days >= 30:
+            return "P3"
+        return "P2"
+
+    def is_stale(self, threshold: int = 30) -> bool:
+        return self.age_days >= threshold
+
+    def short_source(self) -> str:
+        return Path(self.source).name
+
+
+def extract_metadata(todo: Todo, text: str) -> None:
+    for key, regex in INLINE_META.items():
+        m = regex.search(text)
+        if m:
+            setattr(todo, key, m.group(1))
+
+
+def filename_date(path: Path) -> date | None:
+    m = FILENAME_DATE_RE.match(path.name)
+    if not m:
+        return None
+    try:
+        return date.fromisoformat(m.group(1))
+    except ValueError:
+        return None
+
+
+def line_age_days(path: Path, line_no: int) -> int:
+    """Days since the item was created.
+
+    Reflections are write-once; we derive age from the YYYY-MM-DD filename prefix,
+    which is the canonical creation date and beats file mtime (Google Drive sync
+    invalidates mtime). Git blame is also unreliable here: zk/ is a Drive symlink
+    not tracked by the reflectl repo. GTD files are continuously edited, so we
+    approximate their line-age with file mtime.
+    """
+    if "reflections" in path.parts:
+        d = filename_date(path)
+        if d is not None:
+            return max(0, (date.today() - d).days)
+    try:
+        out = subprocess.run(
+            [
+                "git",
+                "blame",
+                "--line-porcelain",
+                "-L",
+                f"{line_no},{line_no}",
+                "--",
+                str(path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        for ln in out.splitlines():
+            if ln.startswith("author-time "):
+                ts = int(ln.split()[1])
+                return max(0, (datetime.now() - datetime.fromtimestamp(ts)).days)
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        pass
+    try:
+        mtime = path.stat().st_mtime
+        return max(0, (datetime.now() - datetime.fromtimestamp(mtime)).days)
+    except OSError:
+        return 0
+
+
+def scan_gtd_file(path: Path) -> list[Todo]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    out: list[Todo] = []
+    for i, line in enumerate(lines, start=1):
+        m = CHECKBOX_RE.match(line)
+        if not m:
+            continue
+        state_char, content = m.groups()
+        state = STATE_MAP.get(state_char, "open")
+        todo = Todo(
+            text=content.strip(),
+            source=str(path),
+            line=i,
+            state=state,
+        )
+        extract_metadata(todo, content)
+        out.append(todo)
+    return out
+
+
+def scan_reflection_next_actions(path: Path) -> list[Todo]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+
+    in_section = False
+    in_skip_sub = False
+    current_sub: str | None = None
+    out: list[Todo] = []
+
+    for i, line in enumerate(lines, start=1):
+        if line.startswith("## "):
+            if any(line.startswith(h) for h in NEXT_ACTION_HEADERS):
+                in_section = True
+                in_skip_sub = False
+                current_sub = None
+                continue
+            if in_section:
+                break
+            continue
+
+        if not in_section:
+            continue
+
+        sub_m = SUBSECTION_RE.match(line)
+        if sub_m:
+            sub_label = sub_m.group(1).strip()
+            current_sub = sub_label
+            in_skip_sub = any(skip in sub_label for skip in SKIP_SUBSECTIONS)
+            continue
+
+        if in_skip_sub:
+            continue
+
+        list_m = LIST_ITEM_RE.match(line)
+        if not list_m:
+            continue
+        indent, content = list_m.groups()
+        if indent:
+            continue  # indented sub-bullets are detail under a parent item
+        text_part = content.strip()
+        if not text_part:
+            continue
+        # DONE-/KILLED- prefix marks reflection items the user (or orchestrator
+        # at session wrap-up) has confirmed closed. Reflection bullets are not
+        # checkboxes, so these prefixes are the closure markers for that source.
+        # KILLED is the kill-path counterpart to GTD `[~]`; DONE is the done-
+        # path counterpart to GTD `[x]`. Both exclude the line from open scans.
+        if (
+            text_part.startswith("DONE ")
+            or text_part.startswith("DONE:")
+            or text_part.startswith("KILLED ")
+            or text_part.startswith("KILLED:")
+        ):
+            continue
+        todo = Todo(
+            text=text_part,
+            source=str(path),
+            line=i,
+            state="open",  # reflection Next Actions are implicitly open
+            section=current_sub,
+        )
+        extract_metadata(todo, text_part)
+        out.append(todo)
+
+    return out
+
+
+def collect_all_todos(load_age: bool = True) -> list[Todo]:
+    todos: list[Todo] = []
+    if GTD_DIR.exists():
+        for f in sorted(GTD_DIR.glob("*.md")):
+            todos.extend(scan_gtd_file(f))
+    if REFLECTIONS_DIR.exists():
+        for f in sorted(REFLECTIONS_DIR.glob("*.md")):
+            todos.extend(scan_reflection_next_actions(f))
+    if load_age:
+        for t in todos:
+            t.age_days = line_age_days(Path(t.source), t.line)
+    return todos
+
+
+def collect_open_todos(load_age: bool = True) -> list[Todo]:
+    return [t for t in collect_all_todos(load_age) if t.state == "open"]
+
+
+def detect_closure_candidates(
+    open_todos: list[Todo], since_days: int = 14
+) -> list[tuple[Todo, str, str]]:
+    """Return (todo, closure_phrase, source_path). De-duplicates on (todo, phrase).
+
+    Scans daily notes only. Reflection bodies are too narrative-heavy and produce
+    excessive false positives.
+    """
+    cutoff = date.today() - timedelta(days=since_days)
+    sources: list[Path] = []
+    if DAILY_NOTES_DIR.exists():
+        for f in DAILY_NOTES_DIR.glob("*.md"):
+            d = filename_date(f)
+            if d is not None and d >= cutoff:
+                sources.append(f)
+
+    seen: set[tuple[str, int, str]] = set()
+    out: list[tuple[Todo, str, str]] = []
+    for src_path in sources:
+        try:
+            text = src_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        for pattern in CLOSURE_PATTERNS:
+            for m in pattern.finditer(text):
+                phrase = m.group(1).strip()
+                if len(phrase) < 2:
+                    continue
+                for todo in open_todos:
+                    if _phrase_matches_todo(phrase, todo.text):
+                        key = (todo.source, todo.line, phrase)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        out.append((todo, phrase, str(src_path)))
+    return out
+
+
+def _is_substantive(s: str) -> bool:
+    """A phrase or token is substantive enough to base a closure match on."""
+    if s in CLOSURE_STOP_WORDS:
+        return False
+    cjk = sum(1 for c in s if "一" <= c <= "鿿")
+    if cjk >= 2:
+        return True
+    if len(s) >= 4 and all(c.isalnum() or c in "-_" for c in s):
+        return True
+    return False
+
+
+def _phrase_matches_todo(phrase: str, todo_text: str) -> bool:
+    if not _is_substantive(phrase):
+        return False
+    if phrase in todo_text:
+        return True
+    tokens = [t for t in re.split(r"[\s/、,，·]+", phrase) if _is_substantive(t)]
+    return any(t in todo_text for t in tokens)
+
+
+def find_last_reflection() -> Path | None:
+    if not REFLECTIONS_DIR.exists():
+        return None
+    files = sorted(
+        REFLECTIONS_DIR.glob("*-reflection*.md"),
+        key=lambda p: p.name,
+        reverse=True,
+    )
+    return files[0] if files else None
+
+
+def cmd_list(args: argparse.Namespace) -> int:
+    todos = collect_open_todos(load_age=True)
+    if args.area:
+        todos = [t for t in todos if t.area == args.area]
+
+    if args.json:
+        payload = []
+        for t in todos:
+            d = asdict(t)
+            d["computed_priority"] = t.computed_priority()
+            payload.append(d)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 0
+
+    groups: dict[str, list[Todo]] = {"P0": [], "P1": [], "P2": [], "P3": []}
+    for t in todos:
+        groups[t.computed_priority()].append(t)
+
+    if not todos:
+        print("No open TODOs.")
+        return 0
+
+    visible = ("P0", "P1", "P2") if not args.include_stale else ("P0", "P1", "P2", "P3")
+    skipped_stale = len(groups["P3"]) if not args.include_stale else 0
+
+    for prio in visible:
+        items = groups[prio]
+        if not items:
+            continue
+        label = {
+            "P0": "P0  OVERDUE / PINNED",
+            "P1": "P1  DUE SOON / HIGH",
+            "P2": "P2  NORMAL",
+            "P3": "P3  STALE (kill candidate)",
+        }[prio]
+        print(f"\n{label}")
+        print("─" * 56)
+        for t in sorted(items, key=lambda x: (x.due or "9999", -x.age_days)):
+            tags = []
+            if t.due:
+                tags.append(f"due:{t.due}")
+            if t.area:
+                tags.append(t.area)
+            if t.section:
+                tags.append(f"§{t.section}")
+            if t.age_days >= 30 and prio != "P3":
+                tags.append(f"{t.age_days}d")
+            tag_str = "  " + " ".join(tags) if tags else ""
+            print(f"  {t.short_source()}:{t.line}{tag_str}")
+            text = t.text if len(t.text) <= 110 else t.text[:107] + "..."
+            print(f"    {text}")
+    if skipped_stale:
+        print(
+            f"\n({skipped_stale} stale items hidden; run with --include-stale "
+            f"or `scripts/todos.py stale`)"
+        )
+    print()
+    return 0
+
+
+def cmd_stale(args: argparse.Namespace) -> int:
+    todos = collect_open_todos(load_age=True)
+    stale = [t for t in todos if t.age_days >= args.days]
+    stale.sort(key=lambda t: -t.age_days)
+    if not stale:
+        print(f"No open TODOs older than {args.days} days.")
+        return 0
+    print(f"Stale TODOs (>= {args.days} days, oldest first)")
+    print("─" * 56)
+    for t in stale:
+        print(f"  {t.age_days:4d}d  {t.short_source()}:{t.line}")
+        text = t.text if len(t.text) <= 100 else t.text[:97] + "..."
+        print(f"         {text}")
+    return 0
+
+
+def cmd_closure_candidates(args: argparse.Namespace) -> int:
+    todos = collect_open_todos(load_age=False)
+    cands = detect_closure_candidates(todos, since_days=args.days)
+    if not cands:
+        print(f"No closure candidates in last {args.days} days.")
+        return 0
+    print(f"Closure candidates (closure language matched in last {args.days} days)")
+    print("─" * 56)
+    last_key: tuple[str, int] | None = None
+    for todo, phrase, src in cands:
+        key = (todo.source, todo.line)
+        if key != last_key:
+            print(f"\n  TODO  {todo.short_source()}:{todo.line}")
+            text = todo.text if len(todo.text) <= 100 else todo.text[:97] + "..."
+            print(f"        {text}")
+            last_key = key
+        print(f"    ↳ \"{phrase}\" in {Path(src).name}")
+    print()
+    return 0
+
+
+def cmd_digest(args: argparse.Namespace) -> int:
+    """Concise output for /reflect Step 0."""
+    last_ref = find_last_reflection()
+    todos = collect_open_todos(load_age=True)
+    cands = detect_closure_candidates(todos, since_days=args.days)
+
+    print("## Digest")
+    if last_ref:
+        last_actions = scan_reflection_next_actions(last_ref)
+        last_actions = [t for t in last_actions if t.state == "open"]
+        # filter out skip subsections (already done by scan, but defensive)
+        print(f"\nLast reflection: {last_ref.name}")
+        if last_actions:
+            print(f"Next Actions ({len(last_actions)}):")
+            for t in last_actions[:5]:
+                section = f" [§{t.section}]" if t.section else ""
+                text = t.text if len(t.text) <= 100 else t.text[:97] + "..."
+                print(f"  - {text}{section}")
+            if len(last_actions) > 5:
+                print(f"  ... ({len(last_actions) - 5} more)")
+    else:
+        print("\nNo prior reflection found.")
+
+    if cands:
+        print(f"\nClosure candidates (mentions in last {args.days} days):")
+        seen: set[tuple[str, int]] = set()
+        for todo, phrase, _ in cands:
+            key = (todo.source, todo.line)
+            if key in seen:
+                continue
+            seen.add(key)
+            text = todo.text if len(todo.text) <= 80 else todo.text[:77] + "..."
+            print(f"  - {text}")
+            print(f"    ({todo.short_source()}:{todo.line}; phrase \"{phrase}\")")
+
+    # Stale tail (top 3 oldest)
+    stale = sorted(
+        [t for t in todos if t.age_days >= 30], key=lambda t: -t.age_days
+    )[:3]
+    if stale:
+        print("\nStale (oldest 3, kill or promote?):")
+        for t in stale:
+            text = t.text if len(t.text) <= 80 else t.text[:77] + "..."
+            print(f"  - {t.age_days}d  {text}  ({t.short_source()}:{t.line})")
+    print()
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="scripts/todos.py",
+        description="Aggregate and surface open TODOs from gtd/ and reflections/.",
+    )
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_list = sub.add_parser("list", help="List open TODOs by computed priority.")
+    p_list.add_argument("--area", help="Filter by area tag, e.g. #capacity")
+    p_list.add_argument(
+        "--include-stale",
+        action="store_true",
+        help="Include P3 stale items (>=30d). Default hides them.",
+    )
+    p_list.add_argument("--json", action="store_true", help="JSON output.")
+    p_list.set_defaults(func=cmd_list)
+
+    p_stale = sub.add_parser("stale", help="List TODOs older than N days.")
+    p_stale.add_argument("--days", type=int, default=30)
+    p_stale.set_defaults(func=cmd_stale)
+
+    p_close = sub.add_parser(
+        "closure-candidates",
+        help="Flag TODOs mentioned with closure language in recent notes.",
+    )
+    p_close.add_argument("--days", type=int, default=14)
+    p_close.set_defaults(func=cmd_closure_candidates)
+
+    p_digest = sub.add_parser(
+        "digest", help="Concise digest for /reflect Step 0."
+    )
+    p_digest.add_argument("--days", type=int, default=7)
+    p_digest.set_defaults(func=cmd_digest)
+
+    args = parser.parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

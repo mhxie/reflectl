@@ -249,15 +249,48 @@ Run a reflection session grounded in your Reflect notes and goals.
    - `Read zk/daily-notes/<effective-date - 1>.md` — what you did the day before. Local only; no MCP fallback needed for a sync-complete day.
    - For recent activity related to your themes, run `Bash: uv run scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
+4. **Load open TODO state (silent — orchestrator working memory):**
+   - `Bash: uv run scripts/todos.py list --json` — parse and hold the open list throughout the session. Source files (`source` field) are needed at session end for closure write-back.
+   - Don't display this output to the user. It's context for the orchestrator's decisions in Step 0 (digest), mid-conversation (topic matching), and Step 7 (resurface vs generate).
+   - **Fallback:** if the command exits non-zero, fails to parse as JSON, or returns `[]`, proceed with empty TODO context for this session and note "TODO context unavailable" under Anomalies in the wrap-up. The TODO Awareness rules below all degrade silently to no-op when the queue is empty.
+
 ## Coaching Session
 
-Based on the loaded context, run an interactive reflection:
+Based on the loaded context, run an interactive reflection.
+
+**Cross-cutting rule: TODO Awareness.** The orchestrator holds the open TODO list loaded in Context Loading step 4 for the entire session.
+
+- **Mid-conversation soft surfacing (max 1 per session):** if the user mentions a topic that strongly matches an open TODO not yet mentioned this session, do **one** soft callback: "顺便,你 [date] 写过 [item] 还 open — 要不要本周 commit?" Confidence threshold is high (phrase or strong-token overlap); do not reach for tenuous matches. If user confirms commitment → mark for closure-pending or promotion at wrap-up. If user declines → do not surface again this session.
+- **No proactive list dump.** The TODO list is for *matching*, not narration. Never volunteer "btw here are N open TODOs" outside Step 0 digest or explicit user request.
+- **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closures and at the end of the Output step. Two paths, two source types:
+  - **Done path (user completed the item):**
+    - GTD-source (`source` under `zk/gtd/`): `Edit` to change `[ ]` → `[x]` on the source line.
+    - Reflection-source (`source` under `zk/reflections/`): `Edit` to prepend `DONE <effective-date>: ` to the bullet text on the source line.
+  - **Kill path (user abandons the item):**
+    - GTD-source: `Edit` to change `[ ]` → `[~]` on the source line. `[~]` is the killed marker per `todos.py` STATE_MAP; preserves the audit distinction from `[x]` (done).
+    - Reflection-source: `Edit` to prepend `KILLED <effective-date>: ` to the bullet text. The scanner excludes both `DONE ` and `KILLED ` prefixes from open scans.
+  - **Line-drift guard:** before each `Edit`, re-read the source line at the recorded `line` number. If the bullet text no longer matches what `list --json` reported (the user manually edited mid-session), **skip that closure** and note it under Anomalies — do not risk overwriting unrelated content.
+  - Do these edits **once at the end**, not mid-conversation, to avoid jumping out of the dialogue.
 
 ### 0. Continuity Check (if not the first session)
-If a previous reflection exists in `zk/reflections/`, read the most recent one. Follow `protocols/session-continuity.md` — one brief callback, then move forward:
-- If the previous session has a "Next Action" and it was from a different day: check in gently. Ask "Last time, you intended to [action]. How did that go?" Accept any answer without judgment -- missed actions are data points, not failures.
-- If the previous session was **today**: skip the check-in (don't nag on multiple sessions per day).
-- If there was no prior action: skip this step entirely.
+
+Run `Bash: uv run scripts/todos.py digest` to fetch:
+- Last reflection's open Next Actions
+- Closure candidates (TODOs mentioned with "已完成 X" / 等 closure language in recent daily notes)
+- Top stale items (≥30d, kill-or-promote prompts)
+
+Present **at most one item per category**, woven into the conversation per `protocols/session-continuity.md`. Do not dump the whole digest:
+
+- **Last Next Action callback** (most recent prior session's first item, if from a different day): "Last time, you intended to [action]. How did that go?" Accept any answer without judgment — missed actions are data points, not failures.
+- **Closure candidate** (if any): "I noticed you mentioned [X] in [date] — does that mean [TODO Y] is done?" If user confirms → add to closure-pending list (write-back at wrap-up).
+- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above: GTD `[~]`, reflection `KILLED <date>: ` prefix). If "promote" → ask for due date and area, then at wrap-up append `+ [ ] <text>  due:<date>  area:<#tag>` to the **active GTD file** (defined as the most recently modified `.md` file in `zk/gtd/` — `Bash: ls -t zk/gtd/*.md | head -1`).
+
+Skip rules:
+- Previous session was **today**: skip the Next Action callback.
+- Previous session had no Next Action: skip that part.
+- No closure candidates: skip silently.
+- No stale items: skip silently.
+- First session ever: skip everything; introduce the system briefly.
 
 ### 1. Warm-Up: Adaptive Opening
 Choose opening style based on what you find in the daily note:
@@ -359,7 +392,15 @@ Use the `Edit` tool to add one row to the user's dining-log table under `zk/trav
 Keep this step under 60s of conversation time. Goal is consistent capture, not depth.
 
 ### 7. Close with Concrete Prompt
-One specific, actionable next step tied to a goal. Not generic advice — something the user can do today or this week.
+
+One specific, actionable next step tied to a goal. **Resurface before generating new** — the open queue is the first place to look:
+
+1. Scan the loaded open-TODO list (Context Loading step 4) for items relevant to what was discussed this session — matching topic, area, or framework.
+2. **If 1+ items match**: surface the most relevant as the next action. "Already on your list: [item] ([source]:[line]). Make it this week's commitment?" No need to invent.
+3. **If no match AND fewer than 5 active items (P0/P1) in the queue**: generate a new concrete next action. The new action goes in the reflection file's `## Next Action` section as a single bullet line (`- <action>` or `1. <action>`). Plain prose under that header is invisible to `todos.py` and will not be resurfaced next session.
+4. **If no match AND queue is bloated (≥5 active P0/P1)**: do not add. Say "Open queue is already at [N] active items. Today doesn't need to add — pick one from the list to commit to this week instead?" Surface 2-3 candidates, let user choose.
+
+Not generic advice — something the user can do today or this week. Match user's language (Chinese for Chinese topics).
 
 ## Output
 
