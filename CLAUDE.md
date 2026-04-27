@@ -105,6 +105,7 @@ Detailed specifications loaded on demand by agents that need them:
 - `protocols/runtime-adapters.md` — Claude Code and Codex portability contract
 - `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
 - `protocols/local-first-architecture.md` — full five-tier model, $ZK/ directory layout
+- `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → zk/ (structured repository) workflow + mv-default rules
 - `protocols/epistemic-hygiene.md` — validation-depth taxonomy, failure modes
 - `protocols/harness-assumptions.md` — model-era assumption registry, audit checklist
 - `protocols/session-log.md` — session event log format
