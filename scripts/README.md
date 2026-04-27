@@ -14,7 +14,8 @@ Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only
 | `harness_smoke.py` | Smoke test for the portable harness helper and lint JSON surfaces | ops | stdlib |
 | `reflectl.py` | Portable command/agent discovery and Codex prompt generation from `harness/*.toml` | ops | stdlib |
 | `merge_daily.py` | Line-union merge of a local daily note with a Reflect-sourced copy; used by `/sync` | ops | stdlib |
-| `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0b | ops | stdlib |
+| `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0c | ops | stdlib |
+| `zk_audit.py` | Post-ingestion hygiene audit for `$ZK/`: missing READMEs, raw-without-digest, archive↔working overlap, root orphans, suspicious dirs; wired into `/lint` Phase 0b | ops | stdlib |
 | `restore.py` | Emergency `/restore` planner (user supplies slug + Reflect note ID pairs) | ops | stdlib |
 | `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
 | `todos.py` | Aggregate open TODOs from `zk/gtd/` and reflection Next Action sections; computes priority from `due:` / `priority:` / age; flags closure candidates from daily-note language; powers `/reflect` Step 0 digest | ops | stdlib |

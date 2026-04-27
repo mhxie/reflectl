@@ -125,6 +125,29 @@ Use `zk/health/README.md` and `zk/housing/README.md` as the templates.
 - Drive Trash retains rm'd files for 30 days. rmdir of an empty folder also goes to Trash. Recovery is from Drive web UI, not CLI.
 - Never `rm -rf` for cleanup. Use targeted `rm <file>` and `rmdir <empty-dir>` so accidents are obvious.
 
+## Post-ingestion verification
+
+After a Drive → zk ingestion sweep (especially a multi-domain pass), run the audit to catch gaps the protocol describes but a human eye misses:
+
+```
+uv run scripts/zk_audit.py            # human-readable report
+uv run scripts/zk_audit.py --json     # machine-readable; used by /lint Phase 0b
+```
+
+The audit walks `$ZK/` and surfaces six categories of finding (advisory only; never mutates):
+
+| # | Category | What it flags | Action |
+|---|---|---|---|
+| 1 | Missing READMEs | Working-tier domains with no `README.md`. Protocol mandates one per domain (see "Per-domain README" above). | Write the README using `zk/health/README.md` or `zk/housing/README.md` as a template. |
+| 2 | Raw without digest | `<domain>/raw/<sub>/` clusters where no `.md` in the working tier mentions `<sub>` by name. Substring heuristic; false negatives possible if a digest references its source by a synonym. | Either write a digest, or accept low-value status and `mv` the cluster to `zk/archive/<category>/`. |
+| 3 | Archive ↔ working-tier overlap | Archive subtrees whose normalized name matches a working-tier domain (e.g., `archive/practical/health-admin` ↔ `health/`). Often pre-protocol residue duplicating active tiers. | Per-subtree decision: keep as historical archive, merge into the active working tier, or rename to disambiguate. Audit surfaces; user decides. |
+| 4 | Root orphans + empty `.md` | `.md` files at `$ZK/` root other than `README.md`; 0-byte `.md` files in working tiers. Empty `.md` under `archive/` aggregated as a count (pre-ingestion stubs, not new debt). | Move root orphans into a tier dir; delete or fill empty stubs. |
+| 5 | Suspicious top-level dirs | Finder-duplicate names (` 2`, ` (2)`), empty dirs, skeleton dirs (no README, fewer than 3 entries). | Rename, remove, or build out. |
+
+The audit is integrated into `/lint` as Phase 0b (advisory; never blocks). `/lint` surfaces a one-line summary per non-empty category; the full listings are read on demand via the script.
+
+Findings are *advisory*, not auto-fixable. The audit reports gaps; consolidation, README authoring, and digest writing are user-driven follow-up work (typically a per-domain pass).
+
 ## Out of scope
 
 - Live, actively-edited Google Docs in top-level Drive folders. Leave in place; ingest only when stable.
@@ -136,3 +159,4 @@ Use `zk/health/README.md` and `zk/housing/README.md` as the templates.
 - [[local-first-architecture.md]] — L1-L5 tier model, where this protocol slots in (raw landing → L1, structured zk markdown → L2).
 - [[epistemic-hygiene.md]] — validation-depth taxonomy applies after ingestion.
 - `zk/housing/README.md`, `zk/health/README.md` — current implementations of this protocol.
+- `scripts/zk_audit.py` — post-ingestion hygiene audit (see "Post-ingestion verification" above).

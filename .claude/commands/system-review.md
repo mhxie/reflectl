@@ -39,7 +39,7 @@ Match top-to-bottom — first matching row wins. Field defaults when keys are ab
 
 The script scans tracked files PLUS untracked-but-not-ignored files (per `tracked_files()` in `scripts/privacy_check.py`), so a brand-new command file with a leak is caught before it is staged.
 
-Rationale: privacy leaks are a hard veto regardless of score. Catching them deterministically before dispatching the expensive external reviewers saves tokens and prevents NEEDS_REVISION cycles caused by mechanical issues a script already knows. Mirrors `/lint` Phase 0b.
+Rationale: privacy leaks are a hard veto regardless of score. Catching them deterministically before dispatching the expensive external reviewers saves tokens and prevents NEEDS_REVISION cycles caused by mechanical issues a script already knows. Mirrors `/lint` Phase 0c.
 
 ### 2. Dispatch in parallel (one message, multiple tool calls)
 

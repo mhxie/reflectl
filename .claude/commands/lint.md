@@ -2,7 +2,7 @@
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `scripts/trust.py` pattern.
 
-**Scope:** Three passes. (0) Harness portability and privacy checks. (1) Structural: everything under `zk/wiki/`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`, `zk/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
+**Scope:** Three passes. (0) Harness portability, $ZK ingestion hygiene, and privacy checks. (1) Structural: everything under `zk/wiki/`. (2) Staleness: L2 working-layer directories (`zk/agent-findings/`, `zk/drafts/`, `zk/gtd/`, `zk/preprints/`, `zk/reflections/`, `zk/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
@@ -19,6 +19,7 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Chinese shadow missing in `zk/wiki-cn/` (`cn-shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the CN shadow manually |
 | Chinese shadow older than English source (`cn-shadow-stale`) | WARN | `scripts/lint.py` — re-translate the CN shadow to match the updated English source |
 | Claude/Codex harness portability (`missing-agents-md`, `models-agent-missing`, `capability-agent-missing`, `agents-registry-entry-missing`, `commands-entry-missing`, `skill-missing`, etc.) | ERROR/WARN/INFO | `scripts/harness_lint.py` |
+| `$ZK` ingestion hygiene (missing READMEs, raw-without-digest, archive↔working-tier overlap, root-level orphans, empty .md files, suspicious top-level dirs) | INFO (advisory) | `scripts/zk_audit.py` — see `protocols/drive-zk-ingestion.md` § Post-ingestion verification |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
 
@@ -60,7 +61,32 @@ Bash: grep -c '\*\*' CLAUDE.md
 ```
 If count > 0, emit INFO: "CLAUDE.md contains [N] bold markers. Bold has no semantic weight for the model and wastes tokens. Consider removing."
 
-### Phase 0b: Privacy leak scan
+### Phase 0b: $ZK ingestion hygiene audit
+
+```
+Bash: uv run scripts/zk_audit.py --json
+```
+
+Parse the JSON. Shape:
+```json
+{
+  "vault": "/path/to/zk",
+  "categories": {
+    "missing_readmes":      [{ "category": "...", "where": "...", "detail": "..." }],
+    "raw_no_digest":        [...],
+    "archive_overlap":      [...],
+    "root_orphans":         [...],
+    "empty_md":             [...],
+    "empty_md_archive_count": N,
+    "suspicious_dirs":      [...]
+  },
+  "total": N
+}
+```
+
+Advisory only: never blocks the run. Exit code 0 unless $ZK is missing (exit 2). Surface a one-line summary per non-empty category. Detailed listings are read on demand via `uv run scripts/zk_audit.py` (no `--json`). Source of truth: `protocols/drive-zk-ingestion.md` § Post-ingestion verification.
+
+### Phase 0c: Privacy leak scan
 
 ```
 Bash: uv run scripts/privacy_check.py --json
@@ -84,7 +110,7 @@ Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem
 - Replace the private title with a generic placeholder (e.g., `Sample Wiki Entry`, `Topic A`).
 - Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.
 
-The check is a blocking quality gate for any system-evolution commit that touches tracked files. Do not proceed to structural lint if Phase 0b returns hits.
+The check is a blocking quality gate for any system-evolution commit that touches tracked files. Do not proceed to structural lint if Phase 0c returns hits.
 
 ### Phase 1a: Structural lint
 
