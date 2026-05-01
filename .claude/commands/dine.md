@@ -1,16 +1,35 @@
 ## Purpose
 
-Recommend 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs; new captures route through `/reflect` Dining Pulse.
+Two intents (auto-detected from args):
+- **A. Restaurant Recommendation** (default): pick 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs; new captures route through `/reflect` Dining Pulse.
+- **B. Workplace Catering Tracker**: parse a weekly catering PDF dropped into `zk/<slug>/catering/`, choose health-aware picks for the user's attendance days, append one line per day to Reflect daily-notes (idempotent).
 
 ## Quick start
 
-`/dine` accepts optional inline context. Examples:
+Intent A examples:
 - `/dine` → ask all context
 - `/dine 工作日午餐` → use as scene hint, ask remaining
 - `/dine 朋友 4 人 川菜 dinner` → use as filters, ask remaining
 - `/dine SF burn credit` → location SF + flag credit-burn priority
 
+Intent B examples (first arg = workplace slug; the folder `zk/<slug>/catering/` must exist; personal policy lives in gitignored `personal/diet.md`):
+- `/dine <slug>` → find latest PDF in `zk/<slug>/catering/` covering this week, pick + append per `personal/diet.md` attendance pattern
+- `/dine <slug> <pdf-path>` → explicit PDF
+- `/dine <slug> all` → all 5 weekdays (override)
+- `/dine <slug> M/T/Th` → custom attendance set (override; any day-code combination works)
+
 If args present, parse them as initial filters; only ask for slots not derivable.
+
+## Step 0: Intent detection
+
+Parse args. Route to **Intent B** if any of:
+- First arg matches an existing folder `zk/<arg>/catering/` (workplace slug)
+- Any arg is a `.pdf` path under a `zk/*/catering/` folder
+- Args contain the literal token `catering`
+
+Otherwise route to **Intent A** (continue to Step 1 below).
+
+For Intent B, jump to the "Intent B: Workplace Catering Tracker" section near the bottom and skip Steps 1-5.
 
 ## Step 1: Gather context
 
@@ -23,7 +42,7 @@ For missing slots, ask via `AskUserQuestion` or sequential 1-line prompts (which
 | **Meal** | Lunch / Dinner / Brunch / Late night | Y |
 | **Time budget** | Quick (<30min) / Standard (1-2h) / Leisurely (2h+) | Y |
 | Mood / cuisine | Surprise / 中餐 / 不要中餐 / 重辣 / 清淡 / Comfort / 探索新 / Special occasion / 老人友好 | N (default any) |
-| **Health filter** | balanced / 清淡 / 蔬菜多 / less oily / less salty / 高蛋白 / no preference | N (default no preference) |
+| **Health filter** | options enumerated in `personal/diet.md` ("Health filter input options" section) plus `no preference` | N (default no preference) |
 | Budget cap | $20 / $50 / $100 / $150+ / no cap | N |
 | Avoid recent | Last 30 / 60 / 90 days | N (default 30) |
 
@@ -68,9 +87,7 @@ The user's vault holds these catalogs under `zk/travel/` and `zk/finance/`. Disc
 | **Credit-burn priority** (Exclusive Tables restaurant + relevant cycle has unused credit AND ≤ 60d to deadline) | **+5** |
 | Michelin star match + mood = "Special occasion" | +4 |
 | Old-favorite revisit (rotation 评 ≥ 2 + last visit > 60d) | +2 |
-| **Health filter active** + recent visits (last 3) tagged 油重/盐重/肥肉多 | -3 |
-| **Health filter active** + history shows balanced/清淡/蔬菜多 OR restaurant is salads/Vietnamese/Japanese clean style | +3 |
-| **Health filter active** + last 5 days had ≥3 油重/重口 entries (cumulative load) | additional +2 to clean options, -2 to oily options |
+| **Health filter active** | apply scoring rules from `personal/diet.md` "Health-filter scoring rules" section (recent-visit penalties, clean-style bonuses, cumulative-load adjustments) |
 
 ## Step 4: Output
 
@@ -79,9 +96,9 @@ Top 3 candidates as a table:
 ```markdown
 | # | 餐厅 | 类型 | $ | 距离·等待 | Why | Credit signal |
 |---|---|---|---|---|---|---|
-| 1 | 东北烧烤 | 东北/烧烤 | $30-60 | 近·中等 | 评 3 (top); fits 4 friends 晚餐; 近期没去 (last 75d) | n/a |
-| 2 | Selby's | American ⭐ | $150+ | 远·订位 | Michelin 1⭐; 上次 8/10 想再去; **CSR #2 Exclusive Tables H1 deadline 6/30 ($150)** | 🔥 burn |
-| 3 | Aziza | N African ⭐ | $80-120 | 中·订位 | 探索新 (never visited); Michelin 1⭐; Exclusive Tables 候选 | CSR #1 H1 ✓ available |
+| 1 | <restaurant-A> | <cuisine> | <$range> | <distance·wait> | <reason from catalog/log: 评 N + scene fit + recency> | n/a |
+| 2 | <restaurant-B> | <cuisine> ⭐ | <$range> | <distance·wait> | <reason: Michelin tier + last log rating + want-revisit>; **<credit-card> <perk-program> <half> deadline <MM/DD> ($<amount>)** | 🔥 burn |
+| 3 | <restaurant-C> | <cuisine> ⭐ | <$range> | <distance·wait> | <reason: novelty + Michelin tier + perk-eligible>; <perk-program> 候选 | <credit-card> <half> ✓ available |
 ```
 
 Brief reasoning paragraph (2-3 lines) below the table:
@@ -96,12 +113,83 @@ End with one line:
 
 Do NOT auto-book; just surface candidates.
 
+## Intent B: Workplace Catering Tracker
+
+### B.1 Resolve PDF
+
+- If an arg is a `.pdf` path → use it directly.
+- Else: list `zk/<slug>/catering/*.pdf`, pick the one whose filename date range covers the current calendar week. Typical filename pattern: `<Workplace> Catering_<Mon> <DD>-<Mon> <DD>.pdf`. If multiple match (e.g., manual override), prefer the most recent `mtime`.
+- Optional date arg `YYYY-MM-DD` shifts the target week (Mon of that week).
+- 0 matches: report `本周菜单还没传到 zk/<slug>/catering/` and exit cleanly.
+
+### B.2 Parse menu
+
+Read the PDF (`Read` tool). Extract per-day sections (Mon/Tue/Wed/Thu/Fri). Each day has a theme + items + dietary tags (`v` / `vg` / `mwgci`).
+
+### B.3 Determine attendance days
+
+Read attendance pattern from `personal/diet.md` (the section matching the resolved `<slug>`, key: `Attendance days`). Override via the second CLI arg:
+- `all` → all 5 weekdays present in the PDF
+- `M/T/Th`, `T/Th`, `W/F`, etc. → custom set (case-insensitive day codes; any combination)
+
+If `personal/diet.md` is absent or has no entry for `<slug>` → ask the user once, do not assume a default. Map each chosen day code to an absolute date based on the resolved week.
+
+### B.4 Pick per day (reuse Step 3 health-filter logic)
+
+Read **dietary picking priorities** and **flag taxonomy** from `personal/diet.md` (the `<slug>` section). Apply the policy verbatim — do not bake personal preferences into this committed file.
+
+Generic fallback when `personal/diet.md` is absent: choose ONE protein + 1-2 veg sides per day, no specific oil/protein bias, and ask the user to confirm the picks before writing.
+
+The skill itself enforces only the structural shape (one row per attendance day, columns: protein + veg + sauce-note + flag). The semantic content is policy from the private file.
+
+### B.5 Preview
+
+Show table (one row per attendance day; values fill from B.4):
+
+```markdown
+| Date | Day | Theme | Pick | Flag |
+|---|---|---|---|---|
+| YYYY-MM-DD | <day> | <menu theme> | <protein> + <veg sides> + <sauce/dressing note> | <flag from personal/diet.md taxonomy> |
+```
+
+Add a 1-2 line cross-day note if `personal/diet.md` defines cross-day rules (e.g., protein rotation, 油脂 balance). Otherwise omit.
+
+### B.6 Confirm + write
+
+Ask: `Append <N> rows to Reflect daily-notes? (Y/n)`
+
+If Y, for each row in order:
+1. `mcp__reflect-notes__get_daily_note(date)` — read current note body.
+2. If body contains the line prefix `<Slug> <date>` → mark **skipped** (idempotent; do not duplicate).
+3. Else: `mcp__reflect-notes__append_to_daily_note(date=<date>, text="<Slug> <date> — <Day> <theme> (<pick>, <flag>)")`.
+4. **On MCP failure** (exception, network/auth error, or tool returns an error payload): record the date in the `failed` bucket with the error reason; continue to the next date. Per-row isolation: a single date failure must not abort the batch.
+
+Format: `<Slug> <YYYY-MM-DD> — <Day> <theme> (<pick>, <flag>)` where `<Slug>` is the user-provided slug capitalized (first letter only).
+
+### B.7 Report
+
+```
+/dine <slug> summary (<week-range>)
+  appended:  N   (date list)
+  skipped:   K   (already had entry, date list)
+  failed:    F   (date list + reason)
+```
+
 ## Rules
 
+Intent A:
 - **Read-only on catalog docs**: do NOT modify the regional dining catalog or the credit-perks catalog from `/dine`
 - **Reading from the dining log is fine**; new captures only via `/reflect` Dining Pulse or explicit user "记录今天 X"
 - **0 candidates after hard filter**: relax most-restrictive constraint by 1 step, retry; surface 1-2 closest matches with flag "relaxed: <constraint>"
-- **Always show credit-burn opportunity** if relevant (Exclusive Tables H1/H2 ≤ 60d deadline + unused). Even if credit餐厅 doesn't match exact mood, surface as 4th line with note: "💡 Credit-burn alt: <restaurant> ($150 H1, deadline 6/30)"
+- **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `zk/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
 - **Match user language**: Chinese-dominant if cuisine is Chinese; English if Western
 - **Keep output under 30 lines** (table + 2-3 line reasoning + 1 close line)
 - **No web search**: cuisine + restaurant data comes from local catalog files only
+
+Intent B:
+- **Read-only on the PDF**: never modify the catering PDF
+- **Idempotent writes**: skip any date whose Reflect daily-note already contains a line starting with `<Slug> <date>`; never duplicate
+- **Writes target Reflect** via `mcp__reflect-notes__append_to_daily_note` (canonical capture surface; local picks up via `/sync`); never write directly to `zk/daily-notes/`
+- **Does not touch the dining log**: workplace catering is excluded by design (low signal density per memory)
+- **Per-day skip on parse failure**: if any one day's section fails to parse, skip that day with a logged warning; do not abort the whole batch
+- **No web search**: menu data comes from the PDF only

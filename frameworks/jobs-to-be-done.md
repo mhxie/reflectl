@@ -19,7 +19,7 @@ Every goal serves an underlying need. Ask: "What job am I hiring this goal to do
 | "Lose 10kg" | Feel confident, have energy for kids, reduce health anxiety |
 | "Get promoted to L6" | Financial security, respect from peers, prove capability |
 | "Read 20 books" | Intellectual stimulation, escape, signal identity |
-| "Save $600K" | Security against uncertainty, freedom to take risks later |
+| "Save for early retirement" | Security against uncertainty, freedom to take risks later |
 
 ### Step 2: Evaluate job fit
 Is this goal actually the best way to get the job done?

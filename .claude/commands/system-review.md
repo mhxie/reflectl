@@ -41,6 +41,31 @@ The script scans tracked files PLUS untracked-but-not-ignored files (per `tracke
 
 Rationale: privacy leaks are a hard veto regardless of score. Catching them deterministically before dispatching the expensive external reviewers saves tokens and prevents NEEDS_REVISION cycles caused by mechanical issues a script already knows. Mirrors `/lint` Phase 0c.
 
+### 1c. Semantic privacy double-guard (blocking, agent-based)
+
+The mechanical script in 1b only matches filename stems under `$ZK/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent agent voices on a cheap model.
+
+**Run only after 1b returns `hit_count: 0`** (or soft-skips). If 1b aborted with hits, do not dispatch 1c — fix 1b first.
+
+Dispatch **two `privacy-reviewer` agent instances** in parallel — single message, two `Agent` tool calls. Both use the same prompt; the pair acts as redundant independent review (haiku-tier model, cheap enough to run on every system review).
+
+Prompt for each instance:
+
+> Privacy review the uncommitted bundle. Walk `git status --short` and `git diff HEAD --` yourself; for untracked-but-not-ignored files, `Read` them in full. Cross-reference `personal/` and `profile/` files (they're on disk but gitignored) to detect taxonomy mirroring and value coincidences with what's about to be committed. Apply all leak categories from your agent definition. Return verdict per the format in your spec. You are instance `<A or B>`; do not coordinate with the other instance.
+
+Pass `instance: A` to the first call and `instance: B` to the second so each can label its report.
+
+**Verdict aggregation** (most-paranoid wins):
+
+| Instance A | Instance B | Action |
+|---|---|---|
+| CLEAN | CLEAN | Proceed to Step 2 |
+| CLEAN | NEEDS_REVISION | Surface SHOULD-FIX list as concerns; proceed to Step 2 (do not block) |
+| NEEDS_REVISION | NEEDS_REVISION | Surface union of SHOULD-FIX as concerns; proceed to Step 2 |
+| Either | BLOCKER | **Abort** with `NEEDS_REVISION`. Present union of BLOCKERs verbatim. Do not dispatch Step 2 reviewers. Fix and re-run `/system-review`. |
+
+The double-guard catches single-model misses: if one instance hallucinates a clean verdict on real leak, the other independent voice acts as cross-check. Cost is bounded (haiku, scope = diff only).
+
 ### 2. Dispatch in parallel (one message, multiple tool calls)
 
 Send a **single** assistant message containing both tool calls:
@@ -119,3 +144,4 @@ If the Evolver specified a tier in its handoff, honor it. Otherwise default to *
 - `protocols/orchestrator.md` → Review Tiers
 - `protocols/agent-handoff.md` → `system-review-request` contract
 - `.claude/agents/reviewer.md` → internal reviewer definition
+- `.claude/agents/privacy-reviewer.md` → semantic privacy guard (haiku-tier, dispatched in pairs in Step 1c)

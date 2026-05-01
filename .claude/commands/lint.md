@@ -20,6 +20,7 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Chinese shadow older than English source (`cn-shadow-stale`) | WARN | `scripts/lint.py` — re-translate the CN shadow to match the updated English source |
 | Claude/Codex harness portability (`missing-agents-md`, `models-agent-missing`, `capability-agent-missing`, `agents-registry-entry-missing`, `commands-entry-missing`, `skill-missing`, etc.) | ERROR/WARN/INFO | `scripts/harness_lint.py` |
 | `$ZK` ingestion hygiene (missing READMEs, raw-without-digest, archive↔working-tier overlap, root-level orphans, empty .md files, suspicious top-level dirs) | INFO (advisory) | `scripts/zk_audit.py` — see `protocols/drive-zk-ingestion.md` § Post-ingestion verification |
+| Auto-memory hygiene (`dead-link`, `orphan-file`, `index-bloat`, `stale-mtime`, `provisional-marker`, `frontmatter-missing`) | WARN/INFO (advisory) | `scripts/auto_memory_audit.py` — capability-side check on `~/.claude-personal/projects/<encoded-cwd>/memory/`; surfaces entries the recall pipeline can't reach (orphan/dead-link), entries past the index truncation horizon (>200 lines), and entries the human should re-verify (mtime/provisional). The (A) path of bi-temporal forgetting; frontmatter-level expiry is (B). |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
 
@@ -111,6 +112,30 @@ Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem
 - Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.
 
 The check is a blocking quality gate for any system-evolution commit that touches tracked files. Do not proceed to structural lint if Phase 0c returns hits.
+
+### Phase 0d: Auto-memory hygiene
+
+```
+Bash: uv run scripts/auto_memory_audit.py --json
+```
+
+Parse the JSON. Shape:
+```json
+{
+  "memory_dir": "/path/to/memory",
+  "thresholds": { "stale_days": 90, "index_truncation": 200 },
+  "counts": {
+    "total_files": N, "indexed_files": N,
+    "dead-link": N, "orphan-file": N, "index-bloat": N,
+    "stale-mtime": N, "provisional-marker": N, "frontmatter-missing": N
+  },
+  "findings": [
+    { "severity": "WARN|INFO", "code": "...", "where": "...", "message": "..." }
+  ]
+}
+```
+
+Advisory only: never blocks the run. Exit code 0 always; missing memory dir produces a single `memory-dir-missing` INFO finding so the JSON parse path stays uniform on first-run setups. Surface a one-line summary per non-zero finding code. Detailed listings on demand via `uv run scripts/auto_memory_audit.py` (no `--json`). The memory dir auto-discovers from CWD; override via `CLAUDE_MEMORY_DIR` or `--dir`. WARN-level findings (`dead-link`, `orphan-file`, `index-bloat`) point at concrete recall-pipeline breakage; INFO-level (`stale-mtime`, `provisional-marker`, `frontmatter-missing`, `memory-dir-missing`) are nudges to re-verify or invalidate. Source of truth: `protocols/local-first-architecture.md` (auto-memory as L1 fallback).
 
 ### Phase 1a: Structural lint
 

@@ -38,6 +38,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 | Reader | `deep_reading` | Sonnet matches on analytical reading quality |
 | Meeting | `meeting_extraction` | Haiku becomes capable for transcript processing |
 | Librarian | `recommendations` | Haiku becomes capable for bilingual recommendations |
+| Privacy Reviewer | `privacy_scan` | Haiku tier capability or cost changes; double-dispatch budget shifts |
 
 ### Token/Context Budgets
 

@@ -2,8 +2,10 @@
 """
 health.py: Aggregate Apple Health daily snapshots from zk/health/daily/.
 
-Inputs: zk/health/daily/YYYY-MM-DD.md files with YAML frontmatter (see
-zk/health/daily/README.md for schema).
+Inputs: zk/health/daily/YYYY-MM-DD-health.md files with YAML frontmatter (see
+zk/health/daily/README.md for schema). The `-health` suffix avoids Obsidian
+wikilink collision with zk/daily-notes/YYYY-MM-DD.md (so `[[YYYY-MM-DD]]`
+unambiguously resolves to the journal entry, not the health snapshot).
 
 Subcommands:
   summary [--days N]     Last N days summary (default 7).

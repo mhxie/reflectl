@@ -104,7 +104,7 @@ Civs convert resources into terminal values. Each civ has a primary terminal out
 
 ### Era Score
 
-Self-estimated composite percentile vs peer cohort (late-20s, PhD, tech, Bay Area, dual-income, first-gen immigrant). Not competition; a self-check on whether you're living up to your own potential in context.
+Self-estimated composite percentile vs peer cohort (read the user's peer-cohort definition from `profile/identity.md`, set during `/introspect`). Not competition; a self-check on whether you're living up to your own potential in context.
 
 | Tier | Percentile | Era | Meaning |
 |---|---|---|---|

@@ -58,6 +58,11 @@ rationale = "Curate resources with bilingual summaries and fit filtering."
 claude_code = "sonnet"
 codex = "openai/gpt-5.4"
 
+[profiles.privacy_scan]
+rationale = "Cheap, fast scan for semantic privacy leaks in committed diffs. Dispatched in pairs as independent voices, so reliability comes from redundancy not depth. Codex side currently maps to gpt-5.4 (cheapest documented tier in this harness); if a smaller variant becomes available, swap in via the assumption registry audit."
+claude_code = "haiku"
+codex = "openai/gpt-5.4"
+
 [agents.researcher]
 profile = "deep_reflection"
 claude_code_model = "opus"
@@ -101,4 +106,8 @@ claude_code_model = "sonnet"
 [agents.librarian]
 profile = "recommendations"
 claude_code_model = "sonnet"
+
+[agents.privacy-reviewer]
+profile = "privacy_scan"
+claude_code_model = "haiku"
 

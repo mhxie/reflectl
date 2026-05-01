@@ -157,6 +157,7 @@ Findings are *advisory*, not auto-fixable. The audit reports gaps; consolidation
 ## Cross-references
 
 - [[local-first-architecture.md]] — L1-L5 tier model, where this protocol slots in (raw landing → L1, structured zk markdown → L2).
+- [[raw-indexing.md]] — downstream pattern: cross-cutting clickable indexes over `zk/<domain>/raw/`, the navigational layer for ingested archives.
 - [[epistemic-hygiene.md]] — validation-depth taxonomy applies after ingestion.
 - `zk/housing/README.md`, `zk/health/README.md` — current implementations of this protocol.
 - `scripts/zk_audit.py` — post-ingestion hygiene audit (see "Post-ingestion verification" above).

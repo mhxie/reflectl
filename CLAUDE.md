@@ -49,6 +49,7 @@ MCP read escape hatches are narrowly scoped (orchestrator + Curator only; no `se
 - Daily notes are user-authored. Only write during orchestrator-authorized sync/today-fetch/weekly fallback, and merge via `scripts/merge_daily.py` without discarding local content.
 - Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
+- `$ZK` is the canonical persistence store, not auto-memory. Write user facts to `profile/identity.md`, goals to `profile/directions.md`, private policy or preferences to `personal/<topic>.md`, validated knowledge to `$ZK/wiki/`, session insights to `$ZK/reflections/`, project context to `profile/directions.md` or daily notes. Auto-memory is fallback only, reserved for items that fit no $ZK tier (rare cross-conversation orchestration nudges). On recall, search $ZK first via `scripts/semantic.py query` + Grep; consult auto-memory only when $ZK returns nothing.
 
 Session reflections go to `$ZK/reflections/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
 
@@ -87,7 +88,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/prm` | Audit relationship health and support system robustness |
 | `/restore` | Emergency wiki recovery from Reflect |
 | `/civ` | Civ-style life-management dashboard |
-| `/dine` | Recommend 3 restaurants based on context, history, and credit-burn opportunities |
+| `/dine` | Recommend 3 restaurants (Intent A); track workplace catering deliveries against a weekly menu PDF (Intent B) |
 
 ## Agent Teams
 
@@ -106,6 +107,7 @@ Detailed specifications loaded on demand by agents that need them:
 - `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
 - `protocols/local-first-architecture.md` — full five-tier model, $ZK/ directory layout
 - `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → zk/ (structured repository) workflow + mv-default rules
+- `protocols/raw-indexing.md` — cross-cutting clickable indexes over `zk/<domain>/raw/` (Obsidian wikilinks, structure, dup handling)
 - `protocols/epistemic-hygiene.md` — validation-depth taxonomy, failure modes
 - `protocols/harness-assumptions.md` — model-era assumption registry, audit checklist
 - `protocols/session-log.md` — session event log format

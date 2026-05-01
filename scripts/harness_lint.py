@@ -8,7 +8,8 @@ Claude Code and Codex:
   1. Codex has a root AGENTS.md.
   2. Shared runtime rules point to CLAUDE.md and runtime-adapters.md.
   3. Agent model frontmatter is represented in harness/models.toml.
-  4. Agent capability requirements are represented in harness/capabilities.toml.
+  4. Capability names referenced by shared protocols are mapped to Codex tools
+     in harness/capabilities.toml.
   5. Tracked command specs are represented in harness/commands.toml.
   6. Tracked agent specs are represented in harness/agents.toml.
   7. The harness reference doc exists.
@@ -315,7 +316,7 @@ def check_models(agents: dict[str, dict[str, str]]) -> list[Finding]:
     return findings
 
 
-def check_capabilities(agents: dict[str, dict[str, str]]) -> list[Finding]:
+def check_capabilities() -> list[Finding]:
     findings: list[Finding] = []
     data, err = _load_toml(ROOT / "harness" / "capabilities.toml")
     if err:
@@ -323,16 +324,10 @@ def check_capabilities(agents: dict[str, dict[str, str]]) -> list[Finding]:
     assert data is not None
 
     capabilities = data.get("capabilities", {})
-    agent_map = data.get("agents", {})
     if not isinstance(capabilities, dict) or not capabilities:
-        findings.append(
+        return [
             Finding("ERROR", "capabilities-missing", "harness/capabilities.toml", "no capabilities declared")
-        )
-    if not isinstance(agent_map, dict) or not agent_map:
-        findings.append(
-            Finding("ERROR", "capabilities-agents", "harness/capabilities.toml", "no agent capability mappings declared")
-        )
-        return findings
+        ]
 
     for cap_name, cap in sorted(capabilities.items()):
         if not isinstance(cap, dict):
@@ -340,7 +335,7 @@ def check_capabilities(agents: dict[str, dict[str, str]]) -> list[Finding]:
                 Finding("ERROR", "capability-shape", "harness/capabilities.toml", f"capability `{cap_name}` is not a table")
             )
             continue
-        for key in ("description", "claude_code", "codex"):
+        for key in ("description", "codex"):
             if not cap.get(key):
                 findings.append(
                     Finding(
@@ -350,77 +345,6 @@ def check_capabilities(agents: dict[str, dict[str, str]]) -> list[Finding]:
                         f"capability `{cap_name}` is missing `{key}`",
                     )
                 )
-
-    for agent_name, fields in sorted(agents.items()):
-        entry = agent_map.get(agent_name)
-        if not isinstance(entry, dict):
-            findings.append(
-                Finding(
-                    "ERROR",
-                    "capability-agent-missing",
-                    "harness/capabilities.toml",
-                    f"agent `{agent_name}` from {fields['path']} has no capability mapping",
-                )
-            )
-            continue
-        required = entry.get("requires")
-        if not isinstance(required, list) or not required:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    "capability-agent-empty",
-                    "harness/capabilities.toml",
-                    f"agent `{agent_name}` has no required capabilities",
-                )
-            )
-            continue
-        unknown = [c for c in required if c not in capabilities]
-        for cap_name in unknown:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    "capability-reference",
-                    "harness/capabilities.toml",
-                    f"agent `{agent_name}` references unknown capability `{cap_name}`",
-                )
-            )
-        if unknown:
-            continue
-        expected_tools: set[str] = set()
-        for cap_name in required:
-            cap = capabilities.get(cap_name)
-            if not isinstance(cap, dict):
-                continue
-            claude_tools = cap.get("claude_code")
-            if not isinstance(claude_tools, list):
-                continue
-            for tool_entry in claude_tools:
-                if isinstance(tool_entry, str) and tool_entry.strip():
-                    expected_tools.add(tool_entry.split(":", 1)[0].strip())
-        actual_tools = {
-            t.strip() for t in fields.get("tools", "").split(",") if t.strip()
-        }
-        missing = sorted(expected_tools - actual_tools)
-        if missing:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    "capability-tools-drift",
-                    fields["path"],
-                    f"agent `{agent_name}` frontmatter `tools` is missing {missing} expected from required capabilities",
-                )
-            )
-
-    extra_agents = sorted(set(agent_map) - set(agents))
-    for agent_name in extra_agents:
-        findings.append(
-            Finding(
-                "WARN",
-                "capability-agent-extra",
-                "harness/capabilities.toml",
-                f"capability mapping exists for `{agent_name}` but no .claude agent file was found",
-            )
-        )
 
     return findings
 
@@ -439,21 +363,15 @@ def check_agent_registry(agents: dict[str, dict[str, str]]) -> list[Finding]:
         ]
 
     models, model_err = _load_toml(ROOT / "harness" / "models.toml")
-    capabilities, capability_err = _load_toml(ROOT / "harness" / "capabilities.toml")
     if model_err:
         findings.append(model_err)
         models = {}
-    if capability_err:
-        findings.append(capability_err)
-        capabilities = {}
     model_profiles = (models or {}).get("profiles", {})
     model_agents = (models or {}).get("agents", {})
-    capability_agents = (capabilities or {}).get("agents", {})
 
     required_fields = (
         "source",
         "model_profile",
-        "capability_profile",
         "status",
         "description",
         "codex_prompt",
@@ -509,16 +427,6 @@ def check_agent_registry(agents: dict[str, dict[str, str]]) -> list[Finding]:
                     "agents-registry-model-profile",
                     "harness/agents.toml",
                     f"agent `{name}` references unknown model profile `{model_profile}`",
-                )
-            )
-        capability_profile = entry.get("capability_profile")
-        if capability_profile not in capability_agents:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    "agents-registry-capability-profile",
-                    "harness/agents.toml",
-                    f"agent `{name}` references unknown capability profile `{capability_profile}`",
                 )
             )
         prompt = str(entry.get("codex_prompt", ""))
@@ -775,7 +683,7 @@ def run_lints() -> list[Finding]:
     commands, command_findings = load_claude_commands()
     findings.extend(command_findings)
     findings.extend(check_models(agents))
-    findings.extend(check_capabilities(agents))
+    findings.extend(check_capabilities())
     findings.extend(check_agent_registry(agents))
     findings.extend(check_commands(commands))
     findings.extend(check_harness_readme())
