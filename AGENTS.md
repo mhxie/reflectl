@@ -1,8 +1,15 @@
-# AGENTS.md - Reflectl
+# AGENTS.md — Atelier
 
 Root instructions for Codex and other non-Claude runtimes. Claude Code reads
 `CLAUDE.md`; Codex reads this file. Treat both as the same behavioral contract.
-Codex can also discover the repo-scoped `reflectl` skill in `.agents/skills/`.
+
+This system is **the Atelier** — a workshop wrapping the user's **œuvre**
+(accumulating body of work, kept under `$OV/`). The user is the **Painter**;
+agents collectively are **le cercle**. For the full vocabulary and the
+12-operator archetype map, see `CLAUDE.md` § Vocabulary.
+
+Codex can also discover the repo-scoped `reflectl` skill in `.agents/skills/`
+(skill directory name remains `reflectl` until the optional phase 6 rename).
 
 Before user-facing reflection work, read `CLAUDE.md` for the domain rules, then
 use `protocols/runtime-adapters.md` to translate Claude-specific command syntax
