@@ -1,6 +1,6 @@
 # scripts/
 
-Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only (or stdlib + one documented dependency), deterministic, and runnable from the repo root with project-relative paths.
+Executable tooling for the Atelier knowledge layer. All scripts are stdlib-only (or stdlib + one documented dependency), deterministic, and runnable from the repo root with project-relative paths.
 
 ## Inventory
 

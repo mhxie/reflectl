@@ -1,26 +1,26 @@
-# reflectl
+# Atelier
 
-Your AI-native personal operating system.
+Your AI-native personal operating system — the workshop, tools, and circle of operators that surrounds your **œuvre** (the accumulating body of your notes, decisions, and reflections, kept locally under `$OV/`). The system reads and writes plain Markdown; nothing leaves your machine. A 12-specialist agent team (le cercle) and a deterministic trust engine score and structure what you keep. Self-improving on a weekly cadence.
 
-Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust. All orchestrated by a team of 11 AI agents over a local-first Zettelkasten — your data on your machine, scored by a deterministic trust engine, improving itself every session.
+Capture what you learn. Reflect on what you think. Research what you don't know. Read deeply. Make decisions. Track goals across life chapters. Crystallize knowledge you trust. All orchestrated over a local-first Zettelkasten — your data on your machine, scored by `scripts/trust.py`, refined every session.
 
-Runs first-class on [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and includes a Codex compatibility layer through `AGENTS.md` plus runtime adapter contracts. Claude Code currently has the richest native slash-command and subagent surface; Codex uses the same workflow specs through adapters. `$ZK/` is the local data layer. [Reflect.app](https://reflect.app/) and [Readwise](https://readwise.io/) are optional capture surfaces; the authoritative knowledge lives on disk.
+Runs first-class on [Claude Code](https://docs.anthropic.com/en/docs/claude-code); ships with a Codex compatibility layer through `AGENTS.md` plus runtime adapter contracts.
 
 ## What It Does
 
-**Reflect** — Daily check-ins grounded in what you actually wrote. Surfaces forgotten connections, challenges assumptions, tracks your goals across life chapters.
+**Reflect** — Daily check-ins grounded in what you actually wrote. Surfaces forgotten connections, challenges assumptions, tracks goals across life chapters.
 
-**Read** — Deep-reads articles, saved notes, and transcripts through multiple lenses (critical, structural, practical, dialectical). Multiple readers analyze in parallel, then you discuss what they found.
+**Read** — Deep-reads articles, saved notes, and transcripts through multiple lenses (critical, structural, practical, dialectical). Multiple readers analyze in parallel; you discuss what they found.
 
-**Plan** — Goal reviews, decision journals, and energy audits. Tracks what's progressing, what's neglected, and what's emerging. Uses 22 thinking frameworks with cross-validation.
+**Plan** — Goal reviews, decision journals, and energy audits. Tracks what's progressing, what's neglected, what's emerging. Uses 22+ thinking frameworks with cross-validation.
 
-**Act** — Compact redundant notes, deep-dive into a topic with 4 agents working in parallel, triage your notes for cleanup, or curate your Readwise inbox.
+**Act** — Compact redundant notes, deep-dive into a topic with 4 agents in parallel, triage notes for cleanup, or curate your Readwise inbox.
 
-**Learn** — Get reading recommendations or introspect to rebuild your self-model.
+**Learn** — Get reading recommendations, or introspect to rebuild your self-model.
 
-**Wiki** — Crystallize validated thinking into `$ZK/wiki/` entries with structured claims, external anchors, and bi-temporal markers. A TrustRank pass (`scripts/trust.py`) scores each claim via Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health. Wiki entries stay local by default; the user can manually share a specific entry to Reflect for mobile reading (orchestrator dispatches Curator for `create_note`).
+**Wiki** — Crystallize validated thinking into `$OV/wiki/` entries with structured claims, external anchors, and bi-temporal markers. `scripts/trust.py` runs Personalized PageRank with external anchors as trust seeds. `/lint` enforces corpus-level structure and harness health.
 
-Session reflections are written to `$ZK/reflections/` as the durable session output. Daily notes are the user's capture stream; the system only writes during an orchestrator-authorized `/sync` that merges Reflect's copy into the local file without discarding any local content. Compiled knowledge lives locally in `$ZK/wiki/`; the user can manually share a specific entry to Reflect for mobile reading.
+Session reflections write to `$OV/reflections/`. Daily notes are user-authored — the system reads them but never writes.
 
 ## Getting Started
 
@@ -31,49 +31,27 @@ Session reflections are written to `$ZK/reflections/` as the durable session out
   - [Codex CLI](https://github.com/openai/codex) for the portable `AGENTS.md` harness and external review
 - [uv](https://docs.astral.sh/uv/) — Python package manager
 
-**Optional — enhances the system but not required:**
-- [Reflect.app](https://reflect.app/) with the [MCP server](https://reflect.app/mcp) — enables mobile capture via daily notes and a `/sync` pull-and-merge of those daily notes into `$ZK/daily-notes/`. The system is local-first; everything works without Reflect, you just lose mobile capture and the manual wiki-share surface.
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli` — second external reviewer perspective
+**Optional — second-opinion external reviewer:**
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) — `npm i -g @google/gemini-cli`
 
-Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`) are stdlib-only. Semantic search and document conversion deps are managed via `pyproject.toml`.
+Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`, `privacy_check.py`, `zk_audit.py`) are stdlib-only. Semantic search and document conversion deps are managed via `pyproject.toml`.
 
 ### Install
 
 ```bash
-git clone https://github.com/mhxie/reflectl.git ~/reflectl
-cd ~/reflectl
+git clone https://github.com/mhxie/reflectl.git ~/atelier
+cd ~/atelier
 uv sync                # install dependencies from pyproject.toml
 ```
 
-Set `$ZK` to point to your Zettelkasten vault (the directory containing `daily-notes/`, `wiki/`, `reflections/`, etc.):
+Set `$OV` to point to your vault (the directory containing `daily-notes/`, `wiki/`, `reflections/`, etc.):
 
 ```bash
-echo 'export ZK="$HOME/path/to/zk"' >> ~/.zshrc
+echo 'export OV="$HOME/path/to/your/vault"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-If using Reflect, create `.mcp.json` in the project root for Claude Code:
-
-```json
-{
-  "mcpServers": {
-    "reflect": {
-      "type": "http",
-      "url": "http://127.0.0.1:7676/mcp"
-    }
-  }
-}
-```
-
-For Codex, register the same MCP server via the Codex CLI:
-
-```bash
-codex mcp add reflect --url http://127.0.0.1:7676/mcp
-codex mcp list                                            # verify
-```
-
-Codex prompts for approval on every MCP tool call (no documented auto-approve
-in `codex-cli 0.125.0`); see `AGENTS.md` → MCP Setup for the full notes.
+The system is fully local-first — no remote services, APIs, or accounts required. All personal content lives under `$OV/` and is gitignored. Only system configuration (protocols, agents, commands, scripts) is committed.
 
 ### First Run
 
@@ -81,7 +59,7 @@ Claude Code:
 
 ```bash
 claude                # open Claude Code in the project
-/introspect           # build your self-model from your notes (reads $ZK/daily-notes/)
+/introspect           # build your self-model from your notes (reads $OV/daily-notes/)
 /reflect              # start your first session
 ```
 
@@ -91,25 +69,13 @@ Codex:
 python3 scripts/reflectl.py run reflect            # fresh Codex TUI on /reflect (default)
 python3 scripts/reflectl.py run lint --exec        # one-shot, no TUI
 python3 scripts/reflectl.py run reflect "context here"
-python3 scripts/reflectl.py run promote --resume   # continue most recent session (only on resume_friendly commands)
+python3 scripts/reflectl.py run promote --resume   # continue most recent session (resume_friendly only)
 python3 scripts/reflectl.py run promote --fork     # branch from most recent without mutating it
 ```
 
-The `run` subcommand spawns `codex` with the generated prompt pre-loaded and
-the repo as the working directory; this is the Codex parity for Claude Code's
-slash commands. Codex reads `AGENTS.md`, picks up the repo-scoped `reflectl`
-skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through
-`protocols/runtime-adapters.md`. Use `run --print` to inspect the prompt
-without launching Codex, or `prompt`/`source` for paste-and-discover flows.
+The `run` subcommand spawns `codex` with the generated prompt pre-loaded and the repo as the working directory. Codex reads `AGENTS.md`, picks up the repo-scoped skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through `protocols/runtime-adapters.md`.
 
-Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.)
-default to fresh sessions because reusing a prior session pollutes the new
-reflection. Continuation-friendly commands (`/promote`, `/restore`) are marked
-`resume_friendly = true` in `harness/commands.toml`; pass `--resume` to chain
-them off a recent session, or `--fork` to branch without mutating the original.
-When `--resume`/`--fork` is used on a non-resume_friendly command, a warning is
-printed to stderr and the command still proceeds — the flag is advisory, not a
-hard stop, since the caller knows their context best.
+Reflection-type commands (`/reflect`, `/weekly`, `/review`, `/decision`, etc.) default to fresh sessions because reusing a prior session pollutes the new reflection. Continuation-friendly commands (`/promote`) are marked `resume_friendly = true` in `harness/commands.toml`; pass `--resume` to chain off a recent session, or `--fork` to branch without mutating it.
 
 ## Sessions
 
@@ -130,71 +96,75 @@ Type `/reflect` to get a menu of everything you can do:
 | Note Triage | Scan for compaction candidates across your notes |
 | Process Meeting | Turn a work meeting transcript into structured notes with action items |
 
-You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/sync`, `/lint`, `/promote`, `/paper-review`.
+You can also go direct: `/review`, `/weekly`, `/decision`, `/explore`, `/energy-audit`, `/curate`, `/introspect`, `/lint`, `/promote`, `/paper-review`, `/dine`, `/prm`, `/civ`, `/system-review`.
 
 **Knowledge layer commands:**
 
 | Command | What it does |
 |---|---|
-| `/promote` | Create an L4 wiki entry from L2 source notes: Researcher finds claims + anchors, Curator drafts schema-compliant entry. |
-| `/sync` | Pull daily notes from Reflect into `$ZK/daily-notes/` and line-union merge with any local edits. One-way, Reflect → local only. Sharing a wiki entry to Reflect is a separate manual per-note operation. |
-| `/lint` | Corpus-level structural check over `$ZK/wiki/` (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also checks harness health: CLAUDE.md size and formatting. |
-| `/restore` | Emergency wiki recovery from Reflect's append-only archive when the user supplies a note ID. Very rarely triggered. |
+| `/promote` | Create an L4 wiki entry from L2 source notes: Researcher finds claims + anchors, Curator drafts schema-compliant entry, orchestrator writes after approval. |
+| `/lint` | Corpus-level structural check over `$OV/wiki/` (parse errors, duplicate titles, slug drift, orphan entries, graph topology). Also harness health: CLAUDE.md size and formatting, privacy gate, ingestion hygiene. |
 
 ## The Team
 
-Eleven agents work together during sessions. You don't need to manage them — the orchestrator dispatches automatically. But you can talk to any of them directly:
+Twelve specialist agents (le cercle) work together during sessions. The orchestrator dispatches automatically; you can also talk to any of them directly:
 
-- *"find notes about X"* — sends Researcher to search your notes
-- *"read [[Article]] with critical lens"* — sends Reader to analyze
-- *"challenge my assumption about X"* — sends Challenger to probe
-- *"compact my notes on Y"* — sends Curator to merge
-- *"recommend reading on Z"* — sends Librarian to curate
-- *"what's happening in the world on X"* — sends Scout to search the web
+- *"find notes about X"* — sends Researcher (the Observer)
+- *"read [[Article]] with critical lens"* — sends Reader
+- *"challenge my assumption about X"* — sends Challenger (the Critic)
+- *"compact my notes on Y"* — sends Curator (the Collector)
+- *"recommend reading on Z"* — sends Librarian (the Cataloguer)
+- *"what's happening in the world on X"* — sends Scout (the Flâneur)
+
+Full cercle archetype map (Observer / Colorist / Arbiter / Critic / Structuralist / Collector / Flâneur / Reader / Cataloguer / Scribe / Master / Steward) lives in `protocols/atelier.md`.
 
 ## How It Works
 
 ```
-Capture sources                 Local data layer ($ZK/)              Display
-(Reflect, Readwise,             L4  $ZK/wiki/       ─manual share→  Reflect
- voice, mobile)                 (trust-scored)                    (mobile read)
-                                L3  $ZK/papers/
-(Reflect daily notes ─/sync──>  L2  $ZK/daily-notes/, reflections/,
- merged line-union)                 research/, preprints/,
-                                    agent-findings/, drafts/, ...
-                                L1  $ZK/cache/, $ZK/readwise/
+Capture sources                  Local data layer ($OV/)
+(Readwise inbox,                 L4  $OV/wiki/        ─ locally certified
+ voice notes,                        (trust-scored canon)
+ markdown editor)                L3  $OV/papers/      ─ peer-reviewed
+                                 L2  $OV/daily-notes/ + reflections/ +
+                                     research/ + preprints/ +
+                                     agent-findings/ + drafts/ + …
+                                 L1  $OV/cache/, $OV/readwise/
 
-                                        ^
-                                        |
-                                        v
-                           AI runtime (Claude Code or Codex)
-                                        |
-                    +-----------+-------+-------+-----------+
-                    v           v               v           v
-              Agent Team    Sessions      Frameworks   Trust engine
-              (11 agents)  (12 types)   (22 + xval)  (trust.py,
-                    |           |               |       lint.py)
-                    v           v               v
-              Protocols    $ZK/reflections/   Cross-validation
-              (21 rules)   (session outputs) & Pattern Library
+                                         ^
+                                         |
+                                         v
+                            AI runtime (Claude Code or Codex)
+                                         |
+                     +-----------+-------+-------+-----------+
+                     v           v               v           v
+                Le Cercle    Sessions     Frameworks    Trust engine
+                (12 agents)  (12 types)   (22 + xval)   (trust.py,
+                     |           |               |        lint.py)
+                     v           v               v
+                Protocols    $OV/reflections/   Cross-validation
+                (~25 rules)  (session outputs)  & Pattern Library
 ```
 
-**Five-tier knowledge model.** Everything under `$ZK/` is classified by depth of crystallization — raw capture (L1), working notes (L2), externally-certified papers (L3), locally-certified wiki entries (L4). Directory = tier; no tags required. Agents read from disk via semantic search and grep, not via MCP. Reflect is demoted to a capture + display surface.
+**Five-tier knowledge model.** Everything under `$OV/` is classified by depth of crystallization — raw capture (L1), working notes (L2), externally-certified papers (L3), locally-certified wiki entries (L4). Directory = tier; no tags required. Agents read from disk via semantic search and grep.
 
-**TrustRank over the wiki.** Wiki entries under `$ZK/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds; trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
+**TrustRank over the wiki.** Wiki entries under `$OV/wiki/` follow a structured schema: `## Claims` with `[C1]`, `[C2]`... headings, each backed by fenced `anchors` blocks containing `@anchor` (external evidence), `@cite` (internal edge to another wiki entry), and `@pass` (reviewer verification) markers with bi-temporal `valid_at`/`invalid_at` fields. `scripts/trust.py` runs Personalized PageRank with external anchors as seeds; trust mass enters the graph only at external sources and propagates through internal cites. No external anchor, no trust. `scripts/lint.py` enforces structural integrity across the corpus.
 
-**Session reflection.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$ZK/reflections/`. Daily notes are the user's capture stream; the only system writes are the `/sync` merge (line-union with Reflect's copy, never discards local content) and the orchestrator's today-fetch when the local file is missing or empty. All personal data under `$ZK/` is gitignored; only the system configuration (protocols, agents, commands, scripts) is committed.
+**Session output.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$OV/reflections/`. Daily notes are user-authored — the system reads them but never writes. All personal data under `$OV/` is gitignored; only system configuration is committed.
 
-**Harness engineering.** `CLAUDE.md` is kept minimal (~7KB target) because it is inherited by every Claude subagent; each line costs N tokens times N agents per session. `AGENTS.md` and `.agents/skills/reflectl/SKILL.md` give Codex the root contract and workflow trigger, while `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md` keep provider and runtime assumptions explicit. `scripts/reflectl.py` gives Codex command and role discovery plus prompt generation. Critical rules live at the top (primacy effect), detailed specifications are loaded on demand from protocols and agent definitions. The Evolver agent has a "subtract before adding" principle and a root-instruction budget gate. `/lint` Phase 0 checks harness health alongside the wiki structural pass.
+**Harness engineering.** `CLAUDE.md` is kept under 8KB because it is inherited by every Claude subagent; each line costs N tokens times N agents per session. `AGENTS.md` and `.agents/skills/reflectl/SKILL.md` give Codex the root contract and workflow trigger. `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md` keep provider and runtime assumptions explicit. `scripts/reflectl.py` gives Codex command and role discovery plus prompt generation. Critical rules live at the top (primacy effect); detailed specifications load on demand from protocols and agent definitions. The Master of the Atelier (Evolver) has a "subtract before adding" principle and a root-instruction budget gate. `/lint` Phase 0 checks harness health alongside the wiki structural pass.
 
 Key design choices:
-- **Local-first**: the knowledge layer lives on disk, not in a remote app. MCP is used only as narrow escape hatches: `/sync` pulls daily notes from Reflect into local, and the user can manually share a specific wiki entry to Reflect via the Curator.
-- **Reflect as append-only archival**: Reflect's MCP has `create_note` and `append_to_daily_note` but no update or delete. That's a drawback for editing, but a feature for recovery: any wiki entry the user has manually shared leaves a tamper-evident copy in Reflect's cloud. The rarely-triggered `/restore` command operationalizes this property.
+
+- **Local-first**: the knowledge layer lives on disk under `$OV/`, not in a remote app. No external services required.
 - **Deterministic trust scoring**: TrustRank is a stdlib-only Python pass, not an LLM heuristic. The same input always produces the same score.
-- **Era-aware**: tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation)
-- **Bilingual**: handles English and Chinese notes, matches your language
-- **Self-improving**: the Evolver agent evolves the system with harness engineering best practices, reviewed by external AI models (Codex, Gemini) via `scripts/review.sh`
-- **Privacy by default**: personal data never leaves your machine
+- **Era-aware**: tracks life chapters with themes and directions (Mastery, Impact, Freedom, Connection, Creation).
+- **Bilingual**: handles English and Chinese notes; matches your language.
+- **Self-improving**: the Master of the Atelier evolves the system, reviewed by external AI models (Codex, Gemini) via `scripts/review.sh`.
+- **Privacy by default**: personal data never leaves your machine. `scripts/privacy_check.py` gates committed-file diffs against private filename stems; the Steward (privacy-reviewer agent) catches semantic leaks.
+
+## Vocabulary
+
+The system has a narrative register from the impressionist atelier — *le cercle* (the agents), *the Painter* (you), *the œuvre* (your accumulating body of work), *impression* / *étude* / *tableau* / *série* / *sitting* / *sketch* / *commission*. The register lives in conversation and identity. **Operational keys are unchanged**: slash commands stay `/reflect`, `/promote`, `/lint`, etc.; agent dispatch keys stay `researcher`, `synthesizer`, …; file paths under `$OV/` stay as documented above. Full glossary: `CLAUDE.md` § Vocabulary and `protocols/atelier.md`.
 
 ## License
 

@@ -1,6 +1,6 @@
 # Harness
 
-Provider-neutral registry files for the Reflectl runtime layer.
+Provider-neutral registry files for the Atelier runtime layer.
 
 | File | Purpose |
 |---|---|

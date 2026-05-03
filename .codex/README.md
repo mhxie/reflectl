@@ -1,9 +1,10 @@
 # Codex
 
-Codex reads the root `AGENTS.md` and can discover the repo-scoped `reflectl`
-skill in `.agents/skills/reflectl/SKILL.md`. The current Claude Code command
-files remain the native command specs, and Codex adapts them through
-`protocols/runtime-adapters.md`.
+Codex runs against the Atelier system. It reads the root `AGENTS.md` and can
+discover the repo-scoped skill in `.agents/skills/reflectl/SKILL.md` (skill
+directory name remains `reflectl` until the optional repo-rename phase).
+The current Claude Code command files remain the native command specs, and
+Codex adapts them through `protocols/runtime-adapters.md`.
 
 Start an interactive Codex session from the repo root:
 
