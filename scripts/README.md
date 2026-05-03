@@ -12,7 +12,7 @@ Executable tooling for the Atelier knowledge layer. All scripts are stdlib-only 
 | `lint.py` | Structural + corpus-level lint over `$OV/wiki/` — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
 | `harness_lint.py` | Claude Code and Codex portability lint — root instructions, model profiles, capability mappings, command and agent registries | ops | stdlib |
 | `harness_smoke.py` | Smoke test for the portable harness helper and lint JSON surfaces | ops | stdlib |
-| `reflectl.py` | Portable command/agent discovery and Codex prompt generation from `harness/*.toml` | ops | stdlib |
+| `atelier.py` | Portable command/agent discovery and Codex prompt generation from `harness/*.toml` | ops | stdlib |
 | `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0c | ops | stdlib |
 | `zk_audit.py` | Post-ingestion hygiene audit for `$OV/`: missing READMEs, raw-without-digest, archive↔working overlap, root orphans, suspicious dirs; wired into `/lint` Phase 0b | ops | stdlib |
 | `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
@@ -22,7 +22,7 @@ Executable tooling for the Atelier knowledge layer. All scripts are stdlib-only 
 
 ## Portable Harness
 
-`scripts/reflectl.py status` summarizes the Claude/Codex registry state.
+`scripts/atelier.py status` summarizes the Claude/Codex registry state.
 Use `commands`, `agents`, `prompt`, and `agent-prompt` subcommands to discover
 portable workflows without scraping `harness/*.toml` directly.
 Run `scripts/harness_smoke.py` after harness edits to verify the helper and JSON

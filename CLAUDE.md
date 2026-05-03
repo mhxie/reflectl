@@ -100,6 +100,7 @@ Detailed specifications loaded on demand by agents that need them:
 - `protocols/orchestrator.md` — workflow patterns, dispatch table, collaboration matrix
 - `protocols/runtime-adapters.md` — Claude Code and Codex portability contract
 - `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
+- `protocols/atelier.md` — system identity vocabulary register (cercle archetype map, glossary)
 - `protocols/local-first-architecture.md` — full five-tier model, $OV/ directory layout
 - `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → `$OV/` (structured repository) workflow + mv-default rules
 - `protocols/raw-indexing.md` — cross-cutting clickable indexes over `$OV/<domain>/raw/` (wikilink-style backlinks, structure, dup handling)

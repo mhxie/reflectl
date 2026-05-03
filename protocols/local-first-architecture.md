@@ -43,7 +43,7 @@ Older topic directories (career, research, people, etc.) carried over from earli
 
 Peer-reviewed papers, high-citation work, and curated reading corpus. Lives in `$OV/papers/` (local PDFs and reading artifacts) plus the Readwise-curated side of `$OV/readwise/`. The canonical id for papers is `s2:` / `arxiv:` / `doi:`; for articles, `url:` or a Readwise document id. L3 receipts are the anchor points for L4 wiki claims — an `@anchor` marker in a wiki entry points at an L3 receipt.
 
-The teaching doc that explains how agents query the papers directory lives at `sources/local-papers.md` (an execution-layer doc in the reflectl repo).
+The teaching doc that explains how agents query the papers directory lives at `sources/local-papers.md` (an execution-layer doc in the atelier repo).
 
 ### L4 — Locally certified (wiki)
 
@@ -65,7 +65,7 @@ Universally certified knowledge — textbook-level material that the user consid
 
 Two roots:
 
-- **System layer** — the `reflectl/` repo (this directory). Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled; no personal data.
+- **System layer** — the `atelier/` repo (this directory). Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled; no personal data.
 - **Vault layer** — the user's note root, addressed as `$OV/`. A flat set of tier-labeled directories: `wiki/` (L4), `papers/` / `preprints/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `agent-findings/` / `drafts/` / `gtd/` / `travel/` / `health/` / `work/` / `immigration/` / `finance/` (L2), `cache/` (L1), and `archive/` (parked notes).
 
 Vault paths use `$OV/` (e.g., `$OV/wiki/`, `$OV/papers/`); each user sets `$OV` to their note root (typical: `export OV="$HOME/notes"`). Repo-internal paths (`scripts/`, `protocols/`, `sources/cite.py`, `frameworks/`) stay project-relative and require no env var. The vault may live anywhere on disk (Google Drive, iCloud, a plain local folder); the system only needs `$OV` to point at it.
@@ -73,7 +73,7 @@ Vault paths use `$OV/` (e.g., `$OV/wiki/`, `$OV/papers/`); each user sets `$OV` 
 ## Directory Layout (canonical)
 
 ```
-reflectl/                           (system root — the agent code)
+atelier/                           (system root — the agent code)
 ├── CLAUDE.md                       # orchestrator instructions
 ├── .claude/agents/                 # team definitions
 ├── .claude/commands/               # slash commands

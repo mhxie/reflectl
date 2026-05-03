@@ -1,27 +1,27 @@
 ---
-name: reflectl
-description: Use when working in the Reflectl repo, especially to run Reflectl workflows such as /reflect, /weekly, /review, /introspect, /sync, /lint, or to adapt Claude Code command specs for Codex.
+name: atelier
+description: Use when working in the Atelier repo, especially to run Atelier workflows such as /reflect, /weekly, /review, /introspect, /lint, /promote, or to adapt Claude Code command specs for Codex.
 ---
 
-# Reflectl
+# Atelier
 
-Use this skill when the user asks to run or modify Reflectl workflows, commands,
+Use this skill when the user asks to run or modify Atelier workflows, commands,
 agents, or harness portability.
 
 ## Quick Start
 
 1. Read `AGENTS.md`.
 2. Read `protocols/runtime-adapters.md`.
-3. Inspect the registry with `python3 scripts/reflectl.py status`.
-4. Discover commands with `python3 scripts/reflectl.py commands`.
+3. Inspect the registry with `python3 scripts/atelier.py status`.
+4. Discover commands with `python3 scripts/atelier.py commands`.
 5. For a specific workflow, either launch it with
-   `python3 scripts/reflectl.py run <command>` (Codex parity for Claude Code
+   `python3 scripts/atelier.py run <command>` (Codex parity for Claude Code
    slash commands) or generate a paste-in prompt with
-   `python3 scripts/reflectl.py prompt <command>`. Read the source with
-   `python3 scripts/reflectl.py source <command>` when you need the full spec.
-6. Discover roles with `python3 scripts/reflectl.py agents`.
-7. For a specific role, run `python3 scripts/reflectl.py agent-prompt <agent>`
-   or read the source with `python3 scripts/reflectl.py agent-source <agent>`.
+   `python3 scripts/atelier.py prompt <command>`. Read the source with
+   `python3 scripts/atelier.py source <command>` when you need the full spec.
+6. Discover roles with `python3 scripts/atelier.py agents`.
+7. For a specific role, run `python3 scripts/atelier.py agent-prompt <agent>`
+   or read the source with `python3 scripts/atelier.py agent-source <agent>`.
 8. Load only the selected `.claude/commands/<command>.md` spec and any directly
    referenced agent or protocol files.
 
@@ -35,12 +35,14 @@ Claude Code command specs are the current workflow source. In Codex, adapt them:
 - `AskUserQuestion` means ask the user a concise question.
 - `Agent(...)` means use Codex subagents only when permitted; otherwise emulate
   the role sequentially from `.claude/agents/<role>.md`.
-- Reflect MCP writes require explicit user approval before calling.
+- All vault writes go through the orchestrator (Write/Edit) after explicit user
+  approval. Daily notes (`$OV/daily-notes/`) are user-authored only — system
+  reads them but never writes.
 
 For unknown commands, do not guess. Run:
 
 ```bash
-python3 scripts/reflectl.py commands
+python3 scripts/atelier.py commands
 ```
 
 ## Harness Changes

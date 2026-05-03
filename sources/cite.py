@@ -22,7 +22,7 @@ CROSSREF_BASE = "https://api.crossref.org/works"
 
 
 def fetch_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "reflectl-cite/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "atelier-cite/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             return json.loads(resp.read())
@@ -44,7 +44,7 @@ def fetch_s2_batch(paper_ids):
     data = json.dumps({"ids": paper_ids}).encode()
     req = urllib.request.Request(
         url, data=data,
-        headers={"Content-Type": "application/json", "User-Agent": "reflectl-cite/1.0"},
+        headers={"Content-Type": "application/json", "User-Agent": "atelier-cite/1.0"},
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:

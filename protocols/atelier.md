@@ -6,7 +6,7 @@ The system's narrative register draws from the impressionist atelier (master + s
 
 | concept | atelier term | operational key (unchanged) |
 |---|---|---|
-| system / repo | **the Atelier** | `reflectl/` |
+| system / repo | **the Atelier** | `atelier/` |
 | user | **the Painter** | (you) |
 | vault root | **the œuvre** | `$OV/` |
 | agents collectively | **le cercle** | `.claude/agents/` |

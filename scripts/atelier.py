@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-reflectl.py: small helper CLI for portable Reflectl workflows.
+atelier.py: small helper CLI for portable Atelier workflows.
 
 Claude Code has native project slash commands. Codex does not currently expose
 a documented custom project slash-command format, so this helper gives Codex a
 stable command discovery surface:
 
-    python3 scripts/reflectl.py commands
-    python3 scripts/reflectl.py prompt reflect
-    python3 scripts/reflectl.py source reflect
-    python3 scripts/reflectl.py agents
-    python3 scripts/reflectl.py agent-prompt researcher
+    python3 scripts/atelier.py commands
+    python3 scripts/atelier.py prompt reflect
+    python3 scripts/atelier.py source reflect
+    python3 scripts/atelier.py agents
+    python3 scripts/atelier.py agent-prompt researcher
 """
 
 from __future__ import annotations
@@ -34,24 +34,24 @@ CAPABILITIES_PATH = ROOT / "harness" / "capabilities.toml"
 def load_commands() -> dict[str, dict[str, Any]]:
     commands = load_table(COMMANDS_PATH, "commands")
     if not isinstance(commands, dict):
-        raise SystemExit("reflectl: harness/commands.toml has no [commands] table")
+        raise SystemExit("atelier: harness/commands.toml has no [commands] table")
     return commands
 
 
 def load_agents() -> dict[str, dict[str, Any]]:
     agents = load_table(AGENTS_PATH, "agents")
     if not isinstance(agents, dict):
-        raise SystemExit("reflectl: harness/agents.toml has no [agents] table")
+        raise SystemExit("atelier: harness/agents.toml has no [agents] table")
     return agents
 
 
 def load_table(path: Path, table: str) -> dict[str, Any]:
     data = tomllib.loads(path.read_text(encoding="utf-8"))
     if table not in data:
-        raise SystemExit(f"reflectl: {path.relative_to(ROOT)} has no [{table}] table")
+        raise SystemExit(f"atelier: {path.relative_to(ROOT)} has no [{table}] table")
     value = data[table]
     if not isinstance(value, dict):
-        raise SystemExit(f"reflectl: {path.relative_to(ROOT)} [{table}] is not a table")
+        raise SystemExit(f"atelier: {path.relative_to(ROOT)} [{table}] is not a table")
     return value
 
 
@@ -60,9 +60,9 @@ def require_command(commands: dict[str, dict[str, Any]], name: str) -> dict[str,
         command = commands[name]
     except KeyError:
         known = ", ".join(sorted(commands))
-        raise SystemExit(f"reflectl: unknown command `{name}`. Known commands: {known}") from None
+        raise SystemExit(f"atelier: unknown command `{name}`. Known commands: {known}") from None
     if not isinstance(command, dict):
-        raise SystemExit(f"reflectl: command `{name}` is not a table")
+        raise SystemExit(f"atelier: command `{name}` is not a table")
     return command
 
 
@@ -71,9 +71,9 @@ def require_agent(agents: dict[str, dict[str, Any]], name: str) -> dict[str, Any
         agent = agents[name]
     except KeyError:
         known = ", ".join(sorted(agents))
-        raise SystemExit(f"reflectl: unknown agent `{name}`. Known agents: {known}") from None
+        raise SystemExit(f"atelier: unknown agent `{name}`. Known agents: {known}") from None
     if not isinstance(agent, dict):
-        raise SystemExit(f"reflectl: agent `{name}` is not a table")
+        raise SystemExit(f"atelier: agent `{name}` is not a table")
     return agent
 
 
@@ -189,7 +189,7 @@ def cmd_source(args: argparse.Namespace) -> int:
         print(source.relative_to(ROOT).as_posix())
         return 0
     if not source.exists():
-        raise SystemExit(f"reflectl: command source `{source}` does not exist")
+        raise SystemExit(f"atelier: command source `{source}` does not exist")
     print(source.read_text(encoding="utf-8"))
     return 0
 
@@ -202,7 +202,7 @@ def cmd_agent_source(args: argparse.Namespace) -> int:
         print(source.relative_to(ROOT).as_posix())
         return 0
     if not source.exists():
-        raise SystemExit(f"reflectl: agent source `{source}` does not exist")
+        raise SystemExit(f"atelier: agent source `{source}` does not exist")
     print(source.read_text(encoding="utf-8"))
     return 0
 
@@ -227,12 +227,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     prompt = "\n".join(parts)
 
     if args.fork and args.exec:
-        raise SystemExit("reflectl: --fork is not supported with --exec; `codex exec` has no fork subcommand.")
+        raise SystemExit("atelier: --fork is not supported with --exec; `codex exec` has no fork subcommand.")
 
     resume_friendly = bool(command.get("resume_friendly", False))
     if (args.resume or args.fork) and not resume_friendly:
         sys.stderr.write(
-            f"reflectl: warning: `{args.command}` is not marked resume_friendly; "
+            f"atelier: warning: `{args.command}` is not marked resume_friendly; "
             "carrying prior session context may pollute reflection-style workflows. "
             "Consider running fresh, or `--fork` to isolate side effects.\n"
         )
@@ -258,7 +258,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         return subprocess.run(codex_cmd, cwd=str(ROOT)).returncode
     except FileNotFoundError:
         raise SystemExit(
-            "reflectl: codex CLI not found on PATH. Install with `npm i -g @openai/codex`."
+            "atelier: codex CLI not found on PATH. Install with `npm i -g @openai/codex`."
         ) from None
 
 
@@ -293,7 +293,7 @@ def cmd_status(args: argparse.Namespace) -> int:
             "models": MODELS_PATH.relative_to(ROOT).as_posix(),
             "capabilities": CAPABILITIES_PATH.relative_to(ROOT).as_posix(),
             "runtime_adapters": "protocols/runtime-adapters.md",
-            "skill": ".agents/skills/reflectl/SKILL.md",
+            "skill": ".agents/skills/atelier/SKILL.md",
         },
     }
 
@@ -301,7 +301,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
 
-    print("Reflectl harness status")
+    print("Atelier harness status")
     print("")
     print(f"AGENTS.md: {payload['roots']['AGENTS.md']['bytes']} bytes")
     print(f"CLAUDE.md: {payload['roots']['CLAUDE.md']['bytes']} bytes")
@@ -330,21 +330,21 @@ def count_by(items: dict[str, dict[str, Any]], field: str) -> dict[str, int]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="scripts/reflectl.py",
+        prog="scripts/atelier.py",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="Discover Reflectl command specs and generate Codex prompts.",
+        description="Discover Atelier command specs and generate Codex prompts.",
         epilog=textwrap.dedent(
             """\
             Examples:
-              python3 scripts/reflectl.py status
-              python3 scripts/reflectl.py commands
-              python3 scripts/reflectl.py commands --category session --json
-              python3 scripts/reflectl.py prompt reflect -- "I had a tough day"
-              python3 scripts/reflectl.py run reflect "I had a tough day"
-              python3 scripts/reflectl.py run lint --exec
-              python3 scripts/reflectl.py source lint --path-only
-              python3 scripts/reflectl.py agents
-              python3 scripts/reflectl.py agent-prompt researcher -- "find notes about agency"
+              python3 scripts/atelier.py status
+              python3 scripts/atelier.py commands
+              python3 scripts/atelier.py commands --category session --json
+              python3 scripts/atelier.py prompt reflect -- "I had a tough day"
+              python3 scripts/atelier.py run reflect "I had a tough day"
+              python3 scripts/atelier.py run lint --exec
+              python3 scripts/atelier.py source lint --path-only
+              python3 scripts/atelier.py agents
+              python3 scripts/atelier.py agent-prompt researcher -- "find notes about agency"
             """
         ),
     )

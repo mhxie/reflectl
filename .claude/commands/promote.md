@@ -1,6 +1,6 @@
 # /promote — Create L4 wiki entry from L2 source notes
 
-Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `$OV/wiki/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for reflectl's claim-level trust architecture.
+Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `$OV/wiki/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for atelier's claim-level trust architecture.
 
 **Scope:** one wiki entry per invocation. The user names a topic or set of source notes; the command produces a draft wiki entry with pre-populated `@anchor` markers for user review.
 

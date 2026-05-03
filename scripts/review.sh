@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Canonical external review for reflectl system-evolution changes.
+# Canonical external review for atelier system-evolution changes.
 # Runs codex and/or gemini on the uncommitted diff with pre-baked prompts.
 # Zero lookup: the orchestrator just runs this script — no skill, no doc.
 #
@@ -24,7 +24,7 @@ if git diff --quiet HEAD -- 2>/dev/null && [ -z "$(git ls-files --others --exclu
   exit 3
 fi
 
-PROMPT='Review this diff for reflectl, a personal reflection system. The changes may be prose (protocols, agent definitions, slash commands, CLAUDE.md, handoff docs) or code (scripts, helpers). Apply the same rigor to both.
+PROMPT='Review this diff for atelier, a personal reflection system. The changes may be prose (protocols, agent definitions, slash commands, CLAUDE.md, handoff docs) or code (scripts, helpers). Apply the same rigor to both.
 
 Check for:
 1. Cross-file consistency — do all path references agree after renames?

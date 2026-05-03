@@ -1,7 +1,7 @@
 # Portable command registry.
 #
 # Claude Code uses `.claude/commands/*.md` as native slash-command specs.
-# Codex uses this manifest plus `scripts/reflectl.py prompt <command>` to
+# Codex uses this manifest plus `scripts/atelier.py prompt <command>` to
 # discover the same workflows without depending on undocumented custom slash
 # command behavior.
 

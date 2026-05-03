@@ -2,7 +2,7 @@
 """
 auto_memory_audit.py: Audit pass over Claude Code auto-memory.
 
-reflectl's auto-memory lives at:
+atelier's auto-memory lives at:
     ~/.claude-personal/projects/<encoded-cwd>/memory/
 
 with a flat layout:

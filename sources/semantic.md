@@ -6,9 +6,9 @@ Teaching doc for the `semantic.py` CLI. Agents and command files call this scrip
 
 ## Modes
 
-**Stub mode** (lexical fallback): active when `~/.cache/reflectl/lance/` does not exist. Uses lexical token matching (substring `count`) over the Markdown corpus under `$OV/`. Prints a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
+**Stub mode** (lexical fallback): active when `~/.cache/atelier/lance/` does not exist. Uses lexical token matching (substring `count`) over the Markdown corpus under `$OV/`. Prints a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
 
-**Real mode** (embedding-backed): active when `~/.cache/reflectl/lance/` exists (sentinel). Day-one stack: BGE-M3 (1024-dim, multilingual, 8K-token context) + LanceDB (embedded columnar store, cosine distance). Documents are chunked at markdown heading boundaries (~2K chars per chunk). Index is machine-local; rebuild with `uv run scripts/semantic.py index` on each machine (~7s on MPS). No caller code changes across the swap.
+**Real mode** (embedding-backed): active when `~/.cache/atelier/lance/` exists (sentinel). Day-one stack: BGE-M3 (1024-dim, multilingual, 8K-token context) + LanceDB (embedded columnar store, cosine distance). Documents are chunked at markdown heading boundaries (~2K chars per chunk). Index is machine-local; rebuild with `uv run scripts/semantic.py index` on each machine (~7s on MPS). No caller code changes across the swap.
 
 ## CLI
 
@@ -111,14 +111,14 @@ scripts/semantic.py query "contradiction" --top 5 | \
 1. **Contract-first.** The CLI flags and output schema will not change when the backend swaps.
 2. **Transparent degradation.** Stub mode always warns on stderr. Callers treat the stream as authoritative.
 3. **Unix-composable.** stdout for data, stderr for meta, exit codes for control flow.
-4. **Sentinel mode detection.** `~/.cache/reflectl/lance/` present → real mode. Absent → stub. Nothing else.
+4. **Sentinel mode detection.** `~/.cache/atelier/lance/` present → real mode. Absent → stub. Nothing else.
 5. **Encoder-agnostic interface.** BGE, local model encoder, or any future backend all produce `(path, score)` pairs with the same semantics.
 6. **Stdlib-only in stub mode.** No dependencies shipped with the interface commit. Real mode deps managed via `pyproject.toml` + `uv`.
 
 ## Setup
 
 ```bash
-uv sync                                    # install deps (venv at ~/.cache/reflectl/.venv)
+uv sync                                    # install deps (venv at ~/.cache/atelier/.venv)
 uv run python scripts/semantic.py index    # build index (~4K files, takes a few minutes)
 uv run python scripts/semantic.py query "curiosity vectors"  # search
 ```

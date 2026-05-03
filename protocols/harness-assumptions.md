@@ -1,6 +1,6 @@
 # Harness Assumptions Protocol
 
-Identifies and tracks rules in the reflectl system that depend on model capabilities, API limits, or temporal context. These assumptions go stale across model upgrades and API changes. This protocol is the registry and audit checklist; the assumptions themselves stay in their original files.
+Identifies and tracks rules in the atelier system that depend on model capabilities, API limits, or temporal context. These assumptions go stale across model upgrades and API changes. This protocol is the registry and audit checklist; the assumptions themselves stay in their original files.
 
 ## Why This Exists
 
@@ -78,7 +78,7 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 
 | Rule | Location | Current Value | Re-test When |
 |------|----------|--------------|-------------|
-| semantic.py is primary for content queries | CLAUDE.md | Real embedding mode | Index is machine-local at `~/.cache/reflectl/lance/`; rebuild with `uv run scripts/semantic.py index` |
+| semantic.py is primary for content queries | CLAUDE.md | Real embedding mode | Index is machine-local at `~/.cache/atelier/lance/`; rebuild with `uv run scripts/semantic.py index` |
 | Grep for structural queries only | CLAUDE.md | Always | semantic.py covers structural queries too |
 | Retry with synonyms on empty results | error-handling.md | Manual retry | semantic.py handles synonyms natively |
 

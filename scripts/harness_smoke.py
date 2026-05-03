@@ -3,7 +3,7 @@
 harness_smoke.py: deterministic smoke test for the portable harness helpers.
 
 This intentionally avoids `$OV/` and network access. It only checks the public
-repo harness surface: harness_lint.py, reflectl.py JSON outputs, source path
+repo harness surface: harness_lint.py, atelier.py JSON outputs, source path
 lookups, and generated prompts.
 """
 
@@ -50,7 +50,7 @@ def check_harness_lint() -> None:
 
 
 def check_status() -> None:
-    payload = json.loads(run(["scripts/reflectl.py", "status", "--json"]))
+    payload = json.loads(run(["scripts/atelier.py", "status", "--json"]))
     registries = payload["registries"]
     expect(registries["commands"] >= 10, "expected at least 10 portable commands")
     expect(registries["agents"] >= 10, "expected at least 10 portable agents")
@@ -61,40 +61,40 @@ def check_status() -> None:
 
 
 def check_filtered_json() -> None:
-    commands = json.loads(run(["scripts/reflectl.py", "commands", "--category", "ops", "--json"]))
+    commands = json.loads(run(["scripts/atelier.py", "commands", "--category", "ops", "--json"]))
     expect("lint" in commands, "ops commands should include lint")
     expect(commands["lint"]["source"] == ".claude/commands/lint.md", "lint source drift")
 
-    agents = json.loads(run(["scripts/reflectl.py", "agents", "--profile", "deep_reflection", "--json"]))
+    agents = json.loads(run(["scripts/atelier.py", "agents", "--profile", "deep_reflection", "--json"]))
     expect("researcher" in agents, "deep_reflection agents should include researcher")
     expect(agents["researcher"]["source"] == ".claude/agents/researcher.md", "researcher source drift")
 
 
 def check_prompts_and_sources() -> None:
-    prompt = run(["scripts/reflectl.py", "prompt", "reflect", "--", "smoke context"])
+    prompt = run(["scripts/atelier.py", "prompt", "reflect", "--", "smoke context"])
     expect(".claude/commands/reflect.md" in prompt, "reflect prompt missing source path")
     expect("AGENTS.md" in prompt, "reflect prompt missing AGENTS.md instruction")
     expect("smoke context" in prompt, "reflect prompt missing context")
 
-    agent_prompt = run(["scripts/reflectl.py", "agent-prompt", "reviewer", "--", "smoke review"])
+    agent_prompt = run(["scripts/atelier.py", "agent-prompt", "reviewer", "--", "smoke review"])
     expect(".claude/agents/reviewer.md" in agent_prompt, "reviewer prompt missing source path")
     expect("smoke review" in agent_prompt, "reviewer prompt missing context")
 
-    command_source = run(["scripts/reflectl.py", "source", "lint", "--path-only"]).strip()
+    command_source = run(["scripts/atelier.py", "source", "lint", "--path-only"]).strip()
     expect(command_source == ".claude/commands/lint.md", "lint path-only source drift")
 
-    agent_source = run(["scripts/reflectl.py", "agent-source", "reviewer", "--path-only"]).strip()
+    agent_source = run(["scripts/atelier.py", "agent-source", "reviewer", "--path-only"]).strip()
     expect(agent_source == ".claude/agents/reviewer.md", "reviewer path-only source drift")
 
 
 def check_run_dry() -> None:
-    prompt = run(["scripts/reflectl.py", "run", "reflect", "smoke context", "--print"])
+    prompt = run(["scripts/atelier.py", "run", "reflect", "smoke context", "--print"])
     expect(".claude/commands/reflect.md" in prompt, "run --print prompt missing source path")
     expect("AGENTS.md" in prompt, "run --print prompt missing AGENTS.md instruction")
     expect("smoke context" in prompt, "run --print prompt missing context")
 
     # --resume + --print should not error and should still produce the prompt
-    resume_prompt = run(["scripts/reflectl.py", "run", "promote", "smoke", "--resume", "--print"])
+    resume_prompt = run(["scripts/atelier.py", "run", "promote", "smoke", "--resume", "--print"])
     expect(".claude/commands/promote.md" in resume_prompt, "run --resume --print missing source path")
 
 

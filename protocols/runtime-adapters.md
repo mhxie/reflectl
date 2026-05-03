@@ -1,6 +1,6 @@
 # Runtime Adapters Protocol
 
-Reflectl should run under Claude Code and Codex without forking the reflection
+Atelier should run under Claude Code and Codex without forking the reflection
 system. The core idea is to separate four concerns:
 
 | Concern | Owned by | Example |
@@ -19,7 +19,7 @@ workflow.
 | Runtime | Reads | Native surface | Status |
 |---|---|---|---|
 | Claude Code | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/` | Primary interactive harness |
-| Codex | `AGENTS.md` | `.agents/skills/reflectl/`, Codex CLI, Codex review | Portable harness |
+| Codex | `AGENTS.md` | `.agents/skills/atelier/`, Codex CLI, Codex review | Portable harness |
 
 Claude Code remains the most complete native surface because the command files
 currently use Claude constructs such as `AskUserQuestion` and `Agent(...)`.
@@ -27,13 +27,13 @@ Codex uses `AGENTS.md` plus this protocol to translate those constructs.
 
 `harness/commands.toml` and `harness/agents.toml` are the registries shared by
 both runtimes. They map portable names to the current Claude source files and
-give Codex prompts that can be generated with `python3 scripts/reflectl.py
-prompt <name>` and `python3 scripts/reflectl.py agent-prompt <name>`. The
-repo-scoped `reflectl` skill points Codex to these registries without loading
+give Codex prompts that can be generated with `python3 scripts/atelier.py
+prompt <name>` and `python3 scripts/atelier.py agent-prompt <name>`. The
+repo-scoped `atelier` skill points Codex to these registries without loading
 every command or agent spec up front.
 
 Codex does not yet ship a project-level custom slash-command surface, so the
-parity invocation is `python3 scripts/reflectl.py run <command>`, which spawns
+parity invocation is `python3 scripts/atelier.py run <command>`, which spawns
 `codex` (or `codex exec` with `--exec`) with the generated workflow prompt
 pre-loaded and the project root as the working directory. This is the
 recommended Codex entry point until Codex documents a stable custom-prompt
@@ -94,7 +94,7 @@ The concrete tool mapping is in `harness/capabilities.toml`.
 
 ## Codex Command Execution
 
-When a user asks Codex to run a Reflectl command:
+When a user asks Codex to run a Atelier command:
 
 1. Read `AGENTS.md`.
 2. Read `CLAUDE.md` for domain rules and safety constraints.
@@ -106,13 +106,13 @@ When a user asks Codex to run a Reflectl command:
 8. Report any downgraded capability, such as missing web access or unavailable
    subagent dispatch.
 
-If the command name is unknown, run `python3 scripts/reflectl.py commands` to
+If the command name is unknown, run `python3 scripts/atelier.py commands` to
 discover the registered command set. To produce a copyable invocation prompt,
-run `python3 scripts/reflectl.py prompt <command>`.
+run `python3 scripts/atelier.py prompt <command>`.
 
-If the role name is unknown, run `python3 scripts/reflectl.py agents` to
+If the role name is unknown, run `python3 scripts/atelier.py agents` to
 discover the registered agent set. To produce a focused role-emulation prompt,
-run `python3 scripts/reflectl.py agent-prompt <agent>`.
+run `python3 scripts/atelier.py agent-prompt <agent>`.
 
 ## Migration Path
 

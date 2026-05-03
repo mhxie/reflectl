@@ -12,11 +12,11 @@ Provider-neutral registry files for the Atelier runtime layer.
 Use the helper CLI instead of scraping TOML directly:
 
 ```bash
-python3 scripts/reflectl.py status
-python3 scripts/reflectl.py commands
-python3 scripts/reflectl.py agents
-python3 scripts/reflectl.py prompt reflect
-python3 scripts/reflectl.py agent-prompt researcher
+python3 scripts/atelier.py status
+python3 scripts/atelier.py commands
+python3 scripts/atelier.py agents
+python3 scripts/atelier.py prompt reflect
+python3 scripts/atelier.py agent-prompt researcher
 ```
 
 Before finishing harness changes:

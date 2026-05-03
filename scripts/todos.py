@@ -147,7 +147,7 @@ def line_age_days(path: Path, line_no: int) -> int:
     Reflections are write-once; we derive age from the YYYY-MM-DD filename prefix,
     which is the canonical creation date and beats file mtime (Google Drive sync
     invalidates mtime). Git blame is also unreliable here: zk/ is a Drive symlink
-    not tracked by the reflectl repo. GTD files are continuously edited, so we
+    not tracked by the atelier repo. GTD files are continuously edited, so we
     approximate their line-age with file mtime.
     """
     if "reflections" in path.parts:

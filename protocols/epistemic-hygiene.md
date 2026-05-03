@@ -1,6 +1,6 @@
 # Epistemic Hygiene
 
-How reflectl distinguishes well-validated thinking from raw or alloyed thinking, and how it guards against the failure modes specific to AI-augmented reflection.
+How atelier distinguishes well-validated thinking from raw or alloyed thinking, and how it guards against the failure modes specific to AI-augmented reflection.
 
 ## The Principle
 
@@ -14,7 +14,7 @@ Three tiers, in increasing order of validation depth.
 
 ### Alloy (default, no tag required)
 
-The default state of every thought that has passed through any reflectl session. Mixed authorship, mixed validation. Useful, searchable, citable, but not certified. Most daily-note write-backs, session reflections, routine notes, and the bulk of the user's vault live here.
+The default state of every thought that has passed through any atelier session. Mixed authorship, mixed validation. Useful, searchable, citable, but not certified. Most daily-note write-backs, session reflections, routine notes, and the bulk of the user's vault live here.
 
 Applies to: anything written collaboratively with the system, anything the system has digested, anything that has been queried about. No tag required — alloy is what you get for free.
 
@@ -48,7 +48,7 @@ Two failure modes anchor the design at opposite ends.
 
 In the LLM Knowledge Bases gist, Andrej Karpathy treats everything in his second brain as acceptable for LLM ingestion and synthesis. There is no zone where the human writer's unmediated voice is preserved as load-bearing. The risk: the second brain becomes a closed loop where the LLM's prior outputs feed the LLM's next outputs, with no external friction to break the cycle. Trust propagates from nothing.
 
-reflectl's structural answer: external anchors are the only seeds of trust. Internal agent passes (Reviewer, Challenger, Thinker) can floor or invalidate trust but never accumulate it. See `wiki-schema.md` → "The Trust Propagation Rule."
+atelier's structural answer: external anchors are the only seeds of trust. Internal agent passes (Reviewer, Challenger, Thinker) can floor or invalidate trust but never accumulate it. See `wiki-schema.md` → "The Trust Propagation Rule."
 
 ### Appleton's failure mode (human centipede epistemology)
 
@@ -58,7 +58,7 @@ Maggie Appleton's Dark Forest essay names the endpoint:
 
 The risk: anchors themselves degrade as the source corpus (papers, articles, discussions) becomes increasingly AI-assisted. Even "external validation" stops being independent.
 
-reflectl's structural answer: **bi-temporal anchors**. Every `@anchor` carries a `valid_at` timestamp recording when the anchor was added. Later invalidation gets `invalid_at`. This lets the system answer "was this claim externally supported *at the time it was anchored*, even if the anchor has since been superseded?" — which is the right question once the anchor corpus itself can degrade. See `wiki-schema.md` → "Bi-temporal Anchors."
+atelier's structural answer: **bi-temporal anchors**. Every `@anchor` carries a `valid_at` timestamp recording when the anchor was added. Later invalidation gets `invalid_at`. This lets the system answer "was this claim externally supported *at the time it was anchored*, even if the anchor has since been superseded?" — which is the right question once the anchor corpus itself can degrade. See `wiki-schema.md` → "Bi-temporal Anchors."
 
 The user's failure mode is not Karpathy's. The user's risk is treating everything as acceptably mixed and losing any anchor — "alloy as surrender." The taxonomy and the trust engine exist to prevent that drift.
 

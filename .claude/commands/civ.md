@@ -51,7 +51,7 @@ From the user's resource framework note (provisional, 2026-04-19). The optimizat
 
 | # | Value | Current weight | Measured by |
 |---|---|---|---|
-| 1 | **意义 Meaning** | Highest | Identity coherence: are you building what matters to you? Evidence: reflectl, systems research identity, "consumer vs creator" |
+| 1 | **意义 Meaning** | Highest | Identity coherence: are you building what matters to you? Evidence: atelier, systems research identity, "consumer vs creator" |
 | 2 | **成就感 Achievement** | Very high (coupled with 意义) | Craft mastery, not external validation. Evidence: ownership, wiki compound, "bugs others would miss" |
 | 3 | **幸福感 Wellbeing** | High | Eudaimonic-heavy: relational depth + intellectual engagement + exploration. Evidence: reading sessions, social interactions, flow states |
 | 4 | **自由 Autonomy** | High | Optionality, self-determination. Evidence: career mobility, financial runway, epistemic sovereignty |

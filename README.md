@@ -66,11 +66,11 @@ claude                # open Claude Code in the project
 Codex:
 
 ```bash
-python3 scripts/reflectl.py run reflect            # fresh Codex TUI on /reflect (default)
-python3 scripts/reflectl.py run lint --exec        # one-shot, no TUI
-python3 scripts/reflectl.py run reflect "context here"
-python3 scripts/reflectl.py run promote --resume   # continue most recent session (resume_friendly only)
-python3 scripts/reflectl.py run promote --fork     # branch from most recent without mutating it
+python3 scripts/atelier.py run reflect            # fresh Codex TUI on /reflect (default)
+python3 scripts/atelier.py run lint --exec        # one-shot, no TUI
+python3 scripts/atelier.py run reflect "context here"
+python3 scripts/atelier.py run promote --resume   # continue most recent session (resume_friendly only)
+python3 scripts/atelier.py run promote --fork     # branch from most recent without mutating it
 ```
 
 The `run` subcommand spawns `codex` with the generated prompt pre-loaded and the repo as the working directory. Codex reads `AGENTS.md`, picks up the repo-scoped skill under `.agents/skills/`, then adapts `.claude/commands/*.md` through `protocols/runtime-adapters.md`.
@@ -151,7 +151,7 @@ Capture sources                  Local data layer ($OV/)
 
 **Session output.** The orchestrator dispatches agents, gathers findings, runs a quality gate, and writes session output to `$OV/reflections/`. Daily notes are user-authored — the system reads them but never writes. All personal data under `$OV/` is gitignored; only system configuration is committed.
 
-**Harness engineering.** `CLAUDE.md` is kept under 8KB because it is inherited by every Claude subagent; each line costs N tokens times N agents per session. `AGENTS.md` and `.agents/skills/reflectl/SKILL.md` give Codex the root contract and workflow trigger. `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md` keep provider and runtime assumptions explicit. `scripts/reflectl.py` gives Codex command and role discovery plus prompt generation. Critical rules live at the top (primacy effect); detailed specifications load on demand from protocols and agent definitions. The Master of the Atelier (Evolver) has a "subtract before adding" principle and a root-instruction budget gate. `/lint` Phase 0 checks harness health alongside the wiki structural pass.
+**Harness engineering.** `CLAUDE.md` is kept under 8KB because it is inherited by every Claude subagent; each line costs N tokens times N agents per session. `AGENTS.md` and `.agents/skills/atelier/SKILL.md` give Codex the root contract and workflow trigger. `harness/models.toml`, `harness/capabilities.toml`, `harness/commands.toml`, `harness/agents.toml`, and `protocols/runtime-adapters.md` keep provider and runtime assumptions explicit. `scripts/atelier.py` gives Codex command and role discovery plus prompt generation. Critical rules live at the top (primacy effect); detailed specifications load on demand from protocols and agent definitions. The Master of the Atelier (Evolver) has a "subtract before adding" principle and a root-instruction budget gate. `/lint` Phase 0 checks harness health alongside the wiki structural pass.
 
 Key design choices:
 

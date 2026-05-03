@@ -16,7 +16,7 @@ Because wiki entries live under `$OV/wiki/` and nothing outside that directory p
 
 Most PKM trust systems assign trust to whole notes. A note like that can contain one well-anchored claim and five confabulated ones, and the whole note inherits the same score. RAGAS faithfulness work shows that atomic-claim granularity is materially more reliable. Graphiti's bi-temporal edge model is the production analog.
 
-reflectl's wiki entries are structured around claims, not paragraphs. Each claim has its own anchor set and its own trust score. Note-level aggregation is a derived view, not the primary unit.
+atelier's wiki entries are structured around claims, not paragraphs. Each claim has its own anchor set and its own trust score. Note-level aggregation is a derived view, not the primary unit.
 
 ## Note Structure
 

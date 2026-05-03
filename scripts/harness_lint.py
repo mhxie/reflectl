@@ -2,7 +2,7 @@
 """
 harness_lint.py: portability checks for the Claude Code and Codex harness.
 
-This script checks the repo-level contracts that let Reflectl run under both
+This script checks the repo-level contracts that let Atelier run under both
 Claude Code and Codex:
 
   1. Codex has a root AGENTS.md.
@@ -13,7 +13,7 @@ Claude Code and Codex:
   5. Tracked command specs are represented in harness/commands.toml.
   6. Tracked agent specs are represented in harness/agents.toml.
   7. The harness reference doc exists.
-  8. Codex has a repo-scoped Reflectl skill for workflow discovery.
+  8. Codex has a repo-scoped Atelier skill for workflow discovery.
 
 Exit code: 0 if no ERROR-level findings, 1 if any ERROR-level finding.
 argparse returns 2 on CLI usage errors.
@@ -619,7 +619,7 @@ def check_harness_readme() -> list[Finding]:
         ]
     text = _read(path)
     findings: list[Finding] = []
-    for needle in ("commands.toml", "agents.toml", "models.toml", "capabilities.toml", "scripts/reflectl.py"):
+    for needle in ("commands.toml", "agents.toml", "models.toml", "capabilities.toml", "scripts/atelier.py"):
         if needle not in text:
             findings.append(
                 Finding(
@@ -632,23 +632,23 @@ def check_harness_readme() -> list[Finding]:
     return findings
 
 
-def check_reflectl_skill() -> list[Finding]:
+def check_atelier_skill() -> list[Finding]:
     findings: list[Finding] = []
-    path = ROOT / ".agents" / "skills" / "reflectl" / "SKILL.md"
+    path = ROOT / ".agents" / "skills" / "atelier" / "SKILL.md"
     if not path.exists():
         return [
             Finding(
                 "ERROR",
                 "skill-missing",
                 rel(path),
-                "repo-scoped Codex skill for Reflectl workflows is missing",
+                "repo-scoped Codex skill for Atelier workflows is missing",
             )
         ]
 
     fields = parse_agent_frontmatter(path)
-    if fields.get("name") != "reflectl":
+    if fields.get("name") != "atelier":
         findings.append(
-            Finding("ERROR", "skill-name", rel(path), "skill frontmatter must set `name: reflectl`")
+            Finding("ERROR", "skill-name", rel(path), "skill frontmatter must set `name: atelier`")
         )
     description = fields.get("description", "")
     if not description or "/reflect" not in description:
@@ -657,12 +657,12 @@ def check_reflectl_skill() -> list[Finding]:
                 "ERROR",
                 "skill-description",
                 rel(path),
-                "skill description must mention Reflectl workflow triggers",
+                "skill description must mention Atelier workflow triggers",
             )
         )
 
     text = _read(path)
-    for needle in ("harness/commands.toml", "harness/agents.toml", "scripts/reflectl.py", "protocols/runtime-adapters.md"):
+    for needle in ("harness/commands.toml", "harness/agents.toml", "scripts/atelier.py", "protocols/runtime-adapters.md"):
         if needle not in text:
             findings.append(
                 Finding(
@@ -687,7 +687,7 @@ def run_lints() -> list[Finding]:
     findings.extend(check_agent_registry(agents))
     findings.extend(check_commands(commands))
     findings.extend(check_harness_readme())
-    findings.extend(check_reflectl_skill())
+    findings.extend(check_atelier_skill())
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 99), f.code, f.where, f.message))
     return findings
 

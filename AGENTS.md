@@ -8,8 +8,8 @@ This system is **the Atelier** — a workshop wrapping the user's **œuvre**
 agents collectively are **le cercle**. For the full vocabulary and the
 12-operator archetype map, see `CLAUDE.md` § Vocabulary.
 
-Codex can also discover the repo-scoped `reflectl` skill in `.agents/skills/`
-(skill directory name remains `reflectl` until the optional phase 6 rename).
+Codex can also discover the repo-scoped `atelier` skill in `.agents/skills/`
+(skill directory name remains `atelier` until the optional phase 6 rename).
 
 Before user-facing reflection work, read `CLAUDE.md` for the domain rules, then
 use `protocols/runtime-adapters.md` to translate Claude-specific command syntax
@@ -65,8 +65,8 @@ High-frequency operations. Lift these directly instead of re-deriving from `prot
 | Wiki entry by title | `rg -l "<title>" "$OV/wiki/"` |
 | Privacy gate | `uv run scripts/privacy_check.py --json` |
 | Harness state / lint | `python3 scripts/harness_lint.py --json` |
-| Source spec for a command | `python3 scripts/reflectl.py source <name>` |
-| Run a workflow | `python3 scripts/reflectl.py run <name>` |
+| Source spec for a command | `python3 scripts/atelier.py source <name>` |
+| Run a workflow | `python3 scripts/atelier.py run <name>` |
 
 For project slash commands such as `/reflect`, `/review`, `/weekly`, and
 `/lint`, read the corresponding `.claude/commands/<name>.md` file and run the
@@ -75,20 +75,20 @@ workflow under this adaptation table.
 To discover command specs from Codex:
 
 ```bash
-python3 scripts/reflectl.py status
-python3 scripts/reflectl.py commands
-python3 scripts/reflectl.py prompt reflect
-python3 scripts/reflectl.py source reflect --path-only
+python3 scripts/atelier.py status
+python3 scripts/atelier.py commands
+python3 scripts/atelier.py prompt reflect
+python3 scripts/atelier.py source reflect --path-only
 ```
 
 To launch a workflow directly (Codex parity for Claude Code's slash commands):
 
 ```bash
-python3 scripts/reflectl.py run reflect            # interactive TUI (fresh session)
-python3 scripts/reflectl.py run lint --exec        # non-interactive
-python3 scripts/reflectl.py run reflect "context"
-python3 scripts/reflectl.py run promote --resume   # continue last session (resume_friendly only)
-python3 scripts/reflectl.py run promote --fork     # branch from last session without mutating it
+python3 scripts/atelier.py run reflect            # interactive TUI (fresh session)
+python3 scripts/atelier.py run lint --exec        # non-interactive
+python3 scripts/atelier.py run reflect "context"
+python3 scripts/atelier.py run promote --resume   # continue last session (resume_friendly only)
+python3 scripts/atelier.py run promote --fork     # branch from last session without mutating it
 ```
 
 Default is a fresh session. `--resume` (`codex resume --last`) and `--fork`
@@ -98,9 +98,9 @@ for commands marked `resume_friendly = true` in `harness/commands.toml`.
 To discover role specs from Codex:
 
 ```bash
-python3 scripts/reflectl.py agents
-python3 scripts/reflectl.py agent-prompt researcher
-python3 scripts/reflectl.py agent-source researcher --path-only
+python3 scripts/atelier.py agents
+python3 scripts/atelier.py agent-prompt researcher
+python3 scripts/atelier.py agent-source researcher --path-only
 ```
 
 ## Project Shell Trust (Codex)
@@ -108,7 +108,7 @@ python3 scripts/reflectl.py agent-source researcher --path-only
 Project shell trust lives in `~/.codex/config.toml`:
 
 ```toml
-[projects."/path/to/reflectl"]
+[projects."/path/to/atelier"]
 trust_level = "trusted"
 ```
 
@@ -123,7 +123,7 @@ When changing the harness:
 3. Add or update capability mappings in `harness/capabilities.toml`.
 4. Add or update role mappings in `harness/agents.toml`.
 5. Add or update command mappings in `harness/commands.toml`.
-6. Update `.agents/skills/reflectl/SKILL.md` if the Codex workflow changes.
+6. Update `.agents/skills/atelier/SKILL.md` if the Codex workflow changes.
 7. Keep Claude-specific syntax in `.claude/` and Codex-specific notes in
    `.codex/`.
 8. Run `python3 scripts/harness_lint.py` before finishing.

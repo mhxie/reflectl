@@ -96,7 +96,7 @@ readwise reader-create-document --url "https://example.com/article" --tags resea
 
 | Tag | Meaning |
 |-----|---------|
-| `#deep-read` | Queued for a reflectl `/reflect → Read` session |
+| `#deep-read` | Queued for a atelier `/reflect → Read` session |
 | `#digest` | Include in weekly reading digest |
 | `#auto-triaged` | Processed by the curate pipeline |
 

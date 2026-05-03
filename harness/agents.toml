@@ -1,8 +1,8 @@
 # Portable agent registry.
 #
 # Claude Code uses `.claude/agents/*.md` as native subagent specs.
-# Codex uses this registry plus `scripts/reflectl.py agents` and
-# `scripts/reflectl.py agent-prompt <agent>` to discover and emulate roles.
+# Codex uses this registry plus `scripts/atelier.py agents` and
+# `scripts/atelier.py agent-prompt <agent>` to discover and emulate roles.
 
 [agents.challenger]
 source = ".claude/agents/challenger.md"
