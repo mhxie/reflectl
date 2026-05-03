@@ -37,10 +37,10 @@ This determines how much analysis is appropriate.
 
 ### Step 3: Search for Relevant History
 
-Pull prior thinking from the local vault. No Reflect MCP.
+Pull prior thinking from the local vault.
 - `Bash: uv run scripts/semantic.py query "<decision topic>" --top 10` — **primary**: has the user thought about adjacent versions of this before? Reframe and retry if thin.
-- `Grep(pattern: "<key terms>", path: "zk/")` — exact-match related notes for structural follow-up. Try both languages.
-- `Grep(pattern: "<goal keyword>", path: "zk/gtd/")` AND `Grep(pattern: "<goal keyword>", path: "zk/wiki/")` — two separate calls; `Grep`'s `path` takes a single root, not a space-separated list. Checks which active goals (gtd) and which certified directions (wiki) are affected by this decision.
+- `Grep(pattern: "<key terms>", path: "$ZK/")` — exact-match related notes for structural follow-up. Try both languages.
+- `Grep(pattern: "<goal keyword>", path: "$ZK/gtd/")` AND `Grep(pattern: "<goal keyword>", path: "$ZK/wiki/")` — two separate calls; `Grep`'s `path` takes a single root, not a space-separated list. Checks which active goals (gtd) and which certified directions (wiki) are affected by this decision.
 
 ### Step 4: Apply Two Frameworks (Cross-Validation)
 
@@ -81,7 +81,7 @@ Don't push for a decision. If the user is ready, capture it. If not, capture the
 
 ## Output
 
-**File:** `zk/reflections/YYYY-MM-DD-decision-<slugified-topic>.md`
+**File:** `$ZK/reflections/YYYY-MM-DD-decision-<slugified-topic>.md`
 
 Note: Slugify the topic for the filename — lowercase, replace spaces with hyphens, remove special characters (e.g., "SF vs NYC job" → `sf-vs-nyc-job`). Keep the original topic text in the file content.
 
@@ -134,6 +134,4 @@ After writing the decision file, emit a session log:
 
 ## Wrap Up
 
-The decision file in `zk/reflections/` is the durable session output. No write-back to daily notes — daily notes are the user's capture stream, read-only from the system's perspective. Tell the user the decision journal has been saved and where to find it.
-
-- If **a write-back already exists**: Skip to avoid duplicates. Tell the user about the skip.
+The decision file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the decision journal has been saved and where to find it.

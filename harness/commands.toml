@@ -76,27 +76,12 @@ description = "Promote L2 working notes into a schema-compliant L4 wiki entry."
 codex_prompt = "Run the /promote workflow using `.claude/commands/promote.md` and the runtime adapter protocol."
 resume_friendly = true
 
-[commands.sync]
-source = ".claude/commands/sync.md"
-category = "ops"
-status = "portable-adapted"
-description = "Pull Reflect daily notes into the local mirror and merge line-union."
-codex_prompt = "Run the /sync workflow using `.claude/commands/sync.md` and the runtime adapter protocol."
-
 [commands.lint]
 source = ".claude/commands/lint.md"
 category = "ops"
 status = "portable-adapted"
 description = "Run harness, privacy, structural, and staleness checks."
 codex_prompt = "Run the /lint workflow using `.claude/commands/lint.md` and the runtime adapter protocol."
-
-[commands.restore]
-source = ".claude/commands/restore.md"
-category = "ops"
-status = "portable-adapted"
-description = "Plan last-resort recovery of a missing wiki entry from Reflect."
-codex_prompt = "Run the /restore workflow using `.claude/commands/restore.md` and the runtime adapter protocol."
-resume_friendly = true
 
 [commands.system-review]
 source = ".claude/commands/system-review.md"

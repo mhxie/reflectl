@@ -1,16 +1,16 @@
 # Wiki Schema
 
-The structural format for a note that lives under `zk/wiki/`. Location is the certification: a note is a wiki entry by virtue of being in `zk/wiki/`, not by carrying any tag. Wiki entries are parseable by `scripts/trust.py` and have claim-level granularity in the trust graph. Notes outside `zk/wiki/` are alloy by default (see `epistemic-hygiene.md`).
+The structural format for a note that lives under `$ZK/wiki/`. Location is the certification: a note is a wiki entry by virtue of being in `$ZK/wiki/`, not by carrying any tag. Wiki entries are parseable by `scripts/trust.py` and have claim-level granularity in the trust graph. Notes outside `$ZK/wiki/` are alloy by default (see `epistemic-hygiene.md`).
 
 ## Why Location, Not Tag
 
-Earlier drafts of this design used a `#compiled-truth` tag to mark notes that followed the schema. The tag is dropped. `zk/` is a real Obsidian vault with hundreds of pre-existing notes; carving out a structural sub-tier by tag inside that vault would conflict with the user's existing tagging conventions and force the trust engine to filter every note in the vault. A dedicated subdirectory is cleaner: `zk/wiki/` is the trust-engine-visible region; everything else in `zk/` is alloy. The trust engine walks one directory; the user has free use of every other tag.
+Earlier drafts of this design used a `#compiled-truth` tag to mark notes that followed the schema. The tag is dropped. `$ZK/` is a real markdown vault with hundreds of pre-existing notes; carving out a structural sub-tier by tag inside that vault would conflict with the user's existing tagging conventions and force the trust engine to filter every note in the vault. A dedicated subdirectory is cleaner: `$ZK/wiki/` is the trust-engine-visible region; everything else in `$ZK/` is alloy. The trust engine walks one directory; the user has free use of every other tag.
 
 The `#solo-flight` tag survives this rename — it lives orthogonally to the schema and marks unstructured pure-human capture, which is location-independent (see `epistemic-hygiene.md`).
 
 ## Session-Visible Markers
 
-Because wiki entries live under `zk/wiki/` and nothing outside that directory participates in the trust graph, a reader scanning a session (the orchestrator, a subagent, or the user skimming chat) has no visible cue that a referenced file is wiki-grade. The file-path prefix `zk/wiki/` is the cue. When agents cite a wiki entry in session output, they cite by path (`zk/wiki/<title>.md`), not by bare note title, so the certification is legible inline. Reflect-only notes continue to be cited as `[[Note Title]]`. A `[[Note Title]]` reference in any session output is alloy by default; a `zk/wiki/...` path reference is wiki-grade. Mixing the two forms in one citation (e.g., `[[zk/wiki/foo]]`) is a schema violation the Reviewer flags.
+Because wiki entries live under `$ZK/wiki/` and nothing outside that directory participates in the trust graph, a reader scanning a session (the orchestrator, a subagent, or the user skimming chat) has no visible cue that a referenced file is wiki-grade. The file-path prefix `$ZK/wiki/` is the cue. When agents cite a wiki entry in session output, they cite by path (`$ZK/wiki/<title>.md`), not by bare note title, so the certification is legible inline. Notes outside `$ZK/wiki/` continue to be cited as `[[Note Title]]`. A `[[Note Title]]` reference in any session output is alloy by default; a `$ZK/wiki/...` path reference is wiki-grade. Mixing the two forms in one citation (e.g., `[[$ZK/wiki/foo]]`) is a schema violation the Reviewer flags.
 
 ## Why Claim-Level
 
@@ -20,7 +20,7 @@ reflectl's wiki entries are structured around claims, not paragraphs. Each claim
 
 ## Note Structure
 
-A wiki entry has three required sections and lives in `zk/wiki/` (see `local-first-architecture.md` for the layer model).
+A wiki entry has three required sections and lives in `$ZK/wiki/` (see `local-first-architecture.md` for the layer model).
 
 ```markdown
 # Note Title
@@ -63,11 +63,11 @@ The `# Title`, `## Summary`, `## Claims`, and `## Revision Log` headings are req
 
 ## Claim Block Identifiers (`^cn`)
 
-Wiki entries need two independent addressing mechanisms for each claim: one the trust parser reads, and one Obsidian's wikilink resolver reads. They live in the same claim block and do not interfere.
+Wiki entries need two independent addressing mechanisms for each claim: one the trust parser reads, and one a wikilink resolver reads. They live in the same claim block and do not interfere.
 
-**Why `[[note#Cn]]` does not work.** Obsidian's internal-link heading resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] The concept has structural property X...` has the literal text `[C1] The concept has structural property X...`, not `C1`. A link written as `[[Sample Wiki Entry#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
+**Why `[[note#Cn]]` does not work.** Heading-based wikilink resolution matches the **literal heading text**, not a prefix or token inside it. A claim heading `### [C1] The concept has structural property X...` has the literal text `[C1] The concept has structural property X...`, not `C1`. A link written as `[[Sample Wiki Entry#C1]]` looks for a heading literally named "C1", finds nothing, and silently fails — no error, no navigation, no warning. This is a real recurring footgun; every agent writing backlinks from alloy notes to wiki claims has tripped it at least once.
 
-**The convention.** Each claim carries an Obsidian block identifier `^cn` (lowercase `c`, matching the claim number) placed inline at the end of the last body paragraph of the claim, immediately before the fenced `anchors` block. Per Obsidian's spec, block identifiers "can only consist of Latin letters, numbers, and dashes," so human-readable `^c1`, `^c2`, ... are valid and deliberately mirror the `[Cn]` heading numbering.
+**The convention.** Each claim carries a block identifier `^cn` (lowercase `c`, matching the claim number) placed inline at the end of the last body paragraph of the claim, immediately before the fenced `anchors` block. Block identifiers may consist only of Latin letters, numbers, and dashes, so human-readable `^c1`, `^c2`, ... are valid and deliberately mirror the `[Cn]` heading numbering.
 
 ```markdown
 ### [C1] The concept has structural property X under condition Y
@@ -81,13 +81,13 @@ why the property holds. Prose runs for one or more paragraphs. ^c1
 ```
 ```
 
-The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced anchors block. Place it at the end of the last prose paragraph. Obsidian then resolves `[[Sample Wiki Entry#^c1]]` to that exact location and scrolls the reader to it.
+The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced anchors block. Place it at the end of the last prose paragraph. A wikilink resolver then matches `[[Sample Wiki Entry#^c1]]` to that exact location and scrolls the reader to it.
 
-**Citing a claim from an alloy note.** Use the block-ID form: `[[Note Title#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `zk/` should point at a specific wiki claim when they want fine-grained navigation.
+**Citing a claim from an alloy note.** Use the block-ID form: `[[Note Title#^c1]]`. This is how learning packs, daily notes, session reflections, and any other alloy content under `$ZK/` should point at a specific wiki claim when they want fine-grained navigation.
 
-**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `zk/wiki/Note Title.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
+**Citing a claim from session output (orchestrator or subagent chat).** Keep using the path form described in "Session-Visible Markers" above: `$ZK/wiki/Note Title.md [C1]`. The session-visible path citation is about legibility of the certification tier in chat, not about click-through navigation, so block IDs are not involved.
 
-**Citing a claim from another wiki entry's `@cite`.** Use the same `#^cn` block-ID form: `@cite: [[Note Title#^c1]] | valid_at: ...`. The trust parser extracts the note title and claim number from this syntax, and Obsidian renders it as a clickable link that navigates to the claim. This is the unified notation: one syntax works for both the trust graph and Obsidian navigation.
+**Citing a claim from another wiki entry's `@cite`.** Use the same `#^cn` block-ID form: `@cite: [[Note Title#^c1]] | valid_at: ...`. The trust parser extracts the note title and claim number from this syntax, and a wikilink-aware viewer renders it as a clickable link that navigates to the claim. This is the unified notation: one syntax works for both the trust graph and viewer navigation.
 
 **Parser impact: none.** `scripts/trust.py` walks claim headings structurally and ignores trailing `^cn` tokens in body text. The structural-integrity check treats a claim body containing `^c1` at the end exactly the same as one without. The schema contract is unchanged — adding `^cn` markers is purely additive for human navigation.
 
@@ -98,7 +98,7 @@ The `^c1` marker is a **sibling of the claim text**, not a sibling of the fenced
 - **Sub-claim granularity is a smell, not a feature.** If you find yourself wanting `^c1-part2` or `^c1a`, the claim is actually two claims and should be split. Splitting preserves the trust-graph granularity: each half gets its own anchors, its own Reviewer pass, its own score. A sub-block ID would let authors evade that pressure and produce "one big claim with five unrelated anchors" notes — precisely the pattern claim-level granularity exists to prevent.
 - **Summary doesn't need one.** The bare `[[wiki-entry]]` link already opens the note at the top. A `^summary` block ID would be redundant navigation to the same destination.
 - **Revision Log doesn't need one.** Revision log entries are historical metadata, not things anyone cites from elsewhere. If a specific revision matters enough to cite, promote its substance to a claim or a standalone note.
-- **Lint stays trivial.** A single regex (`\^c[0-9]+$`) validates every block ID in `zk/wiki/`. Mixing id families would force `/lint` to maintain a taxonomy of which shapes are allowed where.
+- **Lint stays trivial.** A single regex (`\^c[0-9]+$`) validates every block ID in `$ZK/wiki/`. Mixing id families would force `/lint` to maintain a taxonomy of which shapes are allowed where.
 
 A block ID outside the `^cn` family in a wiki entry is a schema violation that `/lint` flags as ERROR (distinct from the WARN for merely missing `^cn` markers on claims).
 
@@ -106,7 +106,7 @@ A block ID outside the `^cn` family in a wiki entry is a schema violation that `
 
 `@anchor` and `@pass` markers live inside fenced code blocks with the language label `anchors`, one marker per line, pipe-separated key-value pairs. The fenced format for these two marker types is non-negotiable because they contain URLs and structured data where code formatting is appropriate, and `scripts/trust.py` parses them by fence label.
 
-`@cite` markers live **outside** the fenced block, as regular Markdown lines immediately after the closing ` ``` `. This allows Obsidian to render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser accepts `@cite` lines both inside and outside fences for backward compatibility, but new entries must place `@cite` outside the fence.
+`@cite` markers live **outside** the fenced block, as regular Markdown lines immediately after the closing ` ``` `. This lets wikilink-aware viewers render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser accepts `@cite` lines both inside and outside fences for backward compatibility, but new entries must place `@cite` outside the fence.
 
 ### `@anchor`
 
@@ -137,9 +137,9 @@ Every `@anchor` marker claims "this external source existed and supported this c
 
 | Anchor type | Durable evidence (L3) | Ephemeral cache (L1) | Last resort |
 |---|---|---|---|
-| `url:` | **Readwise** (by `readwise:` document ID) | `zk/cache/web-*.md` (current session only) | WebFetch |
-| `gist:` | **Readwise** (save the gist URL) | `zk/cache/web-*.md` | WebFetch |
-| `s2:` / `arxiv:` / `doi:` | `zk/papers/` (local PDF + review notes) | — | `sources/cite.py` |
+| `url:` | **Readwise** (by `readwise:` document ID) | `$ZK/cache/web-*.md` (current session only) | WebFetch |
+| `gist:` | **Readwise** (save the gist URL) | `$ZK/cache/web-*.md` | WebFetch |
+| `s2:` / `arxiv:` / `doi:` | `$ZK/papers/` (local PDF + review notes) | — | `sources/cite.py` |
 | `isbn:` | (no local evidence expected) | — | Manual verification |
 
 **The `readwise:` field.** Optional on all anchor types, recommended on `url:` and `gist:` anchors. Contains the Readwise document ID (e.g., `01kk0zpka139am1v9jftnae9dw`). When present, the full source content can be retrieved via `readwise reader-get-document-details --document-id <id>` regardless of whether the URL is still live. Readwise snapshots web content at save time and stores it permanently.
@@ -148,7 +148,7 @@ Every `@anchor` marker claims "this external source existed and supported this c
 1. Check if the URL is already in Readwise: `readwise reader-search-documents --query "<url>"`
 2. If not, save it: `readwise reader-create-document --url "<url>" --tags anchor-evidence`
 3. Add the document ID to the anchor marker: `| readwise: <id>`
-4. Optionally snapshot to `zk/cache/web-<slug>.md` for current-session agent use (ephemeral; will be cleaned up)
+4. Optionally snapshot to `$ZK/cache/web-<slug>.md` for current-session agent use (ephemeral; will be cleaned up)
 
 Tag convention: Readwise saves that back wiki anchors carry the `anchor-evidence` tag. This makes them discoverable via `readwise reader-list-documents --tag anchor-evidence`.
 
@@ -158,18 +158,18 @@ Tag convention: Readwise saves that back wiki anchors carry the `anchor-evidence
 
 An internal pointer to another wiki entry. This is an **edge** in the trust graph: it propagates trust from the cited note's claims to this claim. `@cite` markers do not contribute initial mass.
 
-**Placement:** `@cite` markers are placed **outside** the fenced `anchors` block, as regular Markdown lines immediately after the closing ` ``` `. This allows Obsidian to render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser also accepts `@cite` inside fences for backward compatibility, but new entries must place `@cite` outside.
+**Placement:** `@cite` markers are placed **outside** the fenced `anchors` block, as regular Markdown lines immediately after the closing ` ``` `. This lets wikilink-aware viewers render the `[[wikilink]]` targets as live backlinks in the graph view and backlinks panel. The parser also accepts `@cite` inside fences for backward compatibility, but new entries must place `@cite` outside.
 
-**Unified block-level citation:** Claim-level references use Obsidian's native block reference syntax `#^cn` inside the wikilink brackets:
+**Unified block-level citation:** Claim-level references use the block reference syntax `#^cn` inside the wikilink brackets:
 
 ```
 @cite: [[Note Title#^c3]] | valid_at: <YYYY-MM-DD> [| invalid_at: <YYYY-MM-DD>]
 @cite: [[Note Title]] | valid_at: <YYYY-MM-DD>
 ```
 
-The `#^cn` suffix points at a specific claim via its Obsidian block ID. Obsidian renders this as a single clickable link that navigates directly to the claim. `scripts/trust.py` parses the note title and claim number from the same syntax. Without the suffix, the citation points at the note as a whole and uses the note-level aggregate score as the upstream signal.
+The `#^cn` suffix points at a specific claim via its block ID. A wikilink-aware viewer renders this as a single clickable link that navigates directly to the claim. `scripts/trust.py` parses the note title and claim number from the same syntax. Without the suffix, the citation points at the note as a whole and uses the note-level aggregate score as the upstream signal.
 
-`@cite` markers must resolve. A `@cite` to a note that does not exist in `zk/wiki/`, or a `@cite` with a `#^cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
+`@cite` markers must resolve. A `@cite` to a note that does not exist in `$ZK/wiki/`, or a `@cite` with a `#^cn` suffix to a non-existent claim, is a **dangling internal cite** — caught by structural-integrity check, fails the floor.
 
 ### `@pass`
 
@@ -224,7 +224,7 @@ Once the personalized PageRank has run, apply the floor. **For this check, "pass
 
 ```
 for each claim Ci in note N:
-    if N lives under zk/wiki/
+    if N lives under $ZK/wiki/
        and N passes structural integrity (items 1-10)
        and N has at least one @pass: reviewer | status: verified
     then:
@@ -255,13 +255,13 @@ A note **passes structural integrity** if all of the following hold. `scripts/tr
 
 **Required (enforced by trust.py from Phase B onward):**
 
-1. The note's file path is under `zk/wiki/`.
+1. The note's file path is under `$ZK/wiki/`.
 2. The note has a `## Claims` section.
 3. Every claim heading matches `### [Cn] <text>` with `n` sequential starting from 1.
 4. Every claim has at least one paragraph of body text.
 5. Every fenced `anchors` block parses: every line is either blank, a comment, or matches `@anchor:` / `@pass:` (and optionally `@cite:` for backward compatibility) with valid pipe-separated fields. Bare `@cite:` lines outside fences parse as markers when they appear in the `## Claims` section after a claim heading.
 6. Every `@anchor` has a recognized type and a `valid_at`.
-7. Every `@cite` resolves: the target note exists in `zk/wiki/`. If a `#^cn` suffix is given, the target claim exists in the target note.
+7. Every `@cite` resolves: the target note exists in `$ZK/wiki/`. If a `#^cn` suffix is given, the target claim exists in the target note.
 8. Every `@pass` has a recognized agent and status.
 9. `valid_at` is a valid ISO date <= today.
 10. If `invalid_at` is present, it is a valid ISO date > the corresponding `valid_at`.
@@ -289,7 +289,7 @@ Documented here so they do not get lost between sessions.
 
 ## Chinese Shadow (`wiki-cn`)
 
-Every wiki entry in `zk/wiki/` has a Chinese shadow copy in `zk/wiki-cn/` with the same filename. The shadow is generated automatically by `/promote` (Phase 4) and can be regenerated on demand.
+Every wiki entry in `$ZK/wiki/` has a Chinese shadow copy in `$ZK/wiki-cn/` with the same filename. The shadow is generated automatically by `/promote` (Phase 4) and can be regenerated on demand.
 
 Translation rules:
 - Translate all prose (Summary, claim text, body paragraphs, Revision Log) to Chinese
@@ -297,7 +297,7 @@ Translation rules:
 - Keep the `# Title` in English (filename must match the English version)
 - Prepend: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
 
-The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `zk/wiki/`. The CN version is for reading convenience and mobile review via Reflect. It does not need its own anchors or reviewer passes.
+The CN shadow is not part of the trust graph: `scripts/trust.py` only scans `$ZK/wiki/`. The CN version is for reading convenience. It does not need its own anchors or reviewer passes.
 
 **Sync requirement:** When the English source is updated, the CN shadow must be regenerated. `scripts/lint.py` enforces this with two checks:
 - `cn-shadow-missing` (WARN): English entry exists but no CN shadow
@@ -308,6 +308,6 @@ Edit the English source first, then regenerate the CN shadow in the same working
 ## Cross-References
 
 - Tag taxonomy and the validation-depth principle: `epistemic-hygiene.md`
-- Where wiki entries live and how they sync: `local-first-architecture.md`
+- Where wiki entries live: `local-first-architecture.md`
 - Trust engine implementation (Phase B): `scripts/trust.py` (deferred)
 - Lint integration (Phase D): `.claude/commands/lint.md` (deferred)

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-After Drive → zk ingestion (see [[drive-zk-ingestion.md]]), `zk/<domain>/raw/` accumulates categorical files. This protocol covers the next layer: **cross-cutting markdown indexes** that make raw lookups one-click in Obsidian.
+After Drive → `$ZK` ingestion (see [[drive-zk-ingestion.md]]), `$ZK/<domain>/raw/` accumulates categorical files. This protocol covers the next layer: **cross-cutting markdown indexes** that make raw lookups one-click via wikilinks.
 
 A raw-index is the navigational complement to the raw archive: raw is the source of truth, the index is the table of contents.
 
@@ -25,11 +25,11 @@ Skip when:
 
 | Index scope | Location pattern |
 |---|---|
-| Single domain (immigration only) | `zk/<domain>/<category>-index.md` |
-| Cross-domain identity-level | `zk/personal/<category>-index.md` |
-| Per-holder (when household has multiple subjects) | `zk/personal/<holder>/<category>-index.md` |
+| Single domain (immigration only) | `$ZK/<domain>/<category>-index.md` |
+| Cross-domain identity-level | `$ZK/personal/<category>-index.md` |
+| Per-holder (when household has multiple subjects) | `$ZK/personal/<holder>/<category>-index.md` |
 
-Index lives in working tier (`zk/<domain>/` or `zk/personal/`), never under `raw/`. Raw stays unedited per ingestion protocol.
+Index lives in working tier (`$ZK/<domain>/` or `$ZK/personal/`), never under `raw/`. Raw stays unedited per ingestion protocol.
 
 ## Required structure
 
@@ -39,7 +39,7 @@ last_verified: YYYY-MM-DD
 canonical: true
 scope: <one-line: 索引覆盖什么, 不覆盖什么>
 sources:
-  - zk/<domain>/raw/ (relevant raw subtrees)
+  - $ZK/<domain>/raw/ (relevant raw subtrees)
   - <other authoritative timeline/digest if any>
   - user input <date> (when manual confirmations were folded in)
 ---
@@ -55,7 +55,7 @@ sources:
 | ✅ | active |
 | ⚠️ | expiring soon |
 | 🔴 | expired / superseded |
-| ⛔ | missing — 应该有但 zk/ 找不到 |
+| ⛔ | missing — 应该有但 $ZK/ 找不到 |
 | ❓ | status / 日期未确认 |
 
 ## <Holder or grouping> — <Name>
@@ -95,11 +95,11 @@ sources:
 
 ## Wikilink rules
 
-- **Use vault-relative paths.** Obsidian wikilinks resolve from vault root, not from the index file's directory. Write `[[immigration/raw/<sub>/<file>.pdf]]`, not `[[../immigration/...]]`.
+- **Use vault-relative paths.** Wikilink resolvers expect paths from the vault root, not from the index file's directory. Write `[[immigration/raw/<sub>/<file>.pdf]]`, not `[[../immigration/...]]`.
 - **Include extension for non-md files.** PDFs, JPEGs, PNGs need the suffix to resolve: `[[immigration/raw/<sub>/<file>.pdf]]`. Markdown files omit `.md`: `[[immigration/timeline]]`.
 - **Multi-file cells separator: ` · `** (U+00B7 middle dot, not comma). Reads cleanly when the cell has 3+ links.
-- **Spaces in paths are fine** inside `[[]]` — no escaping needed. But folder names with parentheses (`Photos (2)`) work; just avoid square brackets in paths since they collide with link syntax.
-- **For directory-level references** (no specific file), use plain backticks not wikilinks: `` `immigration/raw/PERM/voe-versions/` ``. Obsidian doesn't preview folders.
+- **Spaces in paths are fine** inside `[[]]` — no escaping needed. Folder names with parentheses (`Photos (2)`) work; avoid square brackets in paths since they collide with link syntax.
+- **For directory-level references** (no specific file), use plain backticks not wikilinks: `` `immigration/raw/PERM/voe-versions/` ``. Wikilinks don't address folders.
 
 ## Multi-copy / duplicate handling
 
@@ -119,7 +119,7 @@ When the same logical document exists as multiple files (Drive-era duplicates, i
 
 ## Example: credentials index
 
-The canonical implementation lives under `zk/personal/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
+The canonical implementation lives under `$ZK/personal/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
 
 Generic structural elements (use as template):
 
@@ -132,6 +132,6 @@ Use the structure as a template; do not copy private content from the vault impl
 
 ## Cross-references
 
-- [[drive-zk-ingestion.md]] — how raw files arrive in `zk/<domain>/raw/` (the prerequisite)
+- [[drive-zk-ingestion.md]] — how raw files arrive in `$ZK/<domain>/raw/` (the prerequisite)
 - [[local-first-architecture.md]] — tier model context (indexes live in working tier)
 - [[epistemic-hygiene.md]] — validation-depth applies: index entries are alloy unless user-verified (last_verified frontmatter)

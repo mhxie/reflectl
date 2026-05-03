@@ -5,18 +5,18 @@ Free-form exploration session for when the user doesn't have a specific question
 ## Prerequisites
 
 1. Read `profile/identity.md` for context.
-2. Read the most recent reflection file from `zk/reflections/`.
+2. Read the most recent reflection file from `$ZK/reflections/`.
 
 ## The Exploration Process
 
 ### Step 1: Cast a Wide Net
 
-Semantic search leads; lexical grep fails by design for exploration. Run 3-4 diverse searches over `zk/`:
+Semantic search leads; lexical grep fails by design for exploration. Run 3-4 diverse searches over `$ZK/`:
 
-1. **Semantic search on a recent theme:** `Bash: uv run scripts/semantic.py query "<topic from today's note>" --top 10` (conceptual neighbors). If results are thin, reframe and retry; Phase C removed the `search_notes` escape hatch.
-2. **Tag exploration:** `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ | sort | uniq -c | sort -rn | head -40` → pick a tag the user hasn't engaged with recently → `Grep(pattern: "#<tag>", path: "zk/")`.
-3. **Time-shifted search:** `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -newermt "<12 months ago>" ! -newermt "<6 months ago>"` → `Grep` for the current interest inside that set. What were they thinking about this 6-12 months ago?
-4. **Cross-domain search:** `Grep` for a term from one life area in another. E.g., if career-focused recently, grep for "health" or "learning" inside `zk/`.
+1. **Semantic search on a recent theme:** `Bash: uv run scripts/semantic.py query "<topic from today's note>" --top 10` (conceptual neighbors). If results are thin, reframe and retry.
+2. **Tag exploration:** `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$ZK"/ | sort | uniq -c | sort -rn | head -40` → pick a tag the user hasn't engaged with recently → `Grep(pattern: "#<tag>", path: "$ZK/")`.
+3. **Time-shifted search:** `Bash: find "$ZK"/daily-notes "$ZK"/reflections -type f -name "*.md" -newermt "<12 months ago>" ! -newermt "<6 months ago>"` → `Grep` for the current interest inside that set. What were they thinking about this 6-12 months ago?
+4. **Cross-domain search:** `Grep` for a term from one life area in another. E.g., if career-focused recently, grep for "health" or "learning" inside `$ZK/`.
 
 ### Step 2: Surface the Surprising
 
@@ -51,7 +51,7 @@ Let the user pick which spark interests them. Then:
 
 ## Output
 
-**File:** `zk/reflections/YYYY-MM-DD-exploration.md`
+**File:** `$ZK/reflections/YYYY-MM-DD-exploration.md`
 
 ```markdown
 # Exploration — YYYY-MM-DD
@@ -84,6 +84,6 @@ After writing the exploration file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type exploration --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
-## Write-Back
+## Wrap Up
 
-Optional: only if a genuine insight emerged. Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and framing. **Write-backs are always in English.** Use a descriptive heading and the `#exploration` topic tag. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`); the descriptive heading is the duplicate-detection signal.
+The exploration file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them.

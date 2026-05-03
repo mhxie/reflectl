@@ -17,34 +17,18 @@ Detect intent from `<context>`, skip the Step 1 menu, route directly:
 
 If no `<context>`, fall through to Weekly Cue Check, then Step 1 menu.
 
-### Background Daily-Notes Sync
-
-| Mode | When | `run_in_background` |
-|---|---|---|
-| Async (default) | Intent = Meeting/Reflection; OR Step 1 mode = Reflect/Plan/Act AND the resolved Step 2 action is **not** Weekly Review | `true` (fire and continue) |
-| Synchronous (override) | Any path that lands on `weekly.md` — Weekly Cue Check accepted (hard floor or soft cue), OR Step 2 selection = Weekly Review under Step 1 = Reflect | `false` (await before routing, so past-7-day mirror is fresh and `weekly.md`'s per-day fallback does not race with an in-flight Curator sync) |
-| Skip | Reading / Talk-transcript / Read mode / Learn mode | n/a |
+### Effective Date
 
 Resolve inline before dispatch:
 - `<effective-date>`: if local time < 03:00, use yesterday's calendar date; else today.
-- `<YYYY-MM-DD-list>`: 7 consecutive dates ending on `<effective-date>`, comma-separated (e.g., `2026-04-19, 2026-04-20, 2026-04-21, 2026-04-22, 2026-04-23, 2026-04-24, 2026-04-25`).
 
-```
-Agent(
-  description: "Background daily-notes sync",
-  subagent_type: "curator",
-  run_in_background: true,  # set to false for synchronous override
-  prompt: "Run the Curator 'Sync Daily Notes' operation. Effective date is <effective-date>. Sync these 7 dates, one at a time (sequential, not parallel): <YYYY-MM-DD-list>. Write each response to `zk/cache/reflect-daily-<date>.md` and run `merge_daily.py` per date. Return the summary table."
-)
-```
-
-Async dispatches do NOT await; the targeted `get_daily_note` fallback inside Daily Reflection's Context Loading is the belt-and-suspenders guard for today's note when routing to Daily Reflection (mitigates `merge_daily.py`'s non-atomic write race). **For the synchronous-override route (Weekly Cue Check accepted → `weekly.md`), Daily Reflection's Context Loading does not run; the second line of defense is `weekly.md`'s per-day MCP fallback (Context Loading step 3), which covers any of the past 7 days that is missing/empty/truncated.** Synchronous dispatches await completion before routing. Duplicate triggers within a session are harmless; `merge_daily.py` folds and does not stack.
+Daily notes are user-authored under `$ZK/daily-notes/YYYY-MM-DD.md`. The system reads them as-is; nothing pulls or mirrors them from anywhere else.
 
 ### Weekly Cue Check (before Step 1 menu, only when no `<context>` routed away)
 
 ```
 # macOS/BSD `date -j -f`. Linux: replace with `date -d "$latest_date" +%s`
-Bash: latest_weekly=$(ls zk/reflections/*-weekly.md 2>/dev/null | sort | tail -1)
+Bash: latest_weekly=$(ls "$ZK"/reflections/*-weekly.md 2>/dev/null | sort | tail -1)
 if [ -n "$latest_weekly" ]; then
   latest_date=$(basename "$latest_weekly" | cut -c1-10)
   days_since=$(( ($(date +%s) - $(date -j -f '%Y-%m-%d' "$latest_date" +%s)) / 86400 ))
@@ -56,8 +40,8 @@ echo "days_since=$days_since latest=$latest_weekly"
 
 | Condition | Branch | Action |
 |---|---|---|
-| `days_since` >10, or no weekly ever | Hard floor | "上次 weekly 是 N 天前 (or 还没跑过). 这周已经积累了 Apple Health / 信号 / 健康 cadence checks 没补齐. 建议先跑 `/weekly`. 现在跑吗?" Yes: synchronous sync, then route to `weekly.md`. No: proceed to Step 1. |
-| `days_since` >6 AND today is Sun or Mon | Soft cue | "提示: 上次 weekly 是 N 天前. 想现在跑 `/weekly` 把这周补齐吗?" Yes: synchronous sync, then route to `weekly.md`. No: proceed to Step 1 (mode selection handles its own sync trigger). |
+| `days_since` >10, or no weekly ever | Hard floor | "上次 weekly 是 N 天前 (or 还没跑过). 这周已经积累了 Apple Health / 信号 / 健康 cadence checks 没补齐. 建议先跑 `/weekly`. 现在跑吗?" Yes: route to `weekly.md`. No: proceed to Step 1. |
+| `days_since` >6 AND today is Sun or Mon | Soft cue | "提示: 上次 weekly 是 N 天前. 想现在跑 `/weekly` 把这周补齐吗?" Yes: route to `weekly.md`. No: proceed to Step 1. |
 | Otherwise | Fresh | Skip silently. Proceed to Step 1. |
 
 Surface at most once per `/reflect` invocation. Do not nag. This is the only non-user-typed reason the orchestrator may suggest a different mode than the user implicitly chose.
@@ -116,10 +100,10 @@ Based on Step 1, use a second `AskUserQuestion`:
 
 - **Curate Inbox:** Read and follow `.claude/commands/curate.md`
 - **Compact Notes:** Ask the user what topic or notes to compact. Then run the snapshot-first flow (see `protocols/orchestrator.md` → Note Operations → Compact Notes):
-  1. **Researcher** identifies related notes in `zk/` (semantic.py primary, Grep for structural).
-  2. **Orchestrator snapshots each source** to `zk/cache/compact-<slug>-<n>.md` — local `cp` for files under `zk/`, `get_note()` fallback only for notes genuinely missing from the local mirror.
+  1. **Researcher** identifies related notes in `$ZK/` (semantic.py primary, Grep for structural).
+  2. **Orchestrator snapshots each source** to `$ZK/cache/compact-<slug>-<n>.md` (local `cp`).
   3. Dispatch to **Curator** with `snapshot_paths: [...]` in the handoff. The Curator works exclusively from the snapshot files, runs the Content Preservation Checklist, and returns a draft.
-  4. User approves each output note individually before Curator writes.
+  4. User approves each output note individually; the orchestrator writes the file after approval.
 - **Deep Dive:** Ask the user for a topic, then dispatch **four agents in parallel**:
   1. **Researcher** — search all notes related to this topic (what you've already thought/written)
   2. **Scout** — search the web for recent articles, research, and developments on this topic
@@ -127,7 +111,7 @@ Based on Step 1, use a second `AskUserQuestion`:
   4. **Thinker** — select and apply a relevant framework from `frameworks/`
   Once all four return, **Synthesizer** combines their outputs into a unified briefing: your existing thinking, external intelligence, curated resources, and a framework lens — all in one view. Present in Chinese for reading-intensive output. Before write-back (if any), dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy and Scout-sourced claims.
 - **Note Triage:** Ask the user for 3-5 topic areas (or pull from `profile/identity.md` themes). Dispatch the **Researcher** to search each topic area in parallel. For each area, identify notes with overlapping content. Present a prioritized compaction plan: which notes to merge, estimated redundancy, and impact. The user picks which to compact, then dispatch to **Curator** for each approved merge.
-- **Process Meeting:** Ask the user to paste or provide the meeting transcript. Dispatch the **Meeting** agent (Executive mode — action items, decisions, next steps). Present the structured output. Before saving, dispatch **Challenger** to check: are action items attributed correctly? Are any decisions ambiguous or missing owners? Ask the user if they want to save as a Reflect note — if yes, dispatch **Curator** to create it. For research talks or presentations, use Read instead — Reader handles transcript format with real analytical lenses.
+- **Process Meeting:** Ask the user to paste or provide the meeting transcript. Dispatch the **Meeting** agent (Executive mode — action items, decisions, next steps). Present the structured output. Before saving, dispatch **Challenger** to check: are action items attributed correctly? Are any decisions ambiguous or missing owners? Ask the user if they want to save as a local note — if yes, dispatch **Curator** to draft it and the orchestrator writes after approval. For research talks or presentations, use Read instead — Reader handles transcript format with real analytical lenses.
 
 ### If Read:
 
@@ -142,13 +126,13 @@ Based on Step 1, use a second `AskUserQuestion`:
 If the source is a Readwise podcast, video, or article (user provides a Readwise URL, `document_id`, or names a podcast), **cache the transcript once before dispatching any Reader**. Independent fetches across parallel Readers are the failure mode this step exists to avoid (same reasoning as the paper cache).
 
 1. Resolve `document_id`. If the user gave a title, find it: `readwise reader-search-documents --query "<keywords>"` → pick the match.
-2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > zk/cache/rw-<id>.md`
-3. Pass `cache_path: zk/cache/rw-<id>.md` to every Reader dispatch. The Reader agent knows this convention (see `.claude/agents/reader.md`, section "Readwise transcript cache").
+2. Snapshot content: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > $ZK/cache/rw-<id>.md`
+3. Pass `cache_path: $ZK/cache/rw-<id>.md` to every Reader dispatch. The Reader agent knows this convention (see `.claude/agents/reader.md`, section "Readwise transcript cache").
 4. For podcasts specifically: also pass the guest name (parsed from title) and host name (from the `author` field) in the dispatch prompt so Reader doesn't have to re-infer for citation.
 
 #### Backup to Readwise (final step in every Read mode)
 
-After the reflection file is saved, fire one `readwise reader-create-document` call as a last-resort backup of the source. The reflection file in `zk/reflections/` remains the durable artifact; this is just so the source itself is preserved if its origin URL ever rots.
+After the reflection file is saved, fire one `readwise reader-create-document` call as a last-resort backup of the source. The reflection file in `$ZK/reflections/` remains the durable artifact; this is just so the source itself is preserved if its origin URL ever rots.
 
 **Skip conditions (do NOT call the CLI):**
 - Input was a Readwise URL or `document_id` (already in Readwise; the Prefetch Step handled it).
@@ -203,7 +187,7 @@ Print the resulting Readwise URL or `document_id` to the user as a one-liner con
    - Fix any issues they surface before writing the reflection file
 
 5. **Save — Phase 5 (local reflection file):**
-   - Write the reflection file to `zk/reflections/YYYY-MM-DD-reading-<slug>.md`
+   - Write the reflection file to `$ZK/reflections/YYYY-MM-DD-reading-<slug>.md`
    - Include full source text under `### Full Text` (see source-text persistence rule in CLAUDE.md)
    - No write-back to daily notes. The reflection file is the durable output.
 
@@ -225,7 +209,7 @@ Print the resulting Readwise URL or `document_id` to the user as a one-liner con
 
 # Daily Reflection
 
-Run a reflection session grounded in your Reflect notes and goals.
+Run a reflection session grounded in your notes and goals.
 
 ## Prerequisites
 
@@ -240,14 +224,14 @@ Run a reflection session grounded in your Reflect notes and goals.
    - `profile/identity.md` — your self-model and intellectual taste
    - `profile/directions.md` — your goals and directions
 
-2. **Read recent reflections** (last 3 files from `zk/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
+2. **Read recent reflections** (last 3 files from `$ZK/reflections/` directory, sorted by date). If none exist, this is the first session — note that.
 
-3. **Pull fresh context from the local mirror:**
+3. **Pull fresh context from the vault:**
    - Determine the **effective date**: if current local time is before 03:00, use yesterday's date; otherwise use today's. This is the user's day boundary (late-sleep rule). All subsequent "today" references in this session use the effective date.
-   - `Read zk/daily-notes/<effective-date>.md` — what you've done today. If the file is missing, empty, or visibly truncated, **sync from Reflect first:** call `get_daily_note(date: "<effective-date>")` via MCP, then overwrite the local file. (Orchestrator only.)
-   - If effective date differs from the calendar date (late-sleep active), also read `zk/daily-notes/<calendar-date>.md` if it exists — the user may have captured something after midnight.
-   - `Read zk/daily-notes/<effective-date - 1>.md` — what you did the day before. Local only; no MCP fallback needed for a sync-complete day.
-   - For recent activity related to your themes, run `Bash: uv run scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find zk/daily-notes zk/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
+   - `Read $ZK/daily-notes/<effective-date>.md` — what you've done today. If the file is missing or empty, note that and proceed; the user may not have captured anything yet.
+   - If effective date differs from the calendar date (late-sleep active), also read `$ZK/daily-notes/<calendar-date>.md` if it exists — the user may have captured something after midnight.
+   - `Read $ZK/daily-notes/<effective-date - 1>.md` — what you did the day before.
+   - For recent activity related to your themes, run `Bash: uv run scripts/semantic.py query "<theme>" --after "<7 days ago, YYYY-MM-DD>" --top 5` first — this is the primary content lookup. For structural follow-up (exact strings, known tags), list files modified in the last 7 days with `Bash: find "$ZK"/daily-notes "$ZK"/reflections -type f -name "*.md" -mtime -7 2>/dev/null | sort`, then `Grep` the theme keyword across those paths.
 
 4. **Load open TODO state (silent — orchestrator working memory):**
    - `Bash: uv run scripts/todos.py list --json` — parse and hold the open list throughout the session. Source files (`source` field) are needed at session end for closure write-back.
@@ -264,8 +248,8 @@ Based on the loaded context, run an interactive reflection.
 - **No proactive list dump.** The TODO list is for *matching*, not narration. Never volunteer "btw here are N open TODOs" outside Step 0 digest or explicit user request.
 - **Closure write-back at wrap-up.** When the user explicitly confirms in conversation that a TODO is done or killed (Step 0 closure / stale prompt or mid-session), accumulate the closures and at the end of the Output step. Two paths, two source types:
   - **Done path (user completed the item):**
-    - GTD-source (`source` under `zk/gtd/`): `Edit` to change `[ ]` → `[x]` on the source line.
-    - Reflection-source (`source` under `zk/reflections/`): `Edit` to prepend `DONE <effective-date>: ` to the bullet text on the source line.
+    - GTD-source (`source` under `$ZK/gtd/`): `Edit` to change `[ ]` → `[x]` on the source line.
+    - Reflection-source (`source` under `$ZK/reflections/`): `Edit` to prepend `DONE <effective-date>: ` to the bullet text on the source line.
   - **Kill path (user abandons the item):**
     - GTD-source: `Edit` to change `[ ]` → `[~]` on the source line. `[~]` is the killed marker per `todos.py` STATE_MAP; preserves the audit distinction from `[x]` (done).
     - Reflection-source: `Edit` to prepend `KILLED <effective-date>: ` to the bullet text. The scanner excludes both `DONE ` and `KILLED ` prefixes from open scans.
@@ -283,7 +267,7 @@ Present **at most one item per category**, woven into the conversation per `prot
 
 - **Last Next Action callback** (most recent prior session's first item, if from a different day): "Last time, you intended to [action]. How did that go?" Accept any answer without judgment — missed actions are data points, not failures.
 - **Closure candidate** (if any): "I noticed you mentioned [X] in [date] — does that mean [TODO Y] is done?" If user confirms → add to closure-pending list (write-back at wrap-up).
-- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above: GTD `[~]`, reflection `KILLED <date>: ` prefix). If "promote" → ask for due date and area, then at wrap-up append `+ [ ] <text>  due:<date>  area:<#tag>` to the **active GTD file** (defined as the most recently modified `.md` file in `zk/gtd/` — `Bash: ls -t zk/gtd/*.md | head -1`).
+- **Stale prompt** (if any): "[Item] has been open ~Nd with no movement. Kill, or promote to GTD with a real deadline?" If user picks "kill" → add to kill-path closures (per the write-back rules above: GTD `[~]`, reflection `KILLED <date>: ` prefix). If "promote" → ask for due date and area, then at wrap-up append `+ [ ] <text>  due:<date>  area:<#tag>` to the **active GTD file** (defined as the most recently modified `.md` file in `$ZK/gtd/` — `Bash: ls -t "$ZK"/gtd/*.md | head -1`).
 
 Skip rules:
 - Previous session was **today**: skip the Next Action callback.
@@ -321,7 +305,7 @@ Each question should:
 - Match the user's language (Chinese for Chinese goals)
 
 ### 3. Forgotten Connection (Semantic Discovery)
-Use `Bash: uv run scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. Reframe and retry if thin — Phase C removed the `search_notes` escape hatch.
+Use `Bash: uv run scripts/semantic.py query "<concept>" --before "<3 months ago, YYYY-MM-DD>" --top 10` to find a semantically related note the user may have forgotten. Reframe and retry if thin.
 - Search with a concept from the conversation, not just keywords
 - Go back at least 3 months for genuine surprise
 - Present as a provocation, not a summary:
@@ -378,7 +362,7 @@ Lightweight capture of dining experiences for personal preference learning + fut
 - 推断 from context (else 1-line confirm): City / 类型 / Platform (OT/R/W/DD) / Credit used
 
 **Append to the dining log**:
-Use the `Edit` tool to add one row to the user's dining-log table under `zk/travel/`, with all columns filled (评分 + 再去 mandatory; the dash placeholder only for missing data the user can't recall). This is a local-file row append, not a Reflect MCP write; the Curator delegate-rule applies to MCP operations (where mistakes are unrecoverable), not local edits backed by git history.
+Use the `Edit` tool to add one row to the user's dining-log table under `$ZK/travel/`, with all columns filled (评分 + 再去 mandatory; the dash placeholder only for missing data the user can't recall).
 
 **Cross-doc sync triggers** (silent unless flagged for user):
 - If 评分 ≥ 8 AND 再去 = Y AND restaurant NOT in the regional catalog rotation → flag user: "Add to rotation?"
@@ -406,7 +390,7 @@ Not generic advice — something the user can do today or this week. Match user'
 
 After the interactive session, write a reflection file:
 
-**File:** `zk/reflections/YYYY-MM-DD-reflection.md`
+**File:** `$ZK/reflections/YYYY-MM-DD-reflection.md`
 ```markdown
 # Reflection — YYYY-MM-DD
 
@@ -459,7 +443,7 @@ After writing the reflection file, emit a session log. Two steps:
 ```
 Bash: uv run scripts/session_log.py --type reflection --duration <minutes>
 ```
-The script prints the file path (e.g., `zk/sessions/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
+The script prints the file path (e.g., `$ZK/sessions/2026-04-11-reflection.md`). It handles the late-sleep date rule and collision auto-increment.
 
 **Step 2: Fill the skeleton.**
 Use `Edit` to populate each section of the skeleton from data you accumulated during the session:
@@ -470,11 +454,11 @@ Use `Edit` to populate each section of the skeleton from data you accumulated du
 - **Frameworks Applied:** Any framework the Thinker applied. Include fit score if available.
 - **Continuity:** Which previous session you referenced (from step 0), and the seed/next-action from step 5.
 - **Decisions & Branches:** Non-obvious routing decisions (e.g., "skipped framework; user in a rush").
-- **Anomalies:** MCP failures, empty searches, user course corrections, degraded mode.
+- **Anomalies:** empty searches, user course corrections, degraded mode (e.g., TODO context unavailable).
 - **Harness Assumptions Exercised:** Any assumption from `protocols/harness-assumptions.md` that was load-bearing (e.g., "Profile stale >7d warning triggered").
 
 If a section has no data, leave the table headers but add no rows. Do not invent data. If the write fails, warn and continue; session logs never block a session.
 
 ## Wrap Up
 
-The reflection file in `zk/reflections/` is the durable session output. No write-back to daily notes — the user's daily note is their capture stream, read-only from the system's perspective. Tell the user the reflection has been saved and where to find it.
+The reflection file in `$ZK/reflections/` is the durable session output. No write-back to daily notes — the user's daily note is their capture stream, read-only from the system's perspective. Tell the user the reflection has been saved and where to find it.

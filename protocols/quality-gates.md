@@ -9,7 +9,7 @@ Defines checkpoints that must pass before output reaches the user. Each gate has
                                        ↑                    |
                                        └── Revision Loop ←──┘
 
-[Curator Proposal] → Gate 4 → [User Approval] → [create_note]
+[Curator Proposal] → Gate 4 → [User Approval] → [Orchestrator Write/Edit]
 ```
 
 ## Gate 1: Research Completeness
@@ -80,7 +80,7 @@ The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) pre
 
 | Check | Pass Criteria | Fail Action |
 |-------|--------------|-------------|
-| Source snapshots | All source notes snapshotted to `zk/cache/<operation>-<slug>.md` at dispatch time (local copy for notes in `zk/`, MCP `get_note` fallback for missing ones) | Abort — do not draft from un-snapshotted sources |
+| Source snapshots | All source notes snapshotted to `$ZK/cache/<operation>-<slug>.md` at dispatch time (local copy from `$ZK/`) | Abort — do not draft from un-snapshotted sources |
 | Media count match | Output image count = snapshot media count | Block — re-scan snapshot files, restore missing media |
 | Size limit | Each output note < 15KB | Split into numbered parts before presenting |
 | Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against snapshot files to find paraphrased content |
@@ -107,7 +107,7 @@ The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) pre
 
 ## Gate 6: Deep Dive & Meeting Transcripts
 
-**When:** Before write-back (Deep Dive) or before creating Reflect note (Meeting).
+**When:** Before write-back (Deep Dive) or before creating a local note (Meeting).
 
 | Check | Pass Criteria | Fail Action |
 |-------|--------------|-------------|
@@ -121,7 +121,6 @@ The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) pre
 ## Bypass Conditions
 
 Gates can be bypassed when:
-- MCP is unavailable (degraded mode — skip Gates 1 and portions of Gate 3)
 - User explicitly asks for a quick/rough reflection
 - Session is interactive and user is actively participating (lower bar for completeness)
 

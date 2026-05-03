@@ -20,15 +20,15 @@ When to invoke:
 
 1. **Read profile files:** `profile/identity.md` + `profile/directions.md`
 
-2. **Read all reflections from the past 7 days** from `zk/reflections/` directory.
+2. **Read all reflections from the past 7 days** from `$ZK/reflections/` directory.
 
-3. **Read the past 7 daily notes from the local mirror:**
-   - `Read zk/daily-notes/<today>.md` through `Read zk/daily-notes/<7-days-ago>.md` (7 local reads). **For any file that is missing, empty, or visibly truncated, fall through via the same protocol as the Background Daily-Notes Sync: dispatch `get_daily_note(date: "<that-date>")` via MCP, write the response body to `zk/cache/reflect-daily-<that-date>.md`, then run `Bash: uv run scripts/merge_daily.py zk/daily-notes/<that-date>.md zk/cache/reflect-daily-<that-date>.md`** to merge with any local edits. Do not overwrite the local file directly — `merge_daily.py` is the only safe write path because daily notes can hold local-only edits the user has not yet pushed to Reflect (Orchestrator only). This per-day fallback is broader than the daily-reflection fallback (which covers only today) because `/weekly` may be invoked from `/reflect`'s hard-floor cue route while the Background Daily-Notes Sync is still running, and any of the past 7 days may be incomplete.
+3. **Read the past 7 daily notes from the vault:**
+   - `Read $ZK/daily-notes/<today>.md` through `Read $ZK/daily-notes/<7-days-ago>.md` (7 local reads). For any file that is missing or empty, note it and continue — the user may not have written that day. Daily notes are user-authored; the system never writes to them.
    - Focus on themes, moods, accomplishments, and struggles.
 
-4. **Search for recent activity in the local mirror:**
-   - Build the recency window: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -7 2>/dev/null | sort`
-   - Grep the recency window for progress markers: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -7 -print0 | xargs -0 grep -HnE "progress|进展" 2>/dev/null`. Using `find -print0 | xargs -0` is safe when `find` returns nothing (xargs with no input simply exits); never use `grep $(find ...)`, which silently scans the current directory on empty input. Local grep is instant; no MCP needed.
+4. **Search for recent activity in the vault:**
+   - Build the recency window: `Bash: find "$ZK"/daily-notes "$ZK"/reflections "$ZK"/gtd -type f -name "*.md" -mtime -7 2>/dev/null | sort`
+   - Grep the recency window for progress markers: `Bash: find "$ZK"/daily-notes "$ZK"/reflections "$ZK"/gtd -type f -name "*.md" -mtime -7 -print0 | xargs -0 grep -HnE "progress|进展" 2>/dev/null`. Using `find -print0 | xargs -0` is safe when `find` returns nothing (xargs with no input simply exits); never use `grep $(find ...)`, which silently scans the current directory on empty input.
 
 ## The Weekly Review Framework
 
@@ -49,14 +49,14 @@ The data feeds directly into Energy Audit (sleep / RHR / HRV → recovery; steps
 
 **Do not invent data. If user doesn't recall, mark `(none surfaced)` and move on.** Backfill is best-effort.
 
-Daily `/reflect` may not run every day. Detect missing days from the past 7 by checking `zk/reflections/`:
+Daily `/reflect` may not run every day. Detect missing days from the past 7 by checking `$ZK/reflections/`:
 
 ```
 # macOS/BSD date syntax; Linux: replace `date -v-${d}d +%Y-%m-%d` with `date -d "${d} days ago" +%Y-%m-%d`
-Bash: for d in $(seq 0 6); do date_str=$(date -v-${d}d +%Y-%m-%d); ls zk/reflections/${date_str}-reflection*.md 2>/dev/null > /dev/null || echo "missing: $date_str"; done
+Bash: for d in $(seq 0 6); do date_str=$(date -v-${d}d +%Y-%m-%d); ls "$ZK"/reflections/${date_str}-reflection*.md 2>/dev/null > /dev/null || echo "missing: $date_str"; done
 ```
 
-Read the daily notes for any missing days (`zk/daily-notes/<date>.md`) so context is loaded, then prompt the user with 3 light **week-level** questions (do not force per-day reconstruction):
+Read the daily notes for any missing days (`$ZK/daily-notes/<date>.md`) so context is loaded, then prompt the user with 3 light **week-level** questions (do not force per-day reconstruction):
 
 1. **Support pulse (week)**: 这 7 天里, 有哪些有意义的互动 (1:1 / 家人 / 朋友 / 同事) 没记到 daily reflection 里? 谁? 什么类型 (E / I / Inf / A)? 有没有新连接?
 2. **Dining (week)**: 这 7 天有去新餐厅 / 重访旧餐厅没记到 dining log 的吗? (餐厅 + **就餐日期 YYYY-MM-DD** + 评分 + **再去? Y/N/Maybe** + 健康 flag + 必点 + Credit used). Backfill spans multiple days, so the Date column must hold the actual visit date — not the session date — otherwise the date-keyed dining log and credit-cycle tracking break. 评分 + 再去 are mandatory per the `/reflect` Dining Pulse rule; do not append a row without both.
@@ -68,18 +68,18 @@ Captured items fold into `## Missed-Day Backfill` (Support pulse / Dining / Sign
 
 Cross-check health-related cadences against current date. Reminder-only — actual booking lives outside the reflection flow.
 
-Default cadences (read `zk/health/metrics.md` for last-drawn dates and `directions.md` #energy for declared but unstarted items):
+Default cadences (read `$ZK/health/metrics.md` for last-drawn dates and `directions.md` #energy for declared but unstarted items):
 
 | Category | Default cadence | Where specifics live (read at runtime) |
 |---|---|---|
-| Lipid panel | Quarterly if any marker out of range; yearly otherwise | `zk/health/metrics.md` |
-| Vitamin / mineral panel | 90 days post-supplement-start, then quarterly. Markers below reference range fast-track (next available draw, not deferred) | `zk/health/metrics.md` |
-| Body composition (DEXA / scale) | 6-12 months | `zk/health/metrics.md` |
-| Endocrine surveillance (thyroid, nodules, etc) | 6-12 months when any finding is flagged | `zk/health/metrics.md` |
+| Lipid panel | Quarterly if any marker out of range; yearly otherwise | `$ZK/health/metrics.md` |
+| Vitamin / mineral panel | 90 days post-supplement-start, then quarterly. Markers below reference range fast-track (next available draw, not deferred) | `$ZK/health/metrics.md` |
+| Body composition (DEXA / scale) | 6-12 months | `$ZK/health/metrics.md` |
+| Endocrine surveillance (thyroid, nodules, etc) | 6-12 months when any finding is flagged | `$ZK/health/metrics.md` |
 | Planned interventions in `profile/directions.md` #energy | Per-intervention cadence (read at runtime) | `profile/directions.md` #energy |
 | Annual physical / PCP | Yearly | runtime decision |
 
-Generic categories only — do not hardcode user-specific lab values, conditions, or thresholds in this command file. The orchestrator reads `zk/health/metrics.md` (gitignored, lives only in the local symlinked vault) at runtime to compute actual due-dates and severity. This is critical for privacy: the command file is committed to the repo, but the user's medical specifics never are.
+Generic categories only — do not hardcode user-specific lab values, conditions, or thresholds in this command file. The orchestrator reads `$ZK/health/metrics.md` (gitignored, lives only in the local symlinked vault) at runtime to compute actual due-dates and severity. This is critical for privacy: the command file is committed to the repo, but the user's medical specifics never are.
 
 For each item:
 - **Due within 4 weeks** → surface as **Next Week → Start** candidate ("约 [item] 复查")
@@ -119,7 +119,7 @@ Based on the review:
 
 ## Output
 
-**File:** `zk/reflections/YYYY-MM-DD-weekly.md`
+**File:** `$ZK/reflections/YYYY-MM-DD-weekly.md`
 
 ```markdown
 # Weekly Review — YYYY-MM-DD (Week of MM/DD - MM/DD)
@@ -189,21 +189,6 @@ After writing the weekly review file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type weekly --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
-## Write-Back
+## Wrap Up
 
-Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
-
-- If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append weekly review summary using this format:
-  ```
-  ## [Descriptive Title]
-  [2-3 sentence summary of the week's key insights and patterns]
-  Related: [[Note Title 1]] [[Note Title 2]]
-  ```
-  **Title guidelines:** The heading must describe the week's core theme or pattern, not just "Weekly Review." Good examples:
-  - `## This week: creation over consumption`
-  - `## Week of 03/15: deep work recovery + energy rebalance`
-  - `## Attention patterns shifted toward reading`
-
-  Never use generic titles like "Weekly Review Summary." The descriptive heading is the duplicate-detection signal. **No provenance tag.** Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
-
-- If exists: skip.
+The weekly review file at `$ZK/reflections/YYYY-MM-DD-weekly.md` is the durable session output. Daily notes are user-authored only; nothing is written back to them. Tell the user the weekly review has been saved and where to find it.

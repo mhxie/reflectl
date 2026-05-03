@@ -1,8 +1,8 @@
 # Local-First Architecture
 
-The shift: **Reflect is no longer the authoritative knowledge store.** It is demoted to a capture source, alongside Readwise and the local papers folder. The authoritative knowledge layer is local plain-text files under `zk/` — a real Obsidian vault the user already maintains, mounted into the repo as a subdirectory. Python tools operate on the local layer. Reflect receives a one-way display push from the local layer when the user wants to read or share the result on mobile.
+The user's knowledge layer is plain-text Markdown files under `$ZK/`. `$ZK` is an environment variable that each user sets to their own vault root. The system reads and writes these files directly; there is no remote note-store mirror.
 
-This is the prerequisite for everything in `wiki-schema.md` and `epistemic-hygiene.md`. Trust propagation, claim-level granularity, bi-temporal anchors, and structural-integrity linting all require deterministic Python access to plain-text files. The Reflect MCP API does not support the operations the design needs (no edit, no delete, no in-place mutation, no path-level access). Working around those limits while pretending Reflect is authoritative was the friction that motivated the shift.
+This is the prerequisite for everything in `wiki-schema.md` and `epistemic-hygiene.md`. Trust propagation, claim-level granularity, bi-temporal anchors, and structural-integrity linting all require deterministic Python access to plain-text files, which this layout provides.
 
 ## The Layers
 
@@ -13,45 +13,43 @@ The model has **five layers (L1–L5), numbered by depth of crystallization.** H
 ```
     L5 — Foundation                   (reserved — textbook-level, universally certified)
     ────────────────────────────
-    L4 — Locally certified            zk/wiki/
+    L4 — Locally certified            $ZK/wiki/
           authoritative knowledge     anchored, schema-validated, TrustRank-scored
     ────────────────────────────
-    L3 — Externally certified         zk/papers/ + Readwise (curated)
+    L3 — Externally certified         $ZK/papers/ + Readwise (curated)
           peer-reviewed or high-citation receipts
     ────────────────────────────
-    L2 — Working / half-baked         zk/daily-notes/, zk/reflections/,
-          alloy by default            zk/research/, zk/preprints/,
-                                      zk/agent-findings/, zk/drafts/, zk/gtd/
+    L2 — Working / half-baked         $ZK/daily-notes/, $ZK/reflections/,
+          alloy by default            $ZK/research/, $ZK/preprints/,
+                                      $ZK/agent-findings/, $ZK/drafts/, $ZK/gtd/
     ────────────────────────────
-    L1 — Raw capture                  Reflect UI, Readwise inbox,
-          fast, sloppy, ephemeral     zk/cache/, zk/readwise/ inbox
+    L1 — Raw capture                  Readwise inbox,
+          fast, sloppy, ephemeral     $ZK/cache/, $ZK/readwise/ inbox
 ```
 
 Promotion is **opportunistic and upward:** L1 capture crystallizes into an L2 draft or reflection; a recurring L2 thought earns an L4 wiki entry once it has anchors and claims; L3 receipts flow in from scout fetches and Readwise curation. There is no demotion workflow — invalidation is additive (bi-temporal markers in wiki entries), not destructive.
 
 ### L1 — Raw capture
 
-The fast, sloppy, mobile-friendly layer. Reflect's strengths (voice transcription, daily notes, mobile capture, decent search) anchor one side of this layer; Readwise's inbox and `zk/cache/`'s ephemeral fetches anchor the other. No guarantees about structure or durability. Reflect is **demoted to one capture source among many** — equal to Readwise, not privileged.
-
-Reflect's corpus is continuously mirrored to `zk/daily-notes/` (YYYY-MM-DD.md files) by the user's existing sync, so the **default read path for read-capable agents (Researcher, orchestrator, Reader, and any agent whose frontmatter includes `Grep` / `Read`) is `Grep` + `Read` over `zk/`, not the Reflect MCP.** MCP reads are the fallback for today's fresh capture (when the sync lags), for semantic-only queries, and for notes genuinely missing from the local mirror. MCP writes (`append_to_daily_note`, `create_note`) stay in use for the capture-layer write path until a local-first write tool replaces them.
+The fast, sloppy, ephemeral layer. Readwise's inbox holds external content (articles, podcasts, papers); `$ZK/cache/` holds web fetches and other transient artifacts. No guarantees about structure or durability. Promotion upward is opportunistic.
 
 ### L2 — Working / half-baked
 
-The alloy layer. Most of the user's active thinking lives here: daily free-writes (`zk/daily-notes/`, synced from Reflect), session reflections (`zk/reflections/`), user-initiated research reports (`zk/research/`), arxiv preprints and paper reviews (`zk/preprints/`), promoted agent synthesis briefs (`zk/agent-findings/`, formerly `research-briefs`), working drafts (`zk/drafts/`), and active planning (`zk/gtd/`). Alloy by default — see `epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
+The alloy layer. Most of the user's active thinking lives here: daily free-writes (`$ZK/daily-notes/`), session reflections (`$ZK/reflections/`), user-initiated research reports (`$ZK/research/`), arxiv preprints and paper reviews (`$ZK/preprints/`), promoted agent synthesis briefs (`$ZK/agent-findings/`), working drafts (`$ZK/drafts/`), and active planning (`$ZK/gtd/`). Alloy by default — see `epistemic-hygiene.md`. Fully searchable, citable, but not certified. The substrate from which wiki entries are distilled.
 
-Pre-2026 topic directories (career, research, people, etc.) that were carried over from the user's Obsidian vault are parked in `zk/archive/` and stay there until individual notes are surfaced upward.
+Older topic directories (career, research, people, etc.) carried over from earlier knowledge systems are parked in `$ZK/archive/` and stay there until individual notes are surfaced upward.
 
 ### L3 — Externally certified
 
-Peer-reviewed papers, high-citation work, and curated reading corpus. Lives in `zk/papers/` (local PDFs and reading artifacts) plus the Readwise-curated side of `zk/readwise/`. The canonical id for papers is `s2:` / `arxiv:` / `doi:`; for articles, `url:` or a Readwise document id. L3 receipts are the anchor points for L4 wiki claims — an `@anchor` marker in a wiki entry points at an L3 receipt.
+Peer-reviewed papers, high-citation work, and curated reading corpus. Lives in `$ZK/papers/` (local PDFs and reading artifacts) plus the Readwise-curated side of `$ZK/readwise/`. The canonical id for papers is `s2:` / `arxiv:` / `doi:`; for articles, `url:` or a Readwise document id. L3 receipts are the anchor points for L4 wiki claims — an `@anchor` marker in a wiki entry points at an L3 receipt.
 
 The teaching doc that explains how agents query the papers directory lives at `sources/local-papers.md` (an execution-layer doc in the reflectl repo).
 
 ### L4 — Locally certified (wiki)
 
-The slow, structured, authoritative layer. Lives in plain Markdown files under `zk/wiki/`. Each file follows `wiki-schema.md`. Each file is parseable by `scripts/trust.py` and produces a per-note trust score. Cross-references between wiki entries are `@cite` markers, which become edges in the trust graph.
+The slow, structured, authoritative layer. Lives in plain Markdown files under `$ZK/wiki/`. Each file follows `wiki-schema.md`. Each file is parseable by `scripts/trust.py` and produces a per-note trust score. Cross-references between wiki entries are `@cite` markers, which become edges in the trust graph.
 
-**Directory is the certification.** A note is a wiki entry by virtue of living under `zk/wiki/`. There is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory and treats every file inside it as a wiki entry. The rest of `zk/` stays alloy by default — the trust engine does not touch it. This gives the trust engine a single, fast directory traversal as its working set and avoids tag-collision with the user's existing tagging conventions.
+**Directory is the certification.** A note is a wiki entry by virtue of living under `$ZK/wiki/`. There is no `#compiled-truth` or `#wiki` tag; the trust engine walks the directory and treats every file inside it as a wiki entry. The rest of `$ZK/` stays alloy by default — the trust engine does not touch it. This gives the trust engine a single, fast directory traversal as its working set and avoids tag-collision with the user's existing tagging conventions.
 
 L4 is the only tier where:
 
@@ -59,91 +57,84 @@ L4 is the only tier where:
 - Bi-temporal anchors are tracked.
 - Structural-integrity lint applies.
 
-Wiki entries can optionally be shared to Reflect for mobile reading via a manual per-note operation (see "Sharing a wiki entry" below). The Reflect copy is a one-off display snapshot; the local file is always the source of truth. Edits made in the Reflect UI are not pulled back.
-
 ### L5 — Foundation (reserved)
 
 Universally certified knowledge — textbook-level material that the user considers settled. No folder yet; the tier exists for future use when there is enough material to warrant one.
 
 ## Project Layout
 
-The repo has two layers under one root:
+Two roots:
 
-- **Execution layer** — everything in `reflectl/` *outside* `zk/`. Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled, no personal data.
-- **Data layer** — everything under `reflectl/zk/`. The user's Obsidian vault, holding a flat set of tier-labeled directories: `wiki/` (L4), `papers/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `preprints/` / `agent-findings/` / `drafts/` / `gtd/` (L2), `cache/` (L1), and `archive/` (parked pre-2026 topic notes). Gitignored.
+- **System layer** — the `reflectl/` repo (this directory). Orchestrator config, agents, protocols, scripts, source-handling teaching docs, and `sources/cite.py`. Version-controlled; no personal data.
+- **Vault layer** — the user's note root, addressed as `$ZK/`. A flat set of tier-labeled directories: `wiki/` (L4), `papers/` / `preprints/` (L3), `readwise/` (L1→L3 mirror), `daily-notes/` / `reflections/` / `research/` / `agent-findings/` / `drafts/` / `gtd/` / `travel/` / `health/` / `work/` / `immigration/` / `finance/` (L2), `cache/` (L1), and `archive/` (parked notes).
 
-All paths in protocols, agents, scripts, and wiki entries are **project-relative** (`zk/wiki/`, `zk/papers/`, `sources/cite.py`). There is no `$ZK_HOME` or `$RFL_HOME` reference inside the repo. The user's fish config may still export those variables for shell convenience, but nothing in this repo reads them.
-
-Both `reflectl/` and the underlying Zettelkasten directory live under Google Drive, so the local files sync across devices automatically. This gives the wiki layer the same cross-device reach as Reflect without coupling to the Reflect API.
+Vault paths use `$ZK/` (e.g., `$ZK/wiki/`, `$ZK/papers/`); each user sets `$ZK` to their note root (typical: `export ZK="$HOME/notes"`). Repo-internal paths (`scripts/`, `protocols/`, `sources/cite.py`, `frameworks/`) stay project-relative and require no env var. The vault may live anywhere on disk (Google Drive, iCloud, a plain local folder); the system only needs `$ZK` to point at it.
 
 ## Directory Layout (canonical)
 
 ```
-reflectl/                           (the repo root — the only root)
+reflectl/                           (system root — the agent code)
 ├── CLAUDE.md                       # orchestrator instructions
 ├── .claude/agents/                 # team definitions
 ├── .claude/commands/               # slash commands
-├── protocols/                      # this directory — the system protocols
+├── protocols/                      # system protocols (this directory)
 ├── frameworks/                     # thinking frameworks
 ├── profile/                        # self-model (identity, directions, expertise)
-├── scripts/                        # Python tooling (trust.py — Phase B, lint.py — Phase D; directory not yet created)
-├── sources/                        # execution layer for source handling (committed)
-│   ├── cite.py                     # academic citation helper (already exists)
-│   ├── readwise.md                 # CLI teaching doc
+├── scripts/                        # Python tooling (trust.py, lint.py, semantic.py, ...)
+├── sources/                        # source-handling teaching docs and helpers
+│   ├── cite.py                     # academic citation helper
+│   ├── readwise.md                 # Readwise CLI teaching doc
 │   ├── scholar.md                  # Semantic Scholar teaching doc
 │   └── local-papers.md             # local papers teaching doc
-├── personal/                       # gitignored sensitive material
-└── zk/                             # data layer (gitignored), flat by tier
-    ├── .obsidian/                  # Obsidian vault config (read-only viewer)
-    ├── wiki/                       # L4 — locally certified (authoritative)
-    │   ├── <topic-1>.md            # each file follows wiki-schema.md
-    │   └── <topic-2>.md
-    ├── papers/                     # L3 — peer-reviewed / high-citation papers
-    ├── readwise/                   # L1 inbox → L3 curated (Readwise mirror)
-    ├── daily-notes/                # L2 — daily free-writes synced from Reflect
-    ├── reflections/                # L2 — session reflection files
-    ├── research/                   # L2 — user-initiated research reports
-    ├── preprints/                  # L2 — arxiv + paper reviews
-    ├── agent-findings/             # L2 — promoted scout briefs and agent synthesis
-    ├── drafts/                     # L2 — working drafts
-    ├── gtd/                        # L2 — active planning (year goals, trackers)
-    ├── cache/                      # L1 — ephemeral raw web fetches and snapshots
-    └── archive/                    # parked pre-2026 topic notes (surfaced opportunistically)
+└── personal/                       # gitignored sensitive material
+
+$ZK/                                (vault root — set via env var)
+├── wiki/                           # L4 — locally certified (authoritative)
+│   ├── <topic-1>.md                # each file follows wiki-schema.md
+│   └── <topic-2>.md
+├── papers/                         # L3 — peer-reviewed / high-citation papers
+├── preprints/                      # L3 — arxiv + paper reviews
+├── readwise/                       # L1 inbox → L3 curated (Readwise mirror)
+├── daily-notes/                    # L2 — daily free-writes (user-authored)
+├── reflections/                    # L2 — session reflection files
+├── research/                       # L2 — user-initiated research reports
+├── agent-findings/                 # L2 — promoted scout briefs and agent synthesis
+├── drafts/                         # L2 — working drafts
+├── gtd/                            # L2 — active planning (year goals, trackers)
+├── travel/, health/, work/         # L2 — domain-specific working notes
+├── cache/                          # L1 — ephemeral raw web fetches and snapshots
+└── archive/                        # parked notes (surfaced opportunistically)
 ```
 
-The trust engine and the wiki schema only see the `zk/wiki/` subtree. Everything else is alloy or receipts and the trust engine does not touch it. The whole `zk/` directory is opened as an Obsidian vault for visual browsing of the entire knowledge base; the editing flow for wiki entries goes through reflectl agents (Curator), not Obsidian directly. Obsidian is the read-only viewer for wiki entries, not their writer.
+The trust engine and the wiki schema only see the `$ZK/wiki/` subtree. Everything else is alloy or receipts and the trust engine does not touch it.
 
-## Sync Direction
+## Source of Truth
 
-Sync is asymmetric by design, split into two unrelated flows:
+`$ZK/` is the only copy of the user's knowledge layer. There is no remote mirror, no two-way sync, no idempotency ledger. The filesystem may sync devices (Google Drive, iCloud, etc.); that is outside the system's concern.
 
-1. **`/sync` (Reflect → local, for daily notes only).** The `/sync` command pulls a date range of daily notes from Reflect via `mcp__reflect-notes__get_daily_note(date)`, stages each response under `zk/cache/reflect-daily-<date>.md`, and runs `scripts/merge_daily.py` to line-union merge the Reflect content with any local edits in `zk/daily-notes/<date>.md`. No content is discarded; local lines come first and Reflect-only lines follow under a `<!-- merged from Reflect -->` marker. `/sync` never writes to Reflect.
+Daily notes (`$ZK/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not write to them. Curator dispatches that target a daily-note path are refused.
 
-2. **Sharing a wiki entry (local → Reflect, manual, per-note).** The user asks "share `[[Foo]]` to Reflect"; the orchestrator reads `zk/wiki/<Foo>.md`, dispatches the Curator with the body, and Curator calls `mcp__reflect-notes__create_note(subject, contentMarkdown)`. The orchestrator verifies with `mcp__reflect-notes__get_note(id)` that the body is non-empty. No manifest, no hash, no diff. If the user later edits the local wiki entry and wants the Reflect copy refreshed, they request the share again (after deleting the Reflect copy by hand, since `create_note` with an existing title returns the existing note unchanged).
-
-There is no automated batch push from `zk/wiki/` to Reflect. Wiki entries are local-first; Reflect is a mobile-reading surface the user opts into one entry at a time.
+All other tiers can be written by the orchestrator after user approval. The Curator drafts proposals; the orchestrator owns `Write` and `Edit` and applies them to a `target_path` under `$ZK/`.
 
 ## Migration Strategy: Opportunistic, Not Big-Bang
 
-There is no migration of existing Reflect notes into the wiki layer. The user's existing Reflect corpus stays in Reflect (synced to `zk/daily-notes/`), and pre-2026 topic directories are parked in `zk/archive/`. The wiki layer grows organically:
+There is no bulk migration of existing notes into the wiki layer. Older topic directories carried over from earlier knowledge systems are parked in `$ZK/archive/`. The wiki layer grows organically:
 
-- New wiki entries are written to `zk/wiki/` directly (Curator + schema).
-- Existing notes (Reflect, `zk/archive/`, or anywhere else in L1/L2) are surfaced to L4 **only when they are about to become anchors for a new wiki claim** — at that point the user (or Curator) extracts the relevant claims, structures them per the schema, writes the wiki entry, and the original note remains in place as an L1/L2 capture record (untouched).
-- There is no goal to empty Reflect or to hoist the entire vault into the wiki layer. L1 and L2 remain the home for daily notes, voice captures, session reflections, drafts, and most thinking. Most notes will never be in L4 — that is correct, not a failure.
+- New wiki entries are written to `$ZK/wiki/` directly (Curator drafts; orchestrator writes after approval).
+- Existing notes (`$ZK/archive/` or anywhere else in L1/L2) are surfaced to L4 **only when they are about to become anchors for a new wiki claim** — at that point the user (or Curator) extracts the relevant claims, structures them per the schema, writes the wiki entry, and the original note remains in place as an L1/L2 capture record (untouched).
+- There is no goal to hoist the entire vault into the wiki layer. L1 and L2 remain the home for daily notes, session reflections, drafts, and most thinking. Most notes will never be in L4 — that is correct, not a failure.
 
 The expected steady-state ratio is roughly: hundreds of L1/L2 notes for every L4 wiki entry. L4 is the slow, careful, anchored kernel. L1 and L2 are the fast surface.
 
-## What Changes for Each Agent
+## Per-Agent Contract
 
-Phase A wired the read path. Phase B shipped `scripts/trust.py`. Phase C dropped Reflect read MCP from every subagent and moved Curator to local-first wiki writes. Phase D shipped `/lint`. The former wiki-push `/sync` was retired in favor of a manual per-note share; the `/sync` command now pulls daily notes from Reflect to local.
-
-| Agent | L1 capture | L4 wiki (`zk/wiki/`) | L3 receipts |
+| Agent | L1/L2 working layer | L4 wiki (`$ZK/wiki/`) | L3 receipts |
 |---|---|---|---|
-| **Researcher** | **Local-only, semantic-primary.** `Bash: uv run scripts/semantic.py query` for content queries, `Grep` + `Read` for structural queries. No Reflect MCP tools in frontmatter. If today's daily note is not yet on disk, flags `needs: get_daily_note(today)` and the orchestrator fetches. | Reads `zk/wiki/` with grep directly. | Reads `zk/readwise/`, `zk/papers/` directly. |
-| **Curator** | Continues to write to daily notes via `append_to_daily_note` (write-side MCP retained). Handles manual wiki-entry shares: orchestrator hands it the local file content, Curator calls `create_note(subject, contentMarkdown)`. | Drafts wiki entries as markdown proposals with `target_path: zk/wiki/<slug>.md`. The orchestrator writes the file after user approval (subagents cannot Write). Then `scripts/trust.py --note <path>` verifies structural integrity and reports initial scores. | Unchanged. |
-| **Synthesizer** | Reads capture-layer briefs from Researcher; writes session reflections to `zk/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
-| **Reviewer** | Continues to gate capture-layer write-backs. Gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
-| **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `zk/agent-findings/` (not the ephemeral `zk/cache/`). |
+| **Researcher** | Local-only, semantic-primary. `Bash: uv run scripts/semantic.py query` for content queries; `Grep` + `Read` for structural queries. | Reads `$ZK/wiki/` with grep directly. | Reads `$ZK/readwise/`, `$ZK/papers/` directly. |
+| **Curator** | Drafts note proposals (compactions, merges, new notes, rewrites); the orchestrator writes after user approval (Curator has no `Write` tool). | Drafts wiki entries with `target_path: $ZK/wiki/<slug>.md`. The orchestrator writes the file after approval, then runs `scripts/trust.py --note <path>` to verify structural integrity and report initial scores. | Unchanged. |
+| **Synthesizer** | Reads capture-layer briefs from Researcher; produces drafts the orchestrator writes to `$ZK/reflections/`. | Reads wiki trust scores when available to weight evidence. | Unchanged. |
+| **Reviewer** | Continues to gate write-backs. Gates wiki writes as well. A `@pass: reviewer | status: verified` marker is added to a claim only after Reviewer signs off. | Unchanged. |
+| **Scout** | Unchanged. | Unchanged. | Writes promoted briefs to `$ZK/agent-findings/` (not the ephemeral `$ZK/cache/`). |
 
 ## Cross-References
 

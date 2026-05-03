@@ -15,7 +15,6 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 | **Model Assignment** | Which model runs which agent | Researcher=Opus | New model release, benchmark shift, cost change |
 | **Token/Context Budget** | Context window sizing, loading limits | "last 3 reflections" | Context window expansion |
 | **Temporal Threshold** | Time-based triggers and warnings | "7 days stale" for profile | User behavior data |
-| **API Constraint** | Limits imposed by external APIs | "20KB per create_note" | API changelog |
 | **Turn Budget** | maxTurns per agent | Evolver=25 | Model efficiency changes |
 | **Search Strategy** | Query patterns tuned to current capability | semantic.py stub fallback | semantic.py mode change |
 
@@ -59,16 +58,6 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 | L2 staleness thresholds | staleness.py | dormant=45d, stale=90d, promote=180d+2refs | First real corpus ages past 90 days; tune with actual archival decisions |
 | Meta-reflection trigger | evolver.md (principle 8 pruning trigger) | Every 5 sessions | Session volume data |
 
-### API Constraints
-
-| Rule | Location | Current Value | Re-test When |
-|------|----------|--------------|-------------|
-| create_note size limit | CLAUDE.md, curator.md | ~20KB (15KB working) | Reflect API changelog |
-| No update/delete operations | CLAUDE.md | Hard constraint | Reflect API changelog |
-| create_note parameter names | CLAUDE.md | contentMarkdown, subject | Reflect API changelog |
-| No markdown tables in create_note | CLAUDE.md | Hard constraint | Reflect API changelog |
-| Silent empty note on wrong params | CLAUDE.md | Known bug | Reflect API fix |
-
 ### Turn Budgets
 
 | Agent | Location | Current maxTurns | Re-test When |
@@ -98,7 +87,6 @@ Inspired by the "context anxiety" example from Anthropic's Managed Agents archit
 Run this checklist when any of these events occur:
 
 - [ ] New Claude model release (Opus, Sonnet, Haiku generation change)
-- [ ] Reflect API update
 - [ ] Context window size change
 - [ ] semantic.py mode change (stub to real)
 - [ ] Cost structure change (model pricing)

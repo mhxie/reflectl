@@ -135,18 +135,14 @@ Required fields:
 
 ## Contract: Orchestrator → Curator (Compact/Merge Dispatch)
 
-When dispatching the Curator for compact or merge operations, the orchestrator MUST take a **snapshot of each source note at dispatch time** under `zk/cache/<operation>-<slug>.md`. The snapshot protects against mid-session mutation: the user may edit a daily note in Obsidian, or a Reflect note may be deleted, while the Curator is drafting. The Curator then works exclusively from those snapshots.
+When dispatching the Curator for compact or merge operations, the orchestrator MUST take a **snapshot of each source note at dispatch time** under `$ZK/cache/<operation>-<slug>.md`. The snapshot protects against mid-session mutation: the user may edit a note in their editor while the Curator is drafting. The Curator then works exclusively from those snapshots.
 
-Snapshot sources (pick per note):
-
-1. **Local file present** (the default — Reflect daily notes sync to `zk/daily-notes/`, wiki entries live in `zk/wiki/`, etc.): copy the local file to `zk/cache/<operation>-<slug>.md`. Use the relative path slug (e.g., `compact-daily-notes-2026-04-05.md`) so the origin is obvious.
-2. **Local mirror missing or stale** (rare — Reflect note not yet synced, archival note outside `zk/`): fetch via `get_note(id)` and write the returned body to `zk/cache/<operation>-<slug>.md`. Note this in the dispatch prompt so Curator knows the snapshot came from MCP.
+To produce each snapshot: copy the local source file under `$ZK/` to `$ZK/cache/<operation>-<slug>.md`. Use the relative path slug (e.g., `compact-daily-notes-2026-04-05.md`) so the origin is obvious.
 
 Dispatch prompt MUST include:
-- `snapshot_paths`: array of `zk/cache/<operation>-<slug>.md` paths the orchestrator just created
-- `source_origins`: for each snapshot, whether it came from local file copy or MCP fallback
+- `snapshot_paths`: array of `$ZK/cache/<operation>-<slug>.md` paths the orchestrator just created
 
-The Curator works exclusively from `snapshot_paths` — it never re-reads the originals, never fetches from MCP itself. This preserves the "content recoverable even if the user deletes mid-session" property that makes the cache step load-bearing.
+The Curator works exclusively from `snapshot_paths` — it never re-reads the originals. This preserves the "content recoverable even if the user deletes mid-session" property that makes the cache step load-bearing.
 
 ## Contract: Curator → Orchestrator
 
@@ -154,9 +150,9 @@ The Curator works exclusively from `snapshot_paths` — it never re-reads the or
 
 Required fields:
 - `operation`: compact | merge | create | replace | wiki-entry
-- `target_path`: (required for `wiki-entry`, optional otherwise) Local file path under `zk/wiki/<slug>.md` where the orchestrator will write the draft after user approval. Curator cannot Write — it only proposes the path and body.
+- `target_path`: (required for `wiki-entry`, optional otherwise) Local file path under `$ZK/wiki/<slug>.md` where the orchestrator will write the draft after user approval. Curator cannot Write — it only proposes the path and body.
 - `notes_affected`: Array of note titles involved
-- `snapshot_paths`: (required for compact/merge) Array of `zk/cache/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal. (Formerly `cached_sources`; renamed to reflect that they are dispatch-time snapshots, not an MCP size-limit workaround.)
+- `snapshot_paths`: (required for compact/merge) Array of `$ZK/cache/<operation>-<slug>.md` snapshot file paths used as source. Orchestrator verifies these exist before accepting the proposal.
 - `media_inventory`: (required for compact/merge, omit for create/replace) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts from source notes. The orchestrator verifies these counts match the output.
 - `media_output_count`: (required for compact/merge) `{images: count, tables: count, structured_blocks: count, embeds: count}` — counts in the proposed output. Must match `media_inventory` or differences must be listed in `changes_summary`.
 - `external_content_flagged`: (required for compact/merge, omit for create/replace) boolean — true if any source notes contain content from external sources (forum quotes, others' experiences). If true, those sections must be clearly attributed in `proposed_content`.
@@ -177,7 +173,7 @@ Required fields:
 - `unclear_items`: Array of items flagged as ambiguous from the transcript
 - `confidence`: How clean/complete the transcript was
 
-The orchestrator presents the structured notes to the user and asks whether to create a Reflect note via Curator.
+The orchestrator presents the structured notes to the user and asks whether to create a local note via Curator.
 
 ## Contract: Evolver → Orchestrator (System Review Request)
 
@@ -196,7 +192,6 @@ Required fields:
 ## Escalation Protocol
 
 If any agent encounters:
-- **MCP connection failure**: Report the failure, continue with cached index data
 - **Empty search results**: Try alternative queries (synonym, other language, broader terms) before reporting gap
 - **Contradictory evidence**: Flag explicitly — don't resolve silently
 - **Token budget exceeded**: Summarize and note truncation

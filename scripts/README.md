@@ -6,19 +6,17 @@ Executable tooling for the reflectl knowledge layer. All scripts are stdlib-only
 
 | Script | Purpose | Phase | Deps |
 |---|---|---|---|
-| `semantic.py` | Local semantic search over `zk/` — BGE-M3 embeddings + LanceDB with tier-aware reranking; lexical fallback when index is absent | B.5 | `lancedb`, `sentence-transformers` (optional; falls back to lexical) |
+| `semantic.py` | Local semantic search over `$ZK/` — BGE-M3 embeddings + LanceDB with tier-aware reranking; lexical fallback when index is absent | B.5 | `lancedb`, `sentence-transformers` (optional; falls back to lexical) |
 | `semantic_backends.py` | Backend implementations for semantic.py (LanceDB embedding backend, lexical fallback) | B.5 | `lancedb`, `sentence-transformers` (optional) |
-| `trust.py` | TrustRank for `zk/wiki/` — Personalized PageRank with external anchor seeds, claim-level granularity, bi-temporal filtering, floor trust | B | stdlib |
-| `lint.py` | Structural + corpus-level lint over `zk/wiki/` — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
+| `trust.py` | TrustRank for `$ZK/wiki/` — Personalized PageRank with external anchor seeds, claim-level granularity, bi-temporal filtering, floor trust | B | stdlib |
+| `lint.py` | Structural + corpus-level lint over `$ZK/wiki/` — parse errors, duplicate titles, slug drift, orphan entries, graph topology | D | stdlib |
 | `harness_lint.py` | Claude Code and Codex portability lint — root instructions, model profiles, capability mappings, command and agent registries | ops | stdlib |
 | `harness_smoke.py` | Smoke test for the portable harness helper and lint JSON surfaces | ops | stdlib |
 | `reflectl.py` | Portable command/agent discovery and Codex prompt generation from `harness/*.toml` | ops | stdlib |
-| `merge_daily.py` | Line-union merge of a local daily note with a Reflect-sourced copy; used by `/sync` | ops | stdlib |
 | `privacy_check.py` | Scans tracked files for private-vault filename-stem leaks; opt-outs live in `privacy_allowlist.txt`; wired into `/lint` Phase 0c | ops | stdlib |
 | `zk_audit.py` | Post-ingestion hygiene audit for `$ZK/`: missing READMEs, raw-without-digest, archive↔working overlap, root orphans, suspicious dirs; wired into `/lint` Phase 0b | ops | stdlib |
-| `restore.py` | Emergency `/restore` planner (user supplies slug + Reflect note ID pairs) | ops | stdlib |
 | `staleness.py` | L2 staleness scoring — surfaces dormant, stale, and promotion-candidate notes | D | stdlib |
-| `todos.py` | Aggregate open TODOs from `zk/gtd/` and reflection Next Action sections; computes priority from `due:` / `priority:` / age; flags closure candidates from daily-note language; powers `/reflect` Step 0 digest | ops | stdlib |
+| `todos.py` | Aggregate open TODOs from `$ZK/gtd/` and reflection Next Action sections; computes priority from `due:` / `priority:` / age; flags closure candidates from daily-note language; powers `/reflect` Step 0 digest | ops | stdlib |
 | `session_log.py` | Session event log skeleton generator — handles late-sleep date rule and collision auto-increment | E | stdlib |
 | `review.sh` | External reviewer wrapper (codex + gemini in parallel) for system-evolution diffs | ops | `codex`, `gemini` CLIs |
 
@@ -32,11 +30,11 @@ surfaces end to end without touching `$ZK/`.
 
 ## `trust.py` — quick reference
 
-Walks `zk/wiki/*.md`, parses each wiki entry into claims and markers, builds a directed trust graph, runs Personalized PageRank, applies the claim-level floor trust of 0.1, and reports per-claim and per-note scores.
+Walks `$ZK/wiki/*.md`, parses each wiki entry into claims and markers, builds a directed trust graph, runs Personalized PageRank, applies the claim-level floor trust of 0.1, and reports per-claim and per-note scores.
 
 ```
-scripts/trust.py                                   # default table over zk/wiki/
-scripts/trust.py --note zk/wiki/<file>.md          # per-claim breakdown
+scripts/trust.py                                   # default table over $ZK/wiki/
+scripts/trust.py --note "$ZK"/wiki/<file>.md       # per-claim breakdown
 scripts/trust.py --as-of 2025-06-01                # bi-temporal snapshot
 scripts/trust.py --json                            # structured output for /lint
 ```
@@ -49,6 +47,6 @@ scripts/trust.py --json                            # structured output for /lint
 
 **Structural integrity.** `trust.py` enforces items 1 to 10 of `protocols/wiki-schema.md` § Structural Integrity Check. A note that fails parse contributes no seeds and no propagation edges, but its claims still appear in the report with score 0 and a `fail` status. Full lint (items 11 to 15) lands with `/lint` in Phase D.
 
-**Exit codes.** `0` on success. `2` on usage error (missing file, invalid date, note outside `zk/wiki/`).
+**Exit codes.** `0` on success. `2` on usage error (missing file, invalid date, note outside `$ZK/wiki/`).
 
 See `protocols/wiki-schema.md` for the schema and `handoffs/2026-04-06-phase-bcd-trust-engine.md` for the Phase B spec and rationale.

@@ -46,7 +46,6 @@ When a command spec uses Claude Code syntax, adapt it this way:
 | `AskUserQuestion` | Ask a concise question; use numbered options if there is no native picker. |
 | `Agent(...)` | Dispatch a Codex subagent only when the runtime permits it; otherwise run the role sequentially from its `.claude/agents/*.md` brief. |
 | `WebSearch` / `WebFetch` | Use web search when enabled; otherwise state that web access is unavailable. |
-| Reflect MCP tools | Use only when configured and only for the escape hatches in `protocols/orchestrator.md`. |
 
 ## Codex Quick Recipes
 
@@ -62,9 +61,9 @@ High-frequency operations. Lift these directly instead of re-deriving from `prot
 | Source spec for a command | `python3 scripts/reflectl.py source <name>` |
 | Run a workflow | `python3 scripts/reflectl.py run <name>` |
 
-For project slash commands such as `/reflect`, `/review`, `/weekly`, `/sync`,
-and `/lint`, read the corresponding `.claude/commands/<name>.md` file and run
-the workflow under this adaptation table.
+For project slash commands such as `/reflect`, `/review`, `/weekly`, and
+`/lint`, read the corresponding `.claude/commands/<name>.md` file and run the
+workflow under this adaptation table.
 
 To discover command specs from Codex:
 
@@ -97,29 +96,16 @@ python3 scripts/reflectl.py agent-prompt researcher
 python3 scripts/reflectl.py agent-source researcher --path-only
 ```
 
-## MCP Setup (Codex)
+## Project Shell Trust (Codex)
 
-Register Reflect's MCP server with Codex (same URL Claude Code uses in `.mcp.json`):
-
-```bash
-codex mcp add reflect --url http://127.0.0.1:7676/mcp
-codex mcp list                                            # verify
-```
-
-Codex prompts for approval on every MCP tool call; `codex-cli 0.125.0` has
-no documented per-tool auto-approve. Plan for one prompt per `note_create`,
-`append_to_daily_note`, `get_note`, or `get_daily_note` invocation. Project
-shell trust lives separately in `~/.codex/config.toml`:
+Project shell trust lives in `~/.codex/config.toml`:
 
 ```toml
 [projects."/path/to/reflectl"]
 trust_level = "trusted"
 ```
 
-This bypasses shell-command approval for trusted projects but does not affect
-MCP approvals. Reflectl's MCP rules from `CLAUDE.md` (read-only escape hatches,
-write requires user approval) are stricter than Codex's defaults and remain
-authoritative under both runtimes.
+This bypasses shell-command approval for trusted projects.
 
 ## System Evolution
 

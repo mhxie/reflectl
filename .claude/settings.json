@@ -3,14 +3,6 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "permissions": {
-    "allow": [
-      "mcp__reflect-notes__search_notes",
-      "mcp__reflect-notes__get_note",
-      "mcp__reflect-notes__get_daily_note",
-      "mcp__reflect-notes__list_tags",
-      "mcp__reflect-notes__append_to_daily_note",
-      "mcp__reflect-notes__create_note",
-      "mcp__reflect-notes__delete_tag"
-    ]
+    "allow": []
   }
 }

@@ -1,12 +1,12 @@
 # Introspect
 
-Build or refresh your self-model by examining your Reflect notes, session history, and reading patterns. Produces three profile files that the rest of the system consults.
+Build or refresh your self-model by examining your local notes, session history, and reading patterns. Produces three profile files that the rest of the system consults.
 
 Unlike `/index` (mechanical extraction), `/introspect` discovers patterns: what you're drawn to, how your taste is shifting, where your curiosity is orbiting before you've named it as a goal.
 
 ## Prerequisites
 
-Verify the local `zk/` mirror is present and non-empty: `Bash: test -d zk/daily-notes && ls zk/daily-notes | head -1`. If the directory is missing or empty, tell the user: "Local `zk/` mirror is missing. Check your Google Drive sync." The Reflect MCP is used only for semantic search fallbacks in this command and is not required to start.
+Verify the local `$ZK/` vault is present and non-empty: `Bash: test -d "$ZK"/daily-notes && ls "$ZK"/daily-notes | head -1`. If the directory is missing or empty, tell the user: "Local `$ZK/` vault is missing. Check that `$ZK` is set and points to a valid directory."
 
 ## Output Files
 
@@ -23,31 +23,31 @@ profile/
 
 ### Step 1: Gather Raw Material
 
-Run these searches in parallel over the local `zk/` mirror. Local grep is instant, deterministic, and returns full paths you can then `Read` without any MCP round-trip.
+Run these searches in parallel over the local `$ZK/` vault. Local grep is instant, deterministic, and returns full paths you can then `Read` directly.
 
 **Goals & Directions:**
-1. `Grep(pattern: "目标", path: "zk/")` — Chinese goal mentions
-2. `Grep(pattern: "goal", path: "zk/", -i: true)` — English goal mentions
-3. `Grep(pattern: "小目标", path: "zk/")` — Annual goal notes
-4. `Grep(pattern: "objective", path: "zk/", -i: true)` — Additional goal mentions
+1. `Grep(pattern: "目标", path: "$ZK/")` — Chinese goal mentions
+2. `Grep(pattern: "goal", path: "$ZK/", -i: true)` — English goal mentions
+3. `Grep(pattern: "小目标", path: "$ZK/")` — Annual goal notes
+4. `Grep(pattern: "objective", path: "$ZK/", -i: true)` — Additional goal mentions
 
 **Identity & Themes:**
-5. Discover tags: `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' zk/ | sort -u` (local tag inventory)
-6. `Grep(pattern: "career", path: "zk/", -i: true)` — Career trajectory
-7. `Grep(pattern: "职业", path: "zk/")` — Chinese career notes
-8. `Grep(pattern: "learning", path: "zk/", -i: true)` — Learning interests
-9. `Grep(pattern: "学习", path: "zk/")` — Chinese learning notes
+5. Discover tags: `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$ZK"/ | sort -u` (local tag inventory)
+6. `Grep(pattern: "career", path: "$ZK/", -i: true)` — Career trajectory
+7. `Grep(pattern: "职业", path: "$ZK/")` — Chinese career notes
+8. `Grep(pattern: "learning", path: "$ZK/", -i: true)` — Learning interests
+9. `Grep(pattern: "学习", path: "$ZK/")` — Chinese learning notes
 
 **Recent Context:**
-10. `Read zk/daily-notes/<today>.md` — today (fall through to `get_daily_note` only if the file hasn't synced)
-11. `Read zk/daily-notes/<yesterday>.md` — yesterday
-12. Recent planning: `Bash: find zk/daily-notes zk/reflections zk/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
+10. `Read $ZK/daily-notes/<today>.md` — today
+11. `Read $ZK/daily-notes/<yesterday>.md` — yesterday
+12. Recent planning: `Bash: find "$ZK"/daily-notes "$ZK"/reflections "$ZK"/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
 
-Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic pass:** for conceptual angles grep cannot phrase ("curiosity vectors", "intellectual taste", "what am I drawn to"), run `Bash: uv run scripts/semantic.py query "<concept>" --top 10`. In Phase C this is the only semantic tool — reframe and retry if thin; there is no MCP fallback.
+Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic pass:** for conceptual angles grep cannot phrase ("curiosity vectors", "intellectual taste", "what am I drawn to"), run `Bash: uv run scripts/semantic.py query "<concept>" --top 10`. Reframe and retry if thin.
 
 ### Step 2: Read Full Content
 
-For the top ~30-40 most relevant notes, `Read` the file paths returned by Step 1 directly. The files are already on disk — no MCP round-trip. Focus on:
+For the top ~30-40 most relevant notes, `Read` the file paths returned by Step 1 directly. Focus on:
 - All goal notes (critical for directions.md)
 - Recent daily notes (critical for identity.md — taste and curiosity signals)
 - Top career/learning notes
@@ -58,7 +58,7 @@ This step goes beyond mechanical extraction. Look for:
 
 **Intellectual taste** (what you engage deeply with vs. skim):
 - Topics that recur across daily notes without being declared goals
-- Articles/papers you chose to deep-read vs. archive (check triage files in `zk/cache/triage-*.md`)
+- Articles/papers you chose to deep-read vs. archive (check triage files in `$ZK/cache/triage-*.md`)
 - Discussion tangents that repeatedly surface in reflection sessions
 - Aesthetic preferences in how you evaluate ideas (from research-profile patterns)
 
@@ -67,7 +67,7 @@ This step goes beyond mechanical extraction. Look for:
 - Reading saves that cluster around an unnamed theme
 - Questions you keep asking but haven't formalized
 
-**If `reader_persona.md` exists**, read it as a secondary signal — it shows what you save (behavioral), not what you think about (intentional). Note divergences between Readwise patterns and Reflect patterns.
+**If `reader_persona.md` exists**, read it as a secondary signal — it shows what you save (behavioral), not what you think about (intentional). Note divergences between Readwise patterns and local-note patterns.
 
 ### Step 4: Synthesize Profile Files
 
@@ -148,7 +148,7 @@ If Reviewer scores < 7 on either dimension, fix the specific issues before writi
 
 Compare the three profile layers and flag tensions:
 - Identity taste says X, but directions don't include it → potential emerging goal?
-- Reader persona (Readwise) shows heavy saves in area Y, but no Reflect notes → consuming but not processing?
+- Reader persona (Readwise) shows heavy saves in area Y, but no local notes → consuming but not processing?
 - Expertise is deep in area Z, but no current goals reference it → dormant strength?
 
 Present divergences to the user — these are the interesting findings.

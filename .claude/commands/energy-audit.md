@@ -9,12 +9,12 @@ Deep assessment of where your energy goes — physical, mental, emotional, and s
 
 ## Context Loading
 
-1. **Read the last 14 daily notes from the local mirror** to track energy patterns: `Read zk/daily-notes/<today>.md` back through `Read zk/daily-notes/<14-days-ago>.md` (one `Read` per date). The orchestrator may `get_daily_note(date: "<today>")` for today's file if the sync hasn't pulled it yet — that's the one Reflect read MCP call remaining. For older dates missing from the mirror, report the gap.
+1. **Read the last 14 daily notes from the local vault** to track energy patterns: `Read $ZK/daily-notes/<today>.md` back through `Read $ZK/daily-notes/<14-days-ago>.md` (one `Read` per date). For dates missing from the vault, report the gap.
 2. **Search for energy-related notes:**
-   - `Grep(pattern: "累|疲惫|精力", path: "zk/")` — Chinese exhaustion markers (local, exact).
-   - `Grep(pattern: "运动|健康|睡眠", path: "zk/")` — Chinese health markers (local, exact).
-   - `Grep(pattern: "exercise|health|sleep", path: "zk/")` — English health markers (local, exact).
-   - `Bash: uv run scripts/semantic.py query "tired exhausted drained" --top 10` — **primary** for affective states that may not use literal "tired/exhausted" language. Reframe the concept and retry if results are thin. No MCP fallback in Phase C.
+   - `Grep(pattern: "累|疲惫|精力", path: "$ZK/")` — Chinese exhaustion markers (local, exact).
+   - `Grep(pattern: "运动|健康|睡眠", path: "$ZK/")` — Chinese health markers (local, exact).
+   - `Grep(pattern: "exercise|health|sleep", path: "$ZK/")` — English health markers (local, exact).
+   - `Bash: uv run scripts/semantic.py query "tired exhausted drained" --top 10` — **primary** for affective states that may not use literal "tired/exhausted" language. Reframe the concept and retry if results are thin.
 
 ## The Four Energy Dimensions
 
@@ -63,7 +63,7 @@ Present findings as:
 
 ## Output
 
-**File:** `zk/reflections/YYYY-MM-DD-energy-audit.md`
+**File:** `$ZK/reflections/YYYY-MM-DD-energy-audit.md`
 
 ```markdown
 # Energy Audit — YYYY-MM-DD
@@ -101,21 +101,6 @@ After writing the energy audit file, emit a session log:
 1. `Bash: uv run scripts/session_log.py --type energy-audit --duration <minutes>`
 2. `Edit` the created file to populate sections from session data (agents dispatched, searches, questions, frameworks, anomalies). See `reflect.md` Session Log for the full fill-in guide. Leave empty sections with headers only. If the write fails, warn and continue.
 
-## Write-Back
+## Wrap Up
 
-Check if today's daily note already contains a write-back from today's session. Detect by descriptive heading. As a best-effort fallback, also check for the legacy `#ai-reflection` tag in case earlier content was written with the old convention.
-
-- If none: Before presenting the write-back, dispatch **Reviewer** + **Challenger** in parallel to verify citation accuracy, framing, and tone. Fix any issues they surface. **Write-backs are always in English.** Append energy audit summary using this format:
-  ```
-  ## [Descriptive Title] #energy-audit
-  [2-3 sentence summary of energy findings and one actionable change]
-  Related: [[Note Title 1]] [[Note Title 2]]
-  ```
-  **Title guidelines:** The heading must describe the audit's core finding, not just "Energy Audit." Good examples:
-  - `## Physical strong but socially drained #energy-audit`
-  - `## Energy dip: mental fatigue from context-switching #energy-audit`
-  - `## Sleep deficit dragging overall energy #energy-audit`
-
-  Never use generic titles like "Energy Audit Summary." The descriptive heading is the duplicate-detection signal. The `#energy-audit` topic tag is allowed because it marks subject matter, not provenance. **No provenance tag** (`#ai-reflection` is retired). Write-backs are alloy by default (see `protocols/epistemic-hygiene.md`).
-
-- If exists: skip.
+The energy audit file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.

@@ -144,13 +144,12 @@ At the end of every output, include:
 
 - **No research brief**: Read index files directly. Prefix with `[DEGRADED: No research brief]`.
 - **Brief has critical gaps**: Acknowledge gaps in output. Don't speculate to fill them.
-- **Write failure**: Save to `zk/reflections/` locally. The orchestrator handles the Reflect write-back — you have no `append_to_daily_note` tool. If the orchestrator reports the write-back failed, the reflection file on disk is still the authoritative record.
+- **Write failure**: Save to `$ZK/reflections/` locally. The reflection file on disk is the authoritative record.
 
 ## File Operations
 
-- Write reflections to `zk/reflections/YYYY-MM-DD-reflection.md`
-- Write reviews to `zk/reflections/YYYY-MM-DD-review.md`
-- No provenance tags on new content. Write-backs are alloy by default; alloy requires no tag (see `protocols/epistemic-hygiene.md`). Legacy tags `#ai-reflection` and `#ai-generated` are retired for new content; treat them as historical markers only. Topic tags (e.g., `#decision`, `#exploration`, `#energy-audit`) are fine because they describe subject matter, not origin.
-- Headings must be descriptive of the session's theme (e.g., `## Constraint creates meaning`), never generic like "AI Reflection." The descriptive heading is the new duplicate-detection signal.
-- Before writing, check if today's daily note already contains a heading from today's session. If yes, skip the write-back and inform the orchestrator. If a legacy `#ai-reflection` section exists (from pre-Phase-A content written earlier today), treat that as also indicating "already wrote back."
-- Wiki entries (`zk/wiki/*.md`) are not written by the Synthesizer. Producing a wiki entry belongs to the Curator (Phase C). If a session surfaces a claim worth promoting to the wiki layer, the Synthesizer notes it in the reflection file under a `## Promotion candidates` section and the orchestrator dispatches Curator.
+- Write reflections to `$ZK/reflections/YYYY-MM-DD-reflection.md`
+- Write reviews to `$ZK/reflections/YYYY-MM-DD-review.md`
+- No provenance tags on new content. New session output is alloy by default; alloy requires no tag (see `protocols/epistemic-hygiene.md`). Legacy tags `#ai-reflection` and `#ai-generated` are retired for new content; treat them as historical markers only. Topic tags (e.g., `#decision`, `#exploration`, `#energy-audit`) are fine because they describe subject matter, not origin.
+- Headings must be descriptive of the session's theme (e.g., `## Constraint creates meaning`), never generic like "AI Reflection." The descriptive heading is the duplicate-detection signal.
+- Wiki entries (`$ZK/wiki/*.md`) are not written by the Synthesizer. Producing a wiki entry belongs to the Curator (Phase C). If a session surfaces a claim worth promoting to the wiki layer, the Synthesizer notes it in the reflection file under a `## Promotion candidates` section and the orchestrator dispatches Curator.

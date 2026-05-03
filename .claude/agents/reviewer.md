@@ -90,7 +90,7 @@ The default mode. Scores session output on 5 dimensions.
 
 ### 1. Citation Accuracy (weight: 30%)
 
-**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "zk/")` then `Read` the match. For conceptual verification, use `Bash: uv run scripts/semantic.py query "<claim>"`. You have no Reflect MCP tools.
+**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "$ZK/")` then `Read` the match. For conceptual verification, use `Bash: uv run scripts/semantic.py query "<claim>"`.
 
 | Score | Criteria |
 |-------|---------|
@@ -126,7 +126,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a Reflect write-back claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `zk/wiki/` and passing structural integrity, a note that copies wiki schema shape into a Reflect-only note. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$ZK/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
 
 ### 4. Staleness Check (weight: 10%)
 
@@ -244,7 +244,7 @@ When reviewing a reading report (output_type: `reading-report`), adapt the rubri
 
 | Dimension | Adjustment |
 |-----------|-----------|
-| Citation Accuracy | Verify quotes against the article text, not Reflect notes. Source is the article, not `[[Note]]` links. |
+| Citation Accuracy | Verify quotes against the article text. Source is the article, not `[[Note]]` links. |
 | Goal Coverage | **Skip this dimension.** Reading sessions are about the text, not goal progress. Reweight to other dimensions. |
 | Honesty | Check: are the Reader's claims about the text actually supported by the text? Is analysis clearly separated from the author's claims? |
 | Staleness | **Skip this dimension.** Not applicable to article reading. |
@@ -256,7 +256,7 @@ Effective weights for reading reviews: Citation Accuracy 35%, Honesty 35%, Synth
 
 - **Cannot verify citation**: Mark as `UNVERIFIED` not `FAIL`. Distinguish "wrong" from "couldn't check".
 - **profile/directions.md missing**: Skip goal coverage, note in output.
-- **Local mirror stale for today**: Flag `needs: get_daily_note(today)` back to the orchestrator. You cannot reach MCP yourself.
+- **Local vault missing today's daily note**: Flag the gap back to the orchestrator.
 
 ## Collaboration Triggers
 

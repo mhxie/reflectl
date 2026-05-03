@@ -60,7 +60,7 @@ URL_CATEGORIES = {
     "github_code": re.compile(r"github\.com/.+/blob/"),
     "github_issue": re.compile(r"github\.com/.+/(issues|discussions|pull)/"),
     "github_repo": re.compile(r"github\.com/[^/]+/[^/]+/?$"),
-    "docs": re.compile(r"docs\.(ray\.io|anyscale\.com)"),
+    "docs": re.compile(r"docs\.ray\.io"),
     "deepwiki": re.compile(r"deepwiki\.com"),
     "wikipedia": re.compile(r"wikipedia\.org"),
     "pdf": re.compile(r"\.(pdf|PDF)($|\?)"),

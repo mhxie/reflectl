@@ -1,0 +1,104 @@
+## Purpose
+
+GitHub-canonical conventions for the `Zettel` repo (the synced `$ZK` markdown layer). These rules optimize for: clean GitHub UI rendering, efficient agent navigation, sustainable folder browsing, and a plain-markdown vault that stays ecosystem-agnostic (no editor-specific carry-over).
+
+Companion: `protocols/semantic-vocabulary.md` (backlink and tag conventions).
+
+## Image policy
+
+### Placement
+
+Images live in a sibling `images/` subdir of the markdown that references them:
+
+```
+wiki/<Topic>.md
+wiki/images/<topic>-overview.png
+
+drafts/<draft-slug>.md
+drafts/images/<draft-slug>-architecture.png
+
+agent-findings/<agent>-<topic>-YYYY-MM-DD.md
+agent-findings/images/<topic>-architecture.png
+```
+
+For nested tiers, the `images/` is sibling to the .md file at any depth:
+
+```
+research/<area>/<Topic>.md
+research/<area>/images/<topic>-flow.png
+```
+
+Reference syntax (relative path from the .md file's directory):
+
+```markdown
+![alt text](images/<topic>-overview.png)
+```
+
+### Naming
+
+- **Lowercase kebab-case**: `<topic>-overview.png`, not `Topic_Overview.png` or `TopicOverview.png`.
+- **Semantic**: the name describes what the image *shows*, not when it was captured. `<vendor>-cart-checkout.png`, not `Pasted image 20260406173547.png`.
+- **Date-leading only when the image is time-bound** (a snapshot of a UI, chart, or receipt at a specific moment): `YYYY-MM-DD-<source>-<artifact>.png`. For evergreen diagrams, omit the date.
+- **Avoid hashes, raw timestamps, generic names** (`IMG_7913.PNG`, `image1.png`, `screenshot.png`).
+- **Topic prefix when many images share a theme**: `<topic>-overview.png`, `<topic>-flow.png`, `<topic>-internals.png`. Readable at a glance in the directory listing.
+
+### Tracking
+
+`$ZK/.gitignore` whitelists `**/images/*.{png,jpg,jpeg,gif,svg,webp}`. Place an image under any `images/` subdir and it auto-tracks on next `git add`.
+
+`assets/` (auto-paste collectors, hash-named imports from prior tools) is re-excluded; any `assets/images/<hash>.png` style import stays local. To promote an `assets/` image to GitHub, move it to the right `<tier>/images/` path with a semantic name and update the markdown reference.
+
+### Legacy image refs
+
+Markdown that still points at `assets/images/<hash>.png` will render broken on GitHub. Acceptable for archive content; for active content, promote on next edit by:
+1. `cp assets/images/<hash>.png <tier>/images/<semantic-name>.png`
+2. Update the `![](path)` reference in the .md.
+3. `git add -A`.
+
+### Examples in this file
+
+All filenames, paths, topics, and people referenced in the example blocks above and the table below are placeholders. Replace `<topic>`, `<vendor>`, `<source>`, `<author>`, `<lab>`, `<venue>` with concrete strings when applying the convention; do not commit those concrete strings into protocol or convention files (they belong inside `$ZK/`, which is gitignored).
+
+## Folder size — fission rule
+
+**Magic number: 32 entries (files + subdirectories combined).** When a directory's immediate-child count reaches 32, trigger a fission: split into subdirectories along a natural axis. GitHub's tree view truncates long lists and pagination breaks navigation; most file explorers also slow above that range.
+
+The 32 threshold is hard, not "rough". A directory at 32 should be split before the next addition.
+
+### Per-tier split axes
+
+| Tier | Split axis | Result example |
+|------|------------|----------------|
+| `daily-notes/` | year, then year-month (two-level grouping keeps every level under 32) | `daily-notes/YYYY/YYYY-MM/YYYY-MM-DD.md` |
+| `reflections/` | year-month | `reflections/YYYY-MM/YYYY-MM-DD-reflection.md` |
+| `agent-findings/` | year-month | `agent-findings/YYYY-MM/<agent>-<slug>.md` |
+| `readwise/articles/` | year-month if dated, else first-letter bucket | `readwise/articles/YYYY-MM/<slug>.md` |
+| `readwise/authors/` | first-letter bucket: `A/`, `B/`, …, `0-9/`, `中/` (CJK) | `readwise/authors/<X>/<Author Name>.md` |
+| `preprints/<class>/` | venue | `preprints/unofficial-reviews/<venue><yy>/` |
+| `wiki/`, `wiki-cn/` | first-letter bucket (alphabetical), or topic cluster | `wiki/<X>/<Topic Title>.md` |
+| `research/<area>/labs/` | by org type or first-letter | `research/<area>/labs/<X>/<lab>/` |
+| `archive/<subdir>` | first-letter bucket or topical sub-grouping (case-by-case) | `archive/people/<X>/<Person Name>.md` |
+
+### Rebuilding refs after fission
+
+File moves break standard markdown links `[X](path.md)`. After a split, run `scripts/relink.py --scan` (TBD) to detect broken refs and `scripts/relink.py --apply` to rewrite paths via the global stem index.
+
+The wikilink converter (`scripts/wikilink_to_md.py`) only handles `[[...]]` syntax. Once links are standard markdown, relink is a separate operation.
+
+### Cascading splits
+
+A subdir created during fission can itself reach 32 over time and require its own fission. The rule applies recursively. Calendar splits (year-month, year-quarter) self-bound: a month never exceeds 31 entries.
+
+## Forward-going naming (general)
+
+- **Filenames**: lowercase kebab-case unless a proper noun or canonical title (e.g., wiki entries can use `Title Case With Spaces.md` because they're canonical names).
+- **Dates**: ISO `YYYY-MM-DD` only. No `MM/DD/YYYY`, no `Thu, August 8th, 2024`.
+- **Tags**: `#kebab-case-tag`, `#中文标签`. No pure-digit tags.
+
+## Lint enforcement (planned)
+
+`scripts/repo_lint.py` (TBD) will check:
+- folders exceeding 30 .md files
+- images outside `images/` subdirs (under tracked tiers)
+- non-semantic image names (timestamps, hashes, "Pasted image…")
+- legacy date strings in new markdown

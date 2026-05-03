@@ -36,6 +36,9 @@ from pathlib import Path
 
 ZK = Path(os.environ.get("ZK", "zk"))
 ALLOWLIST = Path(__file__).resolve().parent / "privacy_allowlist.txt"
+PRIVATE_SLUGS = (
+    Path(__file__).resolve().parent.parent / "personal" / "private_slugs.txt"
+)
 
 _INFRA_DIRS = {"cache", "assets", ".obsidian"}
 
@@ -58,6 +61,7 @@ SKIP_STEMS = {"index", "README", "Note Title"}
 _WIKILINK_RE = re.compile(r'(?<!\!)\[\[([^\]]+)\]\]')
 _DATE_RE = re.compile(r'^\d{4}(-\d{2}(-\d{2})?)?$')
 _NOISE_RE = re.compile(r'^[.\s]+$')
+_NUMERIC_RE = re.compile(r'^[\d\s,.\-]+$')
 
 
 def load_allowlist() -> set[str]:
@@ -69,6 +73,29 @@ def load_allowlist() -> set[str]:
         if not s or s.startswith("#"):
             continue
         out.add(s)
+    return out
+
+
+def load_private_slugs() -> set[str]:
+    """Load single-word private slugs (employer names, codenames) from a
+    gitignored sidecar list.
+
+    The multi-word filename-stem and wikilink heuristics deliberately skip
+    single ASCII words to avoid flagging system vocabulary (e.g., "Reflect",
+    "Protocol"). That floor lets through employer slugs and project
+    codenames that happen to be one word. The user maintains this list
+    explicitly because no heuristic can reliably tell a generic word from
+    a private proper noun. File is gitignored under `personal/`; absent
+    file means no slugs configured.
+    """
+    if not PRIVATE_SLUGS.exists():
+        return set()
+    out: set[str] = set()
+    for line in PRIVATE_SLUGS.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        out.add(s.lower())
     return out
 
 
@@ -100,6 +127,8 @@ def _is_private_wikilink(target: str) -> bool:
     if '/' in target or target.endswith('.md'):
         return False
     if _DATE_RE.match(target) or _NOISE_RE.match(target):
+        return False
+    if _NUMERIC_RE.match(target):
         return False
     has_non_ascii = any(ord(c) > 127 for c in target)
     if has_non_ascii:
@@ -202,6 +231,42 @@ def scan(terms: list[str], files: list[str]) -> list[dict]:
     return hits
 
 
+def scan_slugs(slugs: set[str], files: list[str]) -> list[dict]:
+    """Scan files for single-word private slugs.
+
+    Case-insensitive, word-boundary aware (\\b<slug>\\b) so a slug "foo"
+    matches "Foo" and "foo's" but not "foobar" or "tofoo". Private slugs
+    are typically employer names or codenames that need this stricter
+    boundary check; the multi-word `scan` uses substring match because
+    multi-word phrases rarely appear inside other words.
+    """
+    if not slugs:
+        return []
+    pattern = re.compile(
+        r"\b(" + "|".join(re.escape(s) for s in sorted(slugs)) + r")\b",
+        re.IGNORECASE,
+    )
+    hits: list[dict] = []
+    for f in files:
+        try:
+            content = Path(f).read_text(encoding="utf-8", errors="ignore")
+        except (OSError, UnicodeDecodeError):
+            continue
+        seen_in_file: set[str] = set()
+        for i, line in enumerate(content.splitlines(), 1):
+            for m in pattern.finditer(line):
+                slug = m.group(1).lower()
+                if slug in seen_in_file:
+                    continue
+                seen_in_file.add(slug)
+                hits.append({
+                    "file": f,
+                    "line": i,
+                    "private_title": slug,
+                })
+    return hits
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         prog="scripts/privacy_check.py",
@@ -226,6 +291,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     allowlist = load_allowlist()
+    private_slugs = load_private_slugs()
     dirs = _discover_private_dirs(ZK)
     titles = collect_titles(ZK, allowlist, dirs)
     files = tracked_files()
@@ -240,13 +306,15 @@ def main(argv: list[str] | None = None) -> int:
     wikilinks -= {t for t in wikilinks if _matches_committed(t)}
     all_terms = sorted(set(titles) | wikilinks)
     hits = scan(all_terms, files) if all_terms else []
+    hits.extend(scan_slugs(private_slugs, files))
 
     if args.json:
         print(json.dumps({
             "zk_dir": ZK.as_posix(),
             "filename_stems": len(titles),
             "wikilink_targets": len(wikilinks),
-            "terms_scanned": len(all_terms),
+            "private_slugs": len(private_slugs),
+            "terms_scanned": len(all_terms) + len(private_slugs),
             "allowlist_size": len(allowlist),
             "hit_count": len(hits),
             "hits": hits,
@@ -254,9 +322,10 @@ def main(argv: list[str] | None = None) -> int:
     else:
         if not hits:
             print(
-                f"privacy_check: clean ({len(all_terms)} private terms "
-                f"scanned: {len(titles)} filename stems + "
-                f"{len(wikilinks)} wikilink targets, 0 leaks)"
+                f"privacy_check: clean ({len(all_terms) + len(private_slugs)} "
+                f"private terms scanned: {len(titles)} filename stems + "
+                f"{len(wikilinks)} wikilink targets + "
+                f"{len(private_slugs)} private slugs, 0 leaks)"
             )
             return 0
         files_hit = sorted({h["file"] for h in hits})

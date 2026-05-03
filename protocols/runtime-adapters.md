@@ -7,7 +7,7 @@ system. The core idea is to separate four concerns:
 |---|---|---|
 | Workflow | `protocols/`, command specs | `/reflect`, `/weekly`, `/review` |
 | Role | `harness/agents.toml`, agent specs | Researcher, Synthesizer, Reviewer |
-| Capability | `harness/capabilities.toml` | `semantic_query`, `note_create`, `web_search` |
+| Capability | `harness/capabilities.toml` | `semantic_query`, `write_local_file`, `web_search` |
 | Runtime and model | adapters, local CLI config | Claude Code with Opus, Codex with GPT |
 
 This follows the OpenClaw lesson: the system can use different models when the
@@ -18,8 +18,8 @@ workflow.
 
 | Runtime | Reads | Native surface | Status |
 |---|---|---|---|
-| Claude Code | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/`, MCP settings | Primary interactive harness |
-| Codex | `AGENTS.md` | `.agents/skills/reflectl/`, Codex CLI, Codex review, optional MCP config | Portable harness |
+| Claude Code | `CLAUDE.md` | `.claude/agents/`, `.claude/commands/` | Primary interactive harness |
+| Codex | `AGENTS.md` | `.agents/skills/reflectl/`, Codex CLI, Codex review | Portable harness |
 
 Claude Code remains the most complete native surface because the command files
 currently use Claude constructs such as `AskUserQuestion` and `Agent(...)`.
@@ -47,9 +47,9 @@ format.
   capability from `harness/capabilities.toml`.
 - Existing `.claude/` files may keep Claude frontmatter and tool names. They are
   adapter surfaces.
-- New shared docs should say "run a semantic query" or "create a note", not
-  "call `mcp__reflect-notes__create_note`" unless they are documenting the
-  Claude adapter itself.
+- New shared docs should say "run a semantic query" or "write a local file",
+  not name provider-specific tools, unless they are documenting an adapter
+  itself.
 - If a runtime lacks a feature, degrade explicitly. Example: if Codex cannot
   spawn subagents in a given environment, read the target agent spec and run the
   step sequentially.
@@ -67,7 +67,7 @@ profile names:
 | `framework_reasoning` | independent framework application |
 | `system_evolution` | multi-file harness changes |
 | `mechanical_review` | checklists, rubric scoring, diff review |
-| `note_operations` | structured Reflect or local note writes |
+| `note_operations` | structured local note drafts |
 | `web_research` | external context gathering |
 | `deep_reading` | article and transcript analysis |
 | `meeting_extraction` | action item and decision extraction |
@@ -86,9 +86,6 @@ Capabilities describe what an agent needs, independent of the runtime:
 - `semantic_query`
 - `web_search`
 - `web_fetch`
-- `note_read_escape_hatch`
-- `note_create`
-- `daily_note_append`
 - `write_local_file`
 - `spawn_role`
 - `ask_user`
@@ -105,7 +102,7 @@ When a user asks Codex to run a Reflectl command:
 4. Translate Claude-specific constructs using the table in `AGENTS.md`.
 5. Read any referenced agent specs from `.claude/agents/`.
 6. Prefer local `$ZK/` files, `rg`, and `uv run scripts/semantic.py`.
-7. Ask before any Reflect write.
+7. Ask before any local file write under `$ZK/`.
 8. Report any downgraded capability, such as missing web access or unavailable
    subagent dispatch.
 
@@ -119,8 +116,8 @@ run `python3 scripts/reflectl.py agent-prompt <agent>`.
 
 ## Migration Path
 
-Phase 1 keeps `.claude/` as the native command and agent surface, then adds
-Codex-readable root instructions and neutral registries. Later phases can move
+`.claude/` is the native command and agent surface today; Codex-readable root
+instructions and neutral registries provide portability. Later phases can move
 command and agent source into `harness/` and generate `.claude/` and `.codex/`
 surfaces from it.
 

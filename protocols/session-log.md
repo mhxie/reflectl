@@ -8,11 +8,11 @@ At session end, immediately before (or alongside) the reflection file write. The
 
 ## Storage
 
-- **File:** `zk/sessions/YYYY-MM-DD-<type>.md`
+- **File:** `$ZK/sessions/YYYY-MM-DD-<type>.md`
 - **Types:** reflection, review, weekly, decision, exploration, energy-audit, reading, curate, introspect, meeting, deep-dive, system-review, prm
 - **Collisions:** If multiple sessions of the same type run on the same day, append a sequence number: `YYYY-MM-DD-reflection-2.md`
-- **Tier:** L2, same as `zk/reflections/` and `zk/daily-notes/`
-- **Write method:** Local `Write` only. No MCP call. No user approval needed (system-facing artifact). If the write fails, warn and continue; do not block the session.
+- **Tier:** L2, same as `$ZK/reflections/` and `$ZK/daily-notes/`
+- **Write method:** Local `Write` only. No user approval needed (system-facing artifact). If the write fails, warn and continue; do not block the session.
 
 ## Format
 
@@ -54,7 +54,7 @@ model: <orchestrator model used>
 - <Timestamped prose of key routing decisions the orchestrator made>
 
 ## Anomalies
-- <Anything unexpected: MCP failures, empty searches, user course corrections, degraded mode activations>
+- <Anything unexpected: empty searches, user course corrections, degraded mode activations, filesystem errors>
 
 ## Harness Assumptions Exercised
 - <List any model-era assumptions that were load-bearing this session>
@@ -74,7 +74,7 @@ model: <orchestrator model used>
 
 **Decisions & Branches:** Free-form prose. Captures non-obvious routing decisions: "User requested Scout mid-session", "Reviewer scored 5.8, triggered revision loop round 1", "Skipped framework application (user in a rush)".
 
-**Anomalies:** MCP connection failures, empty search results after retries, user course corrections ("actually, let's talk about X instead"), degraded mode activations (e.g., semantic.py fallback to lexical).
+**Anomalies:** Empty search results after retries, user course corrections ("actually, let's talk about X instead"), degraded mode activations (e.g., semantic.py fallback to lexical), filesystem write failures.
 
 **Harness Assumptions Exercised:** References to `protocols/harness-assumptions.md` registry items that were load-bearing. Examples: "Researcher model=Opus (model-assignment)", "Profile stale >7d warning triggered (temporal-threshold)", "Loaded last 3 reflections (token-budget)".
 
@@ -84,19 +84,18 @@ Session logs are plain markdown with structured headings. No special tooling nee
 
 | Intent | Query |
 |--------|-------|
-| Sessions where a gate failed | `Grep "NEEDS_REVISION\|REJECTED" zk/sessions/` |
-| Sessions that dispatched Scout | `Grep "Scout" zk/sessions/` |
-| Sessions with zero-hit searches | `Grep "0.*\|" zk/sessions/` in Search Log tables |
-| Sessions with anomalies | `Grep "## Anomalies" -A 5 zk/sessions/` |
-| Sessions by type | `Bash: ls zk/sessions/ \| grep -oP '(?<=\d{4}-\d{2}-\d{2}-)[a-z-]+' \| sort \| uniq -c` |
-| Harness assumptions used | `Grep "harness-assumptions" zk/sessions/` |
+| Sessions where a gate failed | `Grep "NEEDS_REVISION\|REJECTED" "$ZK"/sessions/` |
+| Sessions that dispatched Scout | `Grep "Scout" "$ZK"/sessions/` |
+| Sessions with zero-hit searches | `Grep "0.*\|" "$ZK"/sessions/` in Search Log tables |
+| Sessions with anomalies | `Grep "## Anomalies" -A 5 "$ZK"/sessions/` |
+| Sessions by type | `Bash: ls "$ZK"/sessions/ \| grep -oP '(?<=\d{4}-\d{2}-\d{2}-)[a-z-]+' \| sort \| uniq -c` |
+| Harness assumptions used | `Grep "harness-assumptions" "$ZK"/sessions/` |
 
 ## Relationship to Other Artifacts
 
 | Artifact | Purpose | Audience |
 |----------|---------|----------|
-| `zk/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
-| `zk/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
-| Reflect daily note write-back | Summary + backlinks for the knowledge graph | User (in Reflect app) |
+| `$ZK/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
+| `$ZK/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
 
 Session logs do not replace reflection files. They are a parallel, system-facing record.

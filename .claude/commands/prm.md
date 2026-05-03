@@ -183,7 +183,7 @@ After writing the PRM audit file, emit a session log:
 
 ## Wrap Up
 
-The PRM audit file in `zk/reflections/` is the durable session output. No write-back to daily notes. Tell the user the audit has been saved and where to find it.
+The PRM audit file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the audit has been saved and where to find it.
 
 ## Usage Patterns
 

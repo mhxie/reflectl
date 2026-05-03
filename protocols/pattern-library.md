@@ -138,7 +138,7 @@ A Moment is a **first** or a **threshold crossing** — not a routine event. Exa
 ### How to Use Moments
 
 1. **Researcher flags Moments** when scanning notes — look for language like "first time," "finally," "I realized," "breakthrough"
-2. **Tag in Reflect notes** with `#moment` when logging
+2. **Tag with `#moment`** when logging in daily notes or reflections
 3. **Accumulate toward era assessment** — Moments across multiple directions = Golden Age signal; zero Moments in a direction = Dark Age risk
 4. **Surface during reviews** — "You've had 3 Moments in Mastery this quarter but none in Connection. Is that deliberate?"
 

@@ -33,15 +33,13 @@ Verified by = [what the user can check to confirm]
 2. [Step] → verify: [check]
 ```
 
-Concrete transform, "Compact these notes" becomes: "Success = N notes in `zk/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `zk/cache/` → verify: snapshots exist on disk. 3. Curator produces compact → verify: Gate 4 passes (size < 15KB, verbatim preservation)."
+Concrete transform, "Compact these notes" becomes: "Success = N notes in `$ZK/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `$ZK/cache/` → verify: snapshots exist on disk. 3. Curator drafts compaction → verify: Gate 4 passes (size < 15KB, verbatim preservation). 4. Orchestrator writes the compacted file after approval → verify: file exists at the proposed `target_path`."
 
-## MCP Read Escape Hatches
+## Note Writing
 
-The default read path is local (`Read`, `Grep`, `scripts/semantic.py`). Reflect MCP reads are narrowly scoped escape hatches, because MCP round-trips are slower and non-deterministic than local file access:
+All note writes are local file writes under `$ZK/`. The orchestrator (not the Curator) owns the `Write`/`Edit` tools. The Curator drafts proposals; the orchestrator writes after user approval. Every proposal carries a `target_path` under `$ZK/` and the orchestrator either creates the file (`Write`) or applies a surgical change (`Edit`).
 
-- `get_daily_note(date)`: orchestrator (for `/sync`, `/reflect`'s today-fetch fallback when the local mirror lags, and `/weekly`'s per-day fallback for any of the past 7 days that is missing/empty/truncated — `/weekly` may be invoked from `/reflect`'s hard-floor cue route while a Background Sync is mid-merge) and Curator (for background daily-notes sync dispatched by `/reflect`; see the Curator's "Sync Daily Notes" operation).
-- `get_note(id)`: orchestrator-only, for Curator snapshot setup (compact/merge fallback when a note is genuinely missing from the local mirror) and for verifying a manual wiki-entry share (post-`create_note` empty-body check).
-- No `search_notes`, no `list_tags` anywhere in the system. Discovery happens locally.
+Daily notes (`$ZK/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not modify them. Curator dispatches that target a daily-note path are refused.
 
 ## Session Flow
 
@@ -90,19 +88,19 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Researcher finds notes in `zk/` → orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time (local `cp` for notes under `zk/`, orchestrator-side `get_note` fallback only for any note genuinely missing from the local mirror) → Curator compacts from snapshot paths | Researcher → Curator |
-| "Merge these notes" | Combine specified notes into one, archive originals | Curator |
+| "Compact my notes on X" | Researcher finds notes in `$ZK/` → orchestrator snapshots each source to `$ZK/cache/compact-<slug>.md` at dispatch time (local `cp`) → Curator drafts compaction → orchestrator writes after approval | Researcher → Curator |
+| "Merge these notes" | Curator drafts merged note from snapshot files; orchestrator writes after approval | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
-| "Write this insight as a new note" | Create a new Reflect note from session insight | Curator |
-| "Replace [[Old Note]] with this" | Write updated version via MCP | Curator |
+| "Write this insight as a new note" | Curator drafts a local note under the appropriate tier; orchestrator writes after approval | Curator |
+| "Replace [[Old Note]] with this" | Curator drafts the rewrite; orchestrator applies via `Edit`/`Write` after approval | Curator |
 
 ### Research Operations (→ Researcher)
 | User Says | Action | Agent |
 |-----------|--------|-------|
 | "Find notes about X" | `Bash: uv run scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
-| "What did I write about X last year?" | Filename-date filter on `zk/daily-notes/` + `Grep`. No MCP — report the gap if the local mirror is incomplete for that date range. | Researcher |
+| "What did I write about X last year?" | Filename-date filter on `$ZK/daily-notes/` + `Grep`. Report the gap if a date range is missing locally. | Researcher |
 | "Are there related notes I'm forgetting?" | `Bash: uv run scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
-| "Show me everything tagged #X" | `Grep "#X"` over `zk/` | Researcher |
+| "Show me everything tagged #X" | `Grep "#X"` over `$ZK/` | Researcher |
 
 ### Meeting Operations (→ Meeting)
 | User Says | Action | Agent |
@@ -158,7 +156,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | Chain | Trigger | Flow | Value |
 |-------|---------|------|-------|
 | **Research → Synthesize → Review** | Every session | Researcher → Synthesizer → Reviewer | Core quality pipeline |
-| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and calls `append_to_daily_note` after user approval. Synthesizer has no MCP write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
+| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and writes the reflection file under `$ZK/reflections/` (or another tier) after user approval. Synthesizer has no Write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
 | **Scout → Challenger** | Scout finds something that contradicts user's notes | Scout → Challenger surfaces the contradiction | External evidence challenges internal beliefs |
 | **Scout → Librarian** | Scout finds a key resource worth deep reading | Scout flags → Librarian adds to curated list | Scout finds, Librarian curates |
 | **Challenge → Curate** | Challenger surfaces outdated belief or contradiction | Challenger → ask user "want to update that note?" → Curator rewrites | Turns insight into note hygiene |
@@ -166,12 +164,12 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Thinker → Challenger** | Thinker applies a framework | Challenger questions whether the framework fits | Prevents lazy framework application |
 | **Librarian → Researcher** | Librarian recommends a resource | Researcher checks if user already has notes on it | Avoids recommending what user already knows |
 | **Researcher → Curator** | Researcher finds many overlapping notes on same topic | Researcher flags → Curator proposes compaction | Proactive note hygiene |
-| **Meeting → Curator** | User approves meeting notes for saving | Meeting output → Curator creates Reflect note | Turns transcript into permanent note |
+| **Meeting → Curator** | User approves meeting notes for saving | Meeting output → Curator drafts local note → orchestrator writes after approval | Turns transcript into permanent note |
 | **Reader → Synthesizer** | Multiple Reader lenses complete | Synthesizer combines all lens briefs into unified report | Multi-dimensional reading analysis |
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
-| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `zk/` → Orchestrator snapshots each source to `zk/cache/compact-<slug>.md` at dispatch time → Curator compacts from snapshot paths (one output note at a time) | Sequential: all snapshots must exist on disk before Curator starts |
+| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$ZK/` → Orchestrator snapshots each source to `$ZK/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
 
 ### Parallel Dispatches (A and B run simultaneously)
 

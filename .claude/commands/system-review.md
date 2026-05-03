@@ -76,7 +76,7 @@ Send a **single** assistant message containing both tool calls:
   ```bash
   bash scripts/review.sh
   ```
-  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for one only.) Reports land in `zk/cache/review-<timestamp>-{codex,gemini}.md`. The script runs the external CLIs in parallel, blocks on `wait`, includes untracked files in the diff sent to gemini, and treats a missing CLI as a soft-skip.
+  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for one only.) Reports land in `$ZK/cache/review-<timestamp>-{codex,gemini}.md`. The script runs the external CLIs in parallel, blocks on `wait`, includes untracked files in the diff sent to gemini, and treats a missing CLI as a soft-skip.
 
 ### 3. Synchronous wait (invoker contract)
 
@@ -90,7 +90,7 @@ This is a contract at the *invoker* level, not enforced by the script. The scrip
 
 ### 4. Synthesize
 
-Only after both dispatches have returned. Read the two report files under `zk/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
+Only after both dispatches have returned. Read the two report files under `$ZK/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
 
 **External verdict mapping for system reviews:** External reviewers (codex, gemini) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
 
