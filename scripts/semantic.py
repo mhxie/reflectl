@@ -10,7 +10,9 @@ STUB MODE:
 REAL MODE:
     Embedding-backed search using pluggable Embedder + Store backends.
     Day-one stack: BGE-M3 (sentence-transformers) + LanceDB.
-    Active when zk/.semantic/lance/ directory exists (sentinel).
+    Active when the resolved lance directory exists (sentinel). Resolution
+    prefers ~/.cache/atelier/lance/ and falls back to legacy
+    ~/.cache/reflectl/lance/ during the rename window.
 
 The CLI contract is encoder-agnostic and frozen. Swapping the backend from
 stub to real will NOT change caller code in command files or agents.
@@ -42,10 +44,31 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Lance index is machine-local (rebuild is ~7s on MPS, not worth syncing binaries).
 _LANCE_NEW = Path.home() / ".cache" / "atelier" / "lance"
 _LANCE_OLD = Path.home() / ".cache" / "reflectl" / "lance"
-# Prefer the new path; fall back to the legacy reflectl/ cache if the new one
-# isn't built yet. Lets existing installations keep semantic search across the
-# atelier rename without a forced rebuild.
-LANCE_DIR = _LANCE_NEW if _LANCE_NEW.exists() else (_LANCE_OLD if _LANCE_OLD.exists() else _LANCE_NEW)
+
+
+def _resolve_lance_dir(prefer_new: bool = False) -> Path:
+    """Resolve the active lance index directory.
+
+    Read path: prefer the new ~/.cache/atelier/lance/, fall back to the legacy
+    ~/.cache/reflectl/lance/ so existing installations keep semantic search
+    across the atelier rename without a forced rebuild.
+
+    Write path (prefer_new=True): always returns the new path so a rebuild
+    migrates the user off the legacy location instead of silently re-writing
+    to ~/.cache/reflectl/.
+    """
+    if prefer_new:
+        return _LANCE_NEW
+    if _LANCE_NEW.exists():
+        return _LANCE_NEW
+    if _LANCE_OLD.exists():
+        return _LANCE_OLD
+    return _LANCE_NEW
+
+
+# Module-level binding kept for backwards-compat with callers that read it
+# directly (e.g. db_path string interpolation). For read-side code paths.
+LANCE_DIR = _resolve_lance_dir()
 DEFAULT_PATH = "zk"
 # Directories excluded from indexing (ephemeral caches, not worth embedding)
 INDEX_EXCLUDE = {"zk/cache"}
@@ -315,17 +338,31 @@ def real_index(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 def cmd_query(args: argparse.Namespace) -> int:
+    if in_real_mode() and LANCE_DIR == _LANCE_OLD:
+        warn(
+            "querying legacy index at ~/.cache/reflectl/lance/; run "
+            "`uv run scripts/semantic.py index` once to migrate to "
+            "~/.cache/atelier/lance/, then `rm -rf ~/.cache/reflectl/lance` to clean up."
+        )
     if in_real_mode():
         return real_query(args)
     return stub_query(args)
 
 
 def cmd_index(args: argparse.Namespace) -> int:
-    if in_real_mode():
-        return real_index(args)
-
-    # Not in real mode yet: create the sentinel dir and index
-    warn("no existing index found; creating zk/.semantic/lance/ and building index...")
+    # Index always writes to the new path. If a legacy ~/.cache/reflectl/lance/
+    # exists, we deliberately do NOT rebuild into it — that would silently keep
+    # the user on the old location forever. Force migration here.
+    global LANCE_DIR
+    LANCE_DIR = _resolve_lance_dir(prefer_new=True)
+    if _LANCE_OLD.exists() and not _LANCE_NEW.exists():
+        warn(
+            "legacy index exists at ~/.cache/reflectl/lance/; rebuilding at "
+            "~/.cache/atelier/lance/ to migrate. The old path can be deleted "
+            "after this run completes."
+        )
+    elif not LANCE_DIR.exists():
+        warn("no existing index found; creating ~/.cache/atelier/lance/ and building index...")
     LANCE_DIR.mkdir(parents=True, exist_ok=True)
     return real_index(args)
 
@@ -336,8 +373,9 @@ def build_parser() -> argparse.ArgumentParser:
         description=(
             f"Local semantic search for zk/ (current mode: {mode_label()}). "
             "STUB mode uses lexical fallback; results are ranked by token "
-            "match count and are NOT semantic. REAL mode activates when "
-            "zk/.semantic/lance/ exists."
+            "match count and are NOT semantic. REAL mode activates when the "
+            "resolved lance index exists (preferred ~/.cache/atelier/lance/, "
+            "legacy fallback ~/.cache/reflectl/lance/)."
         ),
         epilog="See sources/semantic.md for the full contract.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

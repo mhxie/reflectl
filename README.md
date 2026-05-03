@@ -39,7 +39,7 @@ Core scripts (`trust.py`, `lint.py`, `staleness.py`, `session_log.py`, `privacy_
 ### Install
 
 ```bash
-git clone https://github.com/mhxie/reflectl.git ~/atelier
+git clone https://github.com/mhxie/reflectl.git ~/atelier  # repo URL pending rename
 cd ~/atelier
 uv sync                # install dependencies from pyproject.toml
 ```

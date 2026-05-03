@@ -27,7 +27,9 @@ handoffs
 # Build state
 *.build-state.json
 
-# Python (venv symlink points to ~/.cache/atelier/.venv, outside Cloud Storage)
+# Python (.venv is a symlink to a user-side venv cache outside Cloud Storage;
+# during the atelier rename, the symlink may still target ~/.cache/reflectl/.venv
+# until the user retargets it to ~/.cache/atelier/.venv)
 .venv
 __pycache__/
 *.pyc

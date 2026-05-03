@@ -568,7 +568,7 @@ class LanceStore:
     """
     Store backed by LanceDB (embedded, Lance columnar format).
 
-    Index lives at a directory path (e.g., zk/.semantic/lance/).
+    Index lives at a directory path (e.g., ~/.cache/atelier/lance/).
     No server process. Files on disk.
     """
 

@@ -8,8 +8,7 @@ This system is **the Atelier** — a workshop wrapping the user's **œuvre**
 agents collectively are **le cercle**. For the full vocabulary and the
 12-operator archetype map, see `CLAUDE.md` § Vocabulary.
 
-Codex can also discover the repo-scoped `atelier` skill in `.agents/skills/`
-(skill directory name remains `atelier` until the optional phase 6 rename).
+Codex can also discover the repo-scoped `atelier` skill in `.agents/skills/atelier/`.
 
 Before user-facing reflection work, read `CLAUDE.md` for the domain rules, then
 use `protocols/runtime-adapters.md` to translate Claude-specific command syntax
