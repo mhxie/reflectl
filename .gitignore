@@ -9,10 +9,8 @@ scripts/readwise_skip_domains.txt
 reflect-*/
 # Profile with personal identity/goals/expertise
 profile
-# Personal reference material (examples, sensitive context)
+# Personal reference material (examples, sensitive context, reader persona)
 personal
-# Reader persona (personal data)
-reader_persona.md
 # Paper review methodology (functional locally, kept out of public repo)
 .claude/commands/paper-review.md
 # Signal sweep (private symlink)

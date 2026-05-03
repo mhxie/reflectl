@@ -89,7 +89,7 @@ If the user wants to read something now, transition to `/reflect → Read` with 
 
 - **`/weekly`** — (planned) pulls `#digest` tagged items from Readwise as a "Reading Digest" section
 - **`/reflect → Read`** — (planned) surfaces `#deep-read` tagged items as reading suggestions
-- **`reader_persona.md`** — if it exists, the triage agent can reference it for taste calibration alongside goals
+- **`personal/reader_persona.md`** — if it exists, the triage agent can reference it for taste calibration alongside goals
 
 ## Adding New Sources
 
