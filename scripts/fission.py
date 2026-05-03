@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ZK = (REPO_ROOT / "zk").resolve()
+OV = (REPO_ROOT / "zk").resolve()
 
 
 def axis_first_letter(path: Path) -> str:

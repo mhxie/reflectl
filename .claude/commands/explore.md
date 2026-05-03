@@ -5,18 +5,18 @@ Free-form exploration session for when the user doesn't have a specific question
 ## Prerequisites
 
 1. Read `profile/identity.md` for context.
-2. Read the most recent reflection file from `$ZK/reflections/`.
+2. Read the most recent reflection file from `$OV/reflections/`.
 
 ## The Exploration Process
 
 ### Step 1: Cast a Wide Net
 
-Semantic search leads; lexical grep fails by design for exploration. Run 3-4 diverse searches over `$ZK/`:
+Semantic search leads; lexical grep fails by design for exploration. Run 3-4 diverse searches over `$OV/`:
 
 1. **Semantic search on a recent theme:** `Bash: uv run scripts/semantic.py query "<topic from today's note>" --top 10` (conceptual neighbors). If results are thin, reframe and retry.
-2. **Tag exploration:** `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$ZK"/ | sort | uniq -c | sort -rn | head -40` → pick a tag the user hasn't engaged with recently → `Grep(pattern: "#<tag>", path: "$ZK/")`.
-3. **Time-shifted search:** `Bash: find "$ZK"/daily-notes "$ZK"/reflections -type f -name "*.md" -newermt "<12 months ago>" ! -newermt "<6 months ago>"` → `Grep` for the current interest inside that set. What were they thinking about this 6-12 months ago?
-4. **Cross-domain search:** `Grep` for a term from one life area in another. E.g., if career-focused recently, grep for "health" or "learning" inside `$ZK/`.
+2. **Tag exploration:** `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$OV"/ | sort | uniq -c | sort -rn | head -40` → pick a tag the user hasn't engaged with recently → `Grep(pattern: "#<tag>", path: "$OV/")`.
+3. **Time-shifted search:** `Bash: find "$OV"/daily-notes "$OV"/reflections -type f -name "*.md" -newermt "<12 months ago>" ! -newermt "<6 months ago>"` → `Grep` for the current interest inside that set. What were they thinking about this 6-12 months ago?
+4. **Cross-domain search:** `Grep` for a term from one life area in another. E.g., if career-focused recently, grep for "health" or "learning" inside `$OV/`.
 
 ### Step 2: Surface the Surprising
 
@@ -51,7 +51,7 @@ Let the user pick which spark interests them. Then:
 
 ## Output
 
-**File:** `$ZK/reflections/YYYY-MM-DD-exploration.md`
+**File:** `$OV/reflections/YYYY-MM-DD-exploration.md`
 
 ```markdown
 # Exploration — YYYY-MM-DD
@@ -86,4 +86,4 @@ After writing the exploration file, emit a session log:
 
 ## Wrap Up
 
-The exploration file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them.
+The exploration file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them.

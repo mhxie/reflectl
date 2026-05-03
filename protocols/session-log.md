@@ -8,10 +8,10 @@ At session end, immediately before (or alongside) the reflection file write. The
 
 ## Storage
 
-- **File:** `$ZK/sessions/YYYY-MM-DD-<type>.md`
+- **File:** `$OV/sessions/YYYY-MM-DD-<type>.md`
 - **Types:** reflection, review, weekly, decision, exploration, energy-audit, reading, curate, introspect, meeting, deep-dive, system-review, prm
 - **Collisions:** If multiple sessions of the same type run on the same day, append a sequence number: `YYYY-MM-DD-reflection-2.md`
-- **Tier:** L2, same as `$ZK/reflections/` and `$ZK/daily-notes/`
+- **Tier:** L2, same as `$OV/reflections/` and `$OV/daily-notes/`
 - **Write method:** Local `Write` only. No user approval needed (system-facing artifact). If the write fails, warn and continue; do not block the session.
 
 ## Format
@@ -84,18 +84,18 @@ Session logs are plain markdown with structured headings. No special tooling nee
 
 | Intent | Query |
 |--------|-------|
-| Sessions where a gate failed | `Grep "NEEDS_REVISION\|REJECTED" "$ZK"/sessions/` |
-| Sessions that dispatched Scout | `Grep "Scout" "$ZK"/sessions/` |
-| Sessions with zero-hit searches | `Grep "0.*\|" "$ZK"/sessions/` in Search Log tables |
-| Sessions with anomalies | `Grep "## Anomalies" -A 5 "$ZK"/sessions/` |
-| Sessions by type | `Bash: ls "$ZK"/sessions/ \| grep -oP '(?<=\d{4}-\d{2}-\d{2}-)[a-z-]+' \| sort \| uniq -c` |
-| Harness assumptions used | `Grep "harness-assumptions" "$ZK"/sessions/` |
+| Sessions where a gate failed | `Grep "NEEDS_REVISION\|REJECTED" "$OV"/sessions/` |
+| Sessions that dispatched Scout | `Grep "Scout" "$OV"/sessions/` |
+| Sessions with zero-hit searches | `Grep "0.*\|" "$OV"/sessions/` in Search Log tables |
+| Sessions with anomalies | `Grep "## Anomalies" -A 5 "$OV"/sessions/` |
+| Sessions by type | `Bash: ls "$OV"/sessions/ \| grep -oP '(?<=\d{4}-\d{2}-\d{2}-)[a-z-]+' \| sort \| uniq -c` |
+| Harness assumptions used | `Grep "harness-assumptions" "$OV"/sessions/` |
 
 ## Relationship to Other Artifacts
 
 | Artifact | Purpose | Audience |
 |----------|---------|----------|
-| `$ZK/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
-| `$ZK/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
+| `$OV/reflections/YYYY-MM-DD-*.md` | Session conclusions, insights, next actions | User (human-readable) |
+| `$OV/sessions/YYYY-MM-DD-*.md` | Session process, agent dispatches, search effectiveness | System (Evolver, continuity) |
 
 Session logs do not replace reflection files. They are a parallel, system-facing record.

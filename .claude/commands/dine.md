@@ -2,7 +2,7 @@
 
 Two intents (auto-detected from args):
 - **A. Restaurant Recommendation** (default): pick 3 restaurant candidates based on user-supplied context, historical preferences, and credit-burn opportunities. Read-only on catalog docs; new captures route through `/reflect` Dining Pulse.
-- **B. Workplace Catering Tracker**: parse a weekly catering PDF dropped into `$ZK/<slug>/catering/`, choose health-aware picks for the user's attendance days, and surface a confirmed table for the user to record themselves (the system does not write to daily notes).
+- **B. Workplace Catering Tracker**: parse a weekly catering PDF dropped into `$OV/<slug>/catering/`, choose health-aware picks for the user's attendance days, and surface a confirmed table for the user to record themselves (the system does not write to daily notes).
 
 ## Quick start
 
@@ -12,8 +12,8 @@ Intent A examples:
 - `/dine 朋友 4 人 川菜 dinner` → use as filters, ask remaining
 - `/dine SF burn credit` → location SF + flag credit-burn priority
 
-Intent B examples (first arg = workplace slug; the folder `$ZK/<slug>/catering/` must exist; personal policy lives in gitignored `personal/diet.md`):
-- `/dine <slug>` → find latest PDF in `$ZK/<slug>/catering/` covering this week, pick per `personal/diet.md` attendance pattern
+Intent B examples (first arg = workplace slug; the folder `$OV/<slug>/catering/` must exist; personal policy lives in gitignored `personal/diet.md`):
+- `/dine <slug>` → find latest PDF in `$OV/<slug>/catering/` covering this week, pick per `personal/diet.md` attendance pattern
 - `/dine <slug> <pdf-path>` → explicit PDF
 - `/dine <slug> all` → all 5 weekdays (override)
 - `/dine <slug> M/T/Th` → custom attendance set (override; any day-code combination works)
@@ -23,8 +23,8 @@ If args present, parse them as initial filters; only ask for slots not derivable
 ## Step 0: Intent detection
 
 Parse args. Route to **Intent B** if any of:
-- First arg matches an existing folder `$ZK/<arg>/catering/` (workplace slug)
-- Any arg is a `.pdf` path under a `$ZK/*/catering/` folder
+- First arg matches an existing folder `$OV/<arg>/catering/` (workplace slug)
+- Any arg is a `.pdf` path under a `$OV/*/catering/` folder
 - Args contain the literal token `catering`
 
 Otherwise route to **Intent A** (continue to Step 1 below).
@@ -48,13 +48,13 @@ For missing slots, ask via `AskUserQuestion` or sequential 1-line prompts (which
 
 ## Step 2: Load data (parallel)
 
-The user's vault holds these catalogs under `$ZK/travel/` and `$ZK/finance/`. Discover the actual filenames via `Grep` on those directories at runtime; do not hardcode private filenames here.
+The user's vault holds these catalogs under `$OV/travel/` and `$OV/finance/`. Discover the actual filenames via `Grep` on those directories at runtime; do not hardcode private filenames here.
 
-- Regional dining catalog (rotation + Michelin wishlist + 场景索引), under `$ZK/travel/`
-- Dining log (history with 评分 + 再去 + recency), under `$ZK/travel/`
-- Credit-perks dining catalog (Cycle Tracking + city catalogs), under `$ZK/travel/`
-- Perks ledger (current cycle credit status, for burn signal), under `$ZK/finance/`
-- For LA / NYC / other city: use the credit-perks catalog city section + the corresponding city Michelin guide under `$ZK/archive/practical/travel/`
+- Regional dining catalog (rotation + Michelin wishlist + 场景索引), under `$OV/travel/`
+- Dining log (history with 评分 + 再去 + recency), under `$OV/travel/`
+- Credit-perks dining catalog (Cycle Tracking + city catalogs), under `$OV/travel/`
+- Perks ledger (current cycle credit status, for burn signal), under `$OV/finance/`
+- For LA / NYC / other city: use the credit-perks catalog city section + the corresponding city Michelin guide under `$OV/archive/practical/travel/`
 
 **Missing-file fallback:** if any of these is absent, skip it silently and note the gap in the closing line ("scored without [missing source]"). The recommendation still produces; the user can decide whether to recreate the catalog.
 
@@ -118,9 +118,9 @@ Do NOT auto-book; just surface candidates.
 ### B.1 Resolve PDF
 
 - If an arg is a `.pdf` path → use it directly.
-- Else: list `"$ZK"/<slug>/catering/*.pdf`, pick the one whose filename date range covers the current calendar week. Typical filename pattern: `<Workplace> Catering_<Mon> <DD>-<Mon> <DD>.pdf`. If multiple match (e.g., manual override), prefer the most recent `mtime`.
+- Else: list `"$OV"/<slug>/catering/*.pdf`, pick the one whose filename date range covers the current calendar week. Typical filename pattern: `<Workplace> Catering_<Mon> <DD>-<Mon> <DD>.pdf`. If multiple match (e.g., manual override), prefer the most recent `mtime`.
 - Optional date arg `YYYY-MM-DD` shifts the target week (Mon of that week).
-- 0 matches: report `本周菜单还没传到 $ZK/<slug>/catering/` and exit cleanly.
+- 0 matches: report `本周菜单还没传到 $OV/<slug>/catering/` and exit cleanly.
 
 ### B.2 Parse menu
 
@@ -174,14 +174,14 @@ Intent A:
 - **Read-only on catalog docs**: do NOT modify the regional dining catalog or the credit-perks catalog from `/dine`
 - **Reading from the dining log is fine**; new captures only via `/reflect` Dining Pulse or explicit user "记录今天 X"
 - **0 candidates after hard filter**: relax most-restrictive constraint by 1 step, retry; surface 1-2 closest matches with flag "relaxed: <constraint>"
-- **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `$ZK/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
+- **Always show credit-burn opportunity** if relevant (any perk-program H1/H2 cycle ≤ 60d deadline + unused, per the live perks ledger under `$OV/finance/`). Even if credit餐厅 doesn't match exact mood, surface as 4th line with format: `💡 Credit-burn alt: <restaurant> ($<amount> <half>, deadline <MM/DD>)`
 - **Match user language**: Chinese-dominant if cuisine is Chinese; English if Western
 - **Keep output under 30 lines** (table + 2-3 line reasoning + 1 close line)
 - **No web search**: cuisine + restaurant data comes from local catalog files only
 
 Intent B:
 - **Read-only on the PDF**: never modify the catering PDF
-- **Read-only on daily notes**: daily notes are user-authored; the system surfaces picks for the user to record themselves and never writes to `$ZK/daily-notes/`
+- **Read-only on daily notes**: daily notes are user-authored; the system surfaces picks for the user to record themselves and never writes to `$OV/daily-notes/`
 - **Does not touch the dining log**: workplace catering is excluded by design (low signal density per memory)
 - **Per-day skip on parse failure**: if any one day's section fails to parse, skip that day with a logged warning; do not abort the whole batch
 - **No web search**: menu data comes from the PDF only

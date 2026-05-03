@@ -90,7 +90,7 @@ The default mode. Scores session output on 5 dimensions.
 
 ### 1. Citation Accuracy (weight: 30%)
 
-**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "$ZK/")` then `Read` the match. For conceptual verification, use `Bash: uv run scripts/semantic.py query "<claim>"`.
+**Process:** Spot-check 3-5 [[Note Title]] references by grepping the local vault: `Grep(pattern: "<title>", path: "$OV/")` then `Read` the match. For conceptual verification, use `Bash: uv run scripts/semantic.py query "<claim>"`.
 
 | Score | Criteria |
 |-------|---------|
@@ -126,7 +126,7 @@ The default mode. Scores session output on 5 dimensions.
 | 3-4 | Significant speculation without flagging |
 | 0-2 | Fabricated content or hallucinated note references |
 
-**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$ZK/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
+**Red flags:** "You feel..." without evidence, "possibly" used to mask speculation, a session output claiming wiki-entry-grade certainty (claim sections, `@anchor` / `@cite` markers) without the corresponding file living under `$OV/wiki/` and passing structural integrity, a non-wiki note that copies wiki schema shape. Note: the absence of a `#ai-reflection` or `#ai-generated` tag is NOT a red flag — those tags are retired by the validation-depth taxonomy in `protocols/epistemic-hygiene.md` and new alloy content carries no provenance tag.
 
 ### 4. Staleness Check (weight: 10%)
 

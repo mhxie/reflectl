@@ -23,8 +23,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ZK = (REPO_ROOT / "zk").resolve()
-DAILY = ZK / "daily-notes"
+OV = (REPO_ROOT / "zk").resolve()
+DAILY = OV / "daily-notes"
 
 ISO_FILENAME_RE = re.compile(r"^(\d{4})-(\d{2})-\d{2}\.md$")
 SKIP_DIRS = {"secure", "personal", "cache", ".obsidian", ".trash", "raw", "assets"}
@@ -99,7 +99,7 @@ def main() -> None:
     else:
         print(f"[dry-run] would move {len(moves)} files", file=sys.stderr)
         for src, dst in moves[:3]:
-            print(f"          {src.relative_to(ZK)} → {dst.relative_to(ZK)}", file=sys.stderr)
+            print(f"          {src.relative_to(OV)} → {dst.relative_to(OV)}", file=sys.stderr)
         if len(moves) > 3:
             print(f"          ... +{len(moves) - 3} more", file=sys.stderr)
 
@@ -107,8 +107,8 @@ def main() -> None:
     print(f"\n[refs] scanning all .md for daily-notes/ refs...", file=sys.stderr)
     total_files_changed = 0
     total_replacements = 0
-    for f in ZK.rglob("*.md"):
-        rel = f.relative_to(ZK)
+    for f in OV.rglob("*.md"):
+        rel = f.relative_to(OV)
         if any(p in SKIP_DIRS for p in rel.parts):
             continue
         n = update_links_in_file(f, dry_run=not args.apply)

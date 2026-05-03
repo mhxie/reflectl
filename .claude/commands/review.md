@@ -13,8 +13,8 @@ Review progress on near/mid/long-term goals. Surface what's progressing, what's 
 Inspect the last full review and the last pulse-equivalent so the monthly cadence does not produce duplicate pulses within 30 days. A pulse-equivalent is either a standalone `*-review-pulse.md` OR a `*-weekly.md` (because `/weekly` §6 Honest Assessment doubles as the monthly pulse — see Cadence table). Take whichever is most recent:
 
 ```
-Bash: last_full=$(ls "$ZK"/reflections/*-review.md 2>/dev/null | grep -v -- '-review-pulse' | sort | tail -1)
-Bash: last_pulse=$( (ls "$ZK"/reflections/*-review-pulse.md 2>/dev/null; ls "$ZK"/reflections/*-weekly.md 2>/dev/null) | sort | tail -1)
+Bash: last_full=$(ls "$OV"/reflections/*-review.md 2>/dev/null | grep -v -- '-review-pulse' | sort | tail -1)
+Bash: last_pulse=$( (ls "$OV"/reflections/*-review-pulse.md 2>/dev/null; ls "$OV"/reflections/*-weekly.md 2>/dev/null) | sort | tail -1)
 ```
 
 Note: a no-change pulse intentionally skips writing a file (per Output → Pulse write gate), so `last_pulse` may understate by up to 30 days. That's tolerable — the cost of suggesting one extra pulse during the gap is far lower than the cost of a missed pulse.
@@ -42,11 +42,11 @@ Stale-goal floor: if `directions.md` lists goals older than 1 year with no progr
    - `profile/identity.md` — reflection context
    - `profile/directions.md` — goals with categories and metrics
 
-2. **Read all reflections from the lookback window** from the `$ZK/reflections/` directory. Lookback depends on the form chosen from Cadence: **90 days for full quarterly review**, **30 days for light pulse**. If none exist, note this is the first review.
+2. **Read all reflections from the lookback window** from the `$OV/reflections/` directory. Lookback depends on the form chosen from Cadence: **90 days for full quarterly review**, **30 days for light pulse**. If none exist, note this is the first review.
 
-3. **Pull goal-related updates from the local vault, bounded to the lookback window.** Do NOT issue an unbounded `Grep(path: "$ZK/")` — an unbounded grep will pull stale historical matches that skew the review. Use `find -print0 | xargs -0 grep` so recency actually binds. Substitute `<N>` with the lookback (90 for full, 30 for pulse):
-   - `Bash: find "$ZK"/daily-notes "$ZK"/reflections "$ZK"/gtd "$ZK"/wiki -type f -name "*.md" -mtime -<N> -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
-   - `Read $ZK/daily-notes/<today>.md` for today's context.
+3. **Pull goal-related updates from the local vault, bounded to the lookback window.** Do NOT issue an unbounded `Grep(path: "$OV/")` — an unbounded grep will pull stale historical matches that skew the review. Use `find -print0 | xargs -0 grep` so recency actually binds. Substitute `<N>` with the lookback (90 for full, 30 for pulse):
+   - `Bash: find "$OV"/daily-notes "$OV"/reflections "$OV"/gtd "$OV"/wiki -type f -name "*.md" -mtime -<N> -print0 2>/dev/null | xargs -0 grep -HnE "目标|goal|progress|进展|milestone" 2>/dev/null` — recency-bounded goal and progress mentions across both languages in one pass. Safe with an empty working set (xargs does nothing if stdin is empty).
+   - `Read $OV/daily-notes/<today>.md` for today's context.
 
 4. **Read key goal notes in full** by `Read`-ing the matching files directly. If a referenced note is genuinely missing from the local vault, report the gap.
 
@@ -78,7 +78,7 @@ Present the review interactively, category by category. For each finding, cite t
 
 After discussing, write a review file:
 
-**File:** `$ZK/reflections/YYYY-MM-DD-review.md` for **full** reviews; `$ZK/reflections/YYYY-MM-DD-review-pulse.md` for **monthly light pulse** runs. The distinct suffix lets the Cadence Bash check (above) tell them apart so a pulse does not silently defer the next quarterly review.
+**File:** `$OV/reflections/YYYY-MM-DD-review.md` for **full** reviews; `$OV/reflections/YYYY-MM-DD-review-pulse.md` for **monthly light pulse** runs. The distinct suffix lets the Cadence Bash check (above) tell them apart so a pulse does not silently defer the next quarterly review.
 
 **Pulse write gate**: skip the pulse file write entirely if the pulse surfaced no material change (no goal advanced, none neglected newly, none newly born). Tell the user "no material change this month" and exit without a file. Empty pulse artifacts pollute the longitudinal record and confuse the next cadence check. Full reviews always write a file (even if findings are mostly "still on track") because the quarterly cadence anchor matters.
 ```markdown
@@ -127,7 +127,7 @@ After writing the review file, emit a session log:
 
 ## Wrap Up
 
-The review file in `$ZK/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the review has been saved and where to find it.
+The review file in `$OV/reflections/` is the durable session output. Daily notes are user-authored; the system reads them but does not modify them. Tell the user the review has been saved and where to find it.
 
 Suggest follow-ups:
 - `/reflect` for daily check-ins between reviews
@@ -136,7 +136,7 @@ Suggest follow-ups:
 
 ## Trend Analysis (if prior reviews exist)
 
-If previous review files exist in `$ZK/reflections/`, compare:
+If previous review files exist in `$OV/reflections/`, compare:
 - Which goals were "Neglected" last time — are they still neglected? (Chronic neglect signal)
 - Which goals were "Progressing" — have they continued? (Momentum signal)
 - Which "Suggested Experiments" from last review were actually done? (Follow-through signal)

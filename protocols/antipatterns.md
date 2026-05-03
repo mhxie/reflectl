@@ -60,7 +60,7 @@ The same fact or threshold is encoded in two or more places.
 
 ### 7. Behavior coupled to location
 Assumes "if it lives in directory X it will be treated as Y" without enforcement.
-- Detect: directory-based semantics (`$ZK/wiki/`, `$ZK/cache/`, `$ZK/reflections/`) without a script or guard that checks them.
+- Detect: directory-based semantics (`$OV/wiki/`, `$OV/cache/`, `$OV/reflections/`) without a script or guard that checks them.
 - Remediate: add a `scripts/` check, or document the coupling explicitly so it is visible to future changes.
 
 ### 8. Scope creep past the stated criterion

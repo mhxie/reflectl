@@ -87,11 +87,11 @@ This is preprocessing, not a separate lens. The real analysis comes from whichev
 
 1. **Receive your lens assignment** from the orchestrator. You are told which lens to apply.
 2. **Read the full text.** The full vault is on disk.
-   - **Local note:** `Grep` for the title in `$ZK/` and `Read` the match (wiki in `$ZK/wiki/`, daily notes in `$ZK/daily-notes/YYYY-MM-DD.md`, papers in `$ZK/papers/` or `$ZK/preprints/`).
-   - **URL:** check `$ZK/cache/` first (via `Glob`), then fall back to `WebFetch`.
-   - **Paper cache (directory):** if the orchestrator passes `cache_path: $ZK/cache/<slug>/`, read `paper.txt` and `index.md` from that directory; do NOT re-extract the raw PDF.
-   - **Readwise transcript cache (single file):** if the orchestrator passes `cache_path: $ZK/cache/rw-<doc_id>.md`, read that single file; it contains the transcript `.content` as the orchestrator dumped it. Do NOT re-fetch from the Readwise CLI; parallel Readers independently fetching a 77KB transcript is the same failure mode the PDF cache was designed to prevent.
-   - **Readwise fallback (no cache provided):** if you were handed a bare Readwise `document_id` with no cache, fetch once: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > "$ZK"/cache/rw-<id>.md`, then read the cache. Warn in your brief's `cross-signals` that caching should have happened upstream.
+   - **Local note:** `Grep` for the title in `$OV/` and `Read` the match (wiki in `$OV/wiki/`, daily notes in `$OV/daily-notes/YYYY-MM-DD.md`, papers in `$OV/papers/` or `$OV/preprints/`).
+   - **URL:** check `$OV/cache/` first (via `Glob`), then fall back to `WebFetch`.
+   - **Paper cache (directory):** if the orchestrator passes `cache_path: $OV/cache/<slug>/`, read `paper.txt` and `index.md` from that directory; do NOT re-extract the raw PDF.
+   - **Readwise transcript cache (single file):** if the orchestrator passes `cache_path: $OV/cache/rw-<doc_id>.md`, read that single file; it contains the transcript `.content` as the orchestrator dumped it. Do NOT re-fetch from the Readwise CLI; parallel Readers independently fetching a 77KB transcript is the same failure mode the PDF cache was designed to prevent.
+   - **Readwise fallback (no cache provided):** if you were handed a bare Readwise `document_id` with no cache, fetch once: `readwise reader-get-document-details --document-id <id> | jq -r '.content' > "$OV"/cache/rw-<id>.md`, then read the cache. Warn in your brief's `cross-signals` that caching should have happened upstream.
    - **Vault concept lookup:** when the title isn't known, `Bash: uv run scripts/semantic.py query "<concept>" --top 5`.
 3. **Close-read through your lens.** Don't skim — engage deeply. Mark specific passages, quotes, and data points.
 4. **Produce structured output** in your assigned lens format.

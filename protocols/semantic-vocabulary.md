@@ -2,7 +2,7 @@
 
 Documents the small set of tags that carry **semantic meaning for agents**. Tags listed here are not navigation; they tell agents how to interpret the content that follows.
 
-Agents that parse `$ZK` markdown must recognize these tags. Free-form tags outside this list are user-defined and not interpreted.
+Agents that parse `$OV` markdown must recognize these tags. Free-form tags outside this list are user-defined and not interpreted.
 
 ## Why tags, not wikilinks
 

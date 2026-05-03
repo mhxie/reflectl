@@ -1,8 +1,8 @@
-# /lint — Structural + corpus-level checks over `$ZK/wiki/`
+# /lint — Structural + corpus-level checks over `$OV/wiki/`
 
 Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint.py` is the single source of truth, mirroring the `scripts/trust.py` pattern.
 
-**Scope:** Three passes. (0) Harness portability, $ZK ingestion hygiene, and privacy checks. (1) Structural: everything under `$ZK/wiki/`. (2) Staleness: L2 working-layer directories (`$ZK/agent-findings/`, `$ZK/drafts/`, `$ZK/gtd/`, `$ZK/preprints/`, `$ZK/reflections/`, `$ZK/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
+**Scope:** Three passes. (0) Harness portability, $OV ingestion hygiene, and privacy checks. (1) Structural: everything under `$OV/wiki/`. (2) Staleness: L2 working-layer directories (`$OV/agent-findings/`, `$OV/drafts/`, `$OV/gtd/`, `$OV/preprints/`, `$OV/reflections/`, `$OV/research/`). Structural lint enforces the wiki schema; staleness lint surfaces L2 notes that need attention (archival, compaction, or promotion to L4).
 
 **What gets checked:**
 
@@ -14,12 +14,12 @@ Deterministic Python pass. The LLM never hand-checks structure — `scripts/lint
 | Orphan entry — no inbound `@cite` from any other wiki entry (trust cannot propagate to it) | WARN | `scripts/lint.py` graph topology |
 | No outbound cite — entry does not `@cite` any other wiki entry | INFO | `scripts/lint.py` graph topology |
 | Shared anchor, no cite — two entries reference the same `@anchor` but lack a `@cite` edge | INFO | `scripts/lint.py` graph topology |
-| `url:` or `gist:` anchor missing `readwise:` field (`readwise-missing`) | WARN | `scripts/lint.py` — save to Readwise with `anchor-evidence` tag and backfill the document ID; fix via `uv run scripts/snapshot_anchors.py --apply --note "$ZK/wiki/<Title>.md"` |
+| `url:` or `gist:` anchor missing `readwise:` field (`readwise-missing`) | WARN | `scripts/lint.py` — save to Readwise with `anchor-evidence` tag and backfill the document ID; fix via `uv run scripts/snapshot_anchors.py --apply --note "$OV/wiki/<Title>.md"` |
 | Technical term in claim body not in vocabulary allowlist and not matching any wiki entry title (`unfounded-term`) | INFO | `scripts/lint.py` — add term to `scripts/wiki_vocabulary.txt` if common knowledge, or add a wiki entry, or add a parenthetical definition inline |
-| Chinese shadow missing in `$ZK/wiki-cn/` (`cn-shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the CN shadow manually |
+| Chinese shadow missing in `$OV/wiki-cn/` (`cn-shadow-missing`) | WARN | `scripts/lint.py` — run /promote Phase 4 or regenerate the CN shadow manually |
 | Chinese shadow older than English source (`cn-shadow-stale`) | WARN | `scripts/lint.py` — re-translate the CN shadow to match the updated English source |
 | Claude/Codex harness portability (`missing-agents-md`, `models-agent-missing`, `capability-agent-missing`, `agents-registry-entry-missing`, `commands-entry-missing`, `skill-missing`, etc.) | ERROR/WARN/INFO | `scripts/harness_lint.py` |
-| `$ZK` ingestion hygiene (missing READMEs, raw-without-digest, archive↔working-tier overlap, root-level orphans, empty .md files, suspicious top-level dirs) | INFO (advisory) | `scripts/zk_audit.py` — see `protocols/drive-zk-ingestion.md` § Post-ingestion verification |
+| `$OV` ingestion hygiene (missing READMEs, raw-without-digest, archive↔working-tier overlap, root-level orphans, empty .md files, suspicious top-level dirs) | INFO (advisory) | `scripts/zk_audit.py` — see `protocols/drive-zk-ingestion.md` § Post-ingestion verification |
 | Auto-memory hygiene (`dead-link`, `orphan-file`, `index-bloat`, `stale-mtime`, `provisional-marker`, `frontmatter-missing`) | WARN/INFO (advisory) | `scripts/auto_memory_audit.py` — capability-side check on `~/.claude-personal/projects/<encoded-cwd>/memory/`; surfaces entries the recall pipeline can't reach (orphan/dead-link), entries past the index truncation horizon (>200 lines), and entries the human should re-verify (mtime/provisional). The (A) path of bi-temporal forgetting; frontmatter-level expiry is (B). |
 | Claim missing `^cn` block ID (`block-id-missing`, deferred — Phase D) | WARN | `scripts/lint.py` — regex `\^c[0-9]+$` on last line of each claim body; absent marker is a nudge, not a reject (per `protocols/wiki-schema.md` §"When `^cn` is recommended") |
 | Non-`^cn` block ID inside a wiki entry (`block-id-violation`, deferred — Phase D) | ERROR | `scripts/lint.py` — any `^<token>` that does not match `\^c[0-9]+$` is a schema violation (no `^summary`, `^fig1`, `^revlog-*`, etc.) |
@@ -62,7 +62,7 @@ Bash: grep -c '\*\*' CLAUDE.md
 ```
 If count > 0, emit INFO: "CLAUDE.md contains [N] bold markers. Bold has no semantic weight for the model and wastes tokens. Consider removing."
 
-### Phase 0b: $ZK ingestion hygiene audit
+### Phase 0b: $OV ingestion hygiene audit
 
 ```
 Bash: uv run scripts/zk_audit.py --json
@@ -85,7 +85,7 @@ Parse the JSON. Shape:
 }
 ```
 
-Advisory only: never blocks the run. Exit code 0 unless $ZK is missing (exit 2). Surface a one-line summary per non-empty category. Detailed listings are read on demand via `uv run scripts/zk_audit.py` (no `--json`). Source of truth: `protocols/drive-zk-ingestion.md` § Post-ingestion verification.
+Advisory only: never blocks the run. Exit code 0 unless $OV is missing (exit 2). Surface a one-line summary per non-empty category. Detailed listings are read on demand via `uv run scripts/zk_audit.py` (no `--json`). Source of truth: `protocols/drive-zk-ingestion.md` § Post-ingestion verification.
 
 ### Phase 0c: Privacy leak scan
 
@@ -96,7 +96,7 @@ Bash: uv run scripts/privacy_check.py --json
 Parse the JSON. Shape:
 ```json
 {
-  "zk_dir": "zk",
+  "ov_dir": "zk",
   "titles_scanned": N,
   "allowlist_size": N,
   "hit_count": N,
@@ -106,7 +106,7 @@ Parse the JSON. Shape:
 }
 ```
 
-Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem from the private `$ZK` vault that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
+Any non-empty `hits` array is an ERROR: each entry is a multi-word filename stem from the private `$OV` vault that appears as literal text in a tracked file. Present each hit verbatim with its file and line number. Remediation:
 
 - Replace the private title with a generic placeholder (e.g., `Sample Wiki Entry`, `Topic A`).
 - Or, if the exposure is deliberate (e.g., the title is fully public and appears as an illustrative example), add the stem to `scripts/privacy_allowlist.txt` and document the rationale in the commit message.
@@ -184,7 +184,7 @@ For WARN-level findings: show them but mark them as non-blocking.
 For INFO-level findings: roll them up into a one-line summary (e.g., "4 entries with no outbound `@cite`: consider adding cross-references") unless the user asks for the full list.
 
 **Staleness section** (from Phase 1b): present after the structural findings, under a separate heading. Group by category:
-- **stale** notes: list paths, suggest archiving to `$ZK/archive/`
+- **stale** notes: list paths, suggest archiving to `$OV/archive/`
 - **dormant** notes: list paths, suggest review or compaction
 - **promote** candidates: list paths, suggest `/promote` to create L4 wiki entries
 - If all notes are active, say so in one line and move on.

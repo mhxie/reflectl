@@ -43,7 +43,7 @@ Rationale: privacy leaks are a hard veto regardless of score. Catching them dete
 
 ### 1c. Semantic privacy double-guard (blocking, agent-based)
 
-The mechanical script in 1b only matches filename stems under `$ZK/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent agent voices on a cheap model.
+The mechanical script in 1b only matches filename stems under `$OV/` and wikilink targets. It misses **semantic** leaks: real names, restaurants, $-amount + deadline pairs, demographic phrases, personal taxonomies. Step 1c closes that gap with two independent agent voices on a cheap model.
 
 **Run only after 1b returns `hit_count: 0`** (or soft-skips). If 1b aborted with hits, do not dispatch 1c — fix 1b first.
 
@@ -76,7 +76,7 @@ Send a **single** assistant message containing both tool calls:
   ```bash
   bash scripts/review.sh
   ```
-  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for one only.) Reports land in `$ZK/cache/review-<timestamp>-{codex,gemini}.md`. The script runs the external CLIs in parallel, blocks on `wait`, includes untracked files in the diff sent to gemini, and treats a missing CLI as a soft-skip.
+  (Use `bash scripts/review.sh codex` or `bash scripts/review.sh gemini` for one only.) Reports land in `$OV/cache/review-<timestamp>-{codex,gemini}.md`. The script runs the external CLIs in parallel, blocks on `wait`, includes untracked files in the diff sent to gemini, and treats a missing CLI as a soft-skip.
 
 ### 3. Synchronous wait (invoker contract)
 
@@ -90,7 +90,7 @@ This is a contract at the *invoker* level, not enforced by the script. The scrip
 
 ### 4. Synthesize
 
-Only after both dispatches have returned. Read the two report files under `$ZK/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
+Only after both dispatches have returned. Read the two report files under `$OV/cache/review-<timestamp>-{codex,gemini}.md`, combine with the internal reviewer's handoff, and present.
 
 **External verdict mapping for system reviews:** External reviewers (codex, gemini) may emit `APPROVED_WITH_NOTES`. System reviews do not admit a notes-only verdict; treat external `APPROVED_WITH_NOTES` as `NEEDS_REVISION` for the merge ladder. The "notes" themselves still surface as concerns in the synthesis output. This applies only when synthesizing system reviews; session reviews preserve the original verdict.
 

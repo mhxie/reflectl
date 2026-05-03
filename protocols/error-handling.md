@@ -2,7 +2,7 @@
 
 Defines how agents handle failures without blocking sessions.
 
-The mental model is **local-first**: `$ZK/` is the authoritative read and write path. Plain markdown files on disk are always available (subject only to filesystem health). Readwise integration only matters for `/curate` inbox flows; its absence does not affect the knowledge base.
+The mental model is **local-first**: `$OV/` is the authoritative read and write path. Plain markdown files on disk are always available (subject only to filesystem health). Readwise integration only matters for `/curate` inbox flows; its absence does not affect the knowledge base.
 
 ## Failure Hierarchy
 
@@ -16,13 +16,13 @@ Failures are ranked by severity. Handle at the lowest level possible.
 
 ### Level 2: Degraded (warn and continue)
 - **Readwise unreachable**: `/curate` is blocked. All other commands unaffected.
-- **Target note missing from `$ZK/`**: report the gap honestly. There is no remote fallback; if the user expected a file to exist, they need to author or re-import it.
+- **Target note missing from `$OV/`**: report the gap honestly. There is no remote fallback; if the user expected a file to exist, they need to author or re-import it.
 - **Index files stale (>7 days)**: warn user, proceed with stale profile.
 - **Multiple searches return empty**: report coverage gap, continue with available data.
 - **Web search fails**: Scout/Thinker continue without external sources, note the limitation.
 
 ### Level 3: Blocking (stop and inform)
-- `$ZK/` directory missing or unreadable → the primary read path is gone. Guide the user to check filesystem / cloud-sync state.
+- `$OV/` directory missing or unreadable → the primary read path is gone. Guide the user to check filesystem / cloud-sync state.
 - Profile files missing → cannot run reflection, guide user to `/introspect`.
 - All goal data missing → cannot run review, suggest `/introspect`.
 - Fundamental prompt misunderstanding → ask user to clarify.
@@ -32,21 +32,21 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ### Researcher
 - **Semantic query returns empty**: Reframe the concept and retry `uv run scripts/semantic.py query`. Then try grep with synonym variants in both languages. Report the gap after 3 attempts.
 - **Grep returns empty**: Try 3 alternative phrasings in both languages before reporting gap. Strategy: exact → synonym → semantic reframe → broader category.
-- **Target note not in `$ZK/`**: Report the gap honestly with `[DEGRADED: not found in $ZK]`. There is no remote fallback.
+- **Target note not in `$OV/`**: Report the gap honestly with `[DEGRADED: not found in $OV]`. There is no remote fallback.
 - **Semantic script errors**: The script is stdlib-only and should not error. If it does (e.g., permission problem), report the stderr and fall back to Grep with synonym variants for the immediate query, then file an Evolver note.
 
 ### Synthesizer
-- **No research brief received**: Read `$ZK/` directly (bypass normal contract). Prefix output with `[DEGRADED: No research brief, synthesizing from direct reads]`.
+- **No research brief received**: Read `$OV/` directly (bypass normal contract). Prefix output with `[DEGRADED: No research brief, synthesizing from direct reads]`.
 - **Research brief has critical gaps**: Acknowledge gaps explicitly in output rather than filling with speculation.
-- **Write failure to `$ZK/reflections/`**: Abort with a clear error — this is the primary write path and there is no further fallback. Report the filesystem error to the user.
+- **Write failure to `$OV/reflections/`**: Abort with a clear error — this is the primary write path and there is no further fallback. Report the filesystem error to the user.
 
 ### Reviewer
 - **Cannot verify citation**: Mark as `UNVERIFIED` rather than `FAIL`. Distinguish "wrong" from "couldn't check".
 - **`profile/directions.md` missing**: Skip goal coverage check, note in output.
-- **Source note missing from `$ZK/`**: Mark `UNVERIFIED`. Reviewer cannot fetch missing notes. An UNVERIFIED mark is the correct outcome.
+- **Source note missing from `$OV/`**: Mark `UNVERIFIED`. Reviewer cannot fetch missing notes. An UNVERIFIED mark is the correct outcome.
 
 ### Challenger
-- **No recent entries in `$ZK/daily-notes/`**: Use the latest reflection file in `$ZK/reflections/` as context instead.
+- **No recent entries in `$OV/daily-notes/`**: Use the latest reflection file in `$OV/reflections/` as context instead.
 - **No contradictions found**: This is fine — not every session has contradictions. Don't force them.
 - **User emotional state unclear**: Default to neutral register.
 
@@ -56,9 +56,9 @@ Failures are ranked by severity. Handle at the lowest level possible.
 - **No clear framework fit**: Use first principles thinking — always available.
 
 ### Curator
-- **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan snapshot files in `$ZK/cache/<operation>-*.md` for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in snapshots but missing from output, block the proposal until fixed.
-- **Snapshot missing at dispatch time**: If the orchestrator could not produce a snapshot at `$ZK/cache/<operation>-<slug>.md` for any source note (the local source could not be copied), abort the operation. Do not proceed with partial sources.
-- **Source note disappears mid-session**: The dispatch-time snapshot in `$ZK/cache/` is authoritative. Continue working from the snapshot — the loss of the original is informational only. This is exactly what the snapshot step exists to protect against.
+- **Content loss in merge**: Run Content Preservation Checklist (see `curator.md`). Scan snapshot files in `$OV/cache/<operation>-*.md` for `![`, `http`, `[[`, table syntax before finalizing. If any media is found in snapshots but missing from output, block the proposal until fixed.
+- **Snapshot missing at dispatch time**: If the orchestrator could not produce a snapshot at `$OV/cache/<operation>-<slug>.md` for any source note (the local source could not be copied), abort the operation. Do not proceed with partial sources.
+- **Source note disappears mid-session**: The dispatch-time snapshot in `$OV/cache/` is authoritative. Continue working from the snapshot — the loss of the original is informational only. This is exactly what the snapshot step exists to protect against.
 - **Size overflow**: Use 15KB as a working limit for individual notes — split larger drafts into numbered parts with cross-link headers.
 - **Image/media count mismatch**: If the output media count does not match the snapshot media count, the proposal is invalid. Re-scan snapshot files and fix before presenting to user.
 - **Local write failure**: Surface the filesystem error to the user; the orchestrator owns `Write`/`Edit` and is the only writer. Curator never writes.
@@ -71,8 +71,8 @@ Failures are ranked by severity. Handle at the lowest level possible.
 ## Session Continuity
 
 If a session is interrupted:
-1. Check `$ZK/reflections/` for partial output from today.
-2. Check today's daily note (`$ZK/daily-notes/YYYY-MM-DD.md`) for a session write-back the user may have authored. The system never writes to daily notes, so any content there is user-authored; resume from where the user left off.
+1. Check `$OV/reflections/` for partial output from today.
+2. Check today's daily note (`$OV/daily-notes/YYYY-MM-DD.md`) for a session write-back the user may have authored. The system never writes to daily notes, so any content there is user-authored; resume from where the user left off.
 3. Resume from the last completed step rather than restarting.
 4. If unclear what was done, ask the user.
 
@@ -82,7 +82,7 @@ If a session is interrupted:
 - Readwise calls: 30 seconds before reporting `/curate` as degraded
 - Web searches: 15 seconds before skip
 - Agent handoffs: No timeout (rely on maxTurns)
-- Local writes (`$ZK/reflections/`, `$ZK/drafts/`, `$ZK/cache/`): 5 seconds
+- Local writes (`$OV/reflections/`, `$OV/drafts/`, `$OV/cache/`): 5 seconds
 
 ## Escalation Rules
 

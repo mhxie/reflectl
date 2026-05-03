@@ -5,7 +5,7 @@
 These rules apply to every turn, every agent. Violations are bugs.
 
 - Never hallucinate note content. If search returns nothing, say so.
-- Never hardcode private names, private repo URLs, employers, org names, or multi-word filename stems from `$ZK/` in committed files. `scripts/privacy_check.py` enforces the filename-stem half in `/lint` and `/system-review`.
+- Never hardcode private names, private repo URLs, employers, org names, or multi-word filename stems from `$OV/` in committed files. `scripts/privacy_check.py` enforces the filename-stem half in `/lint` and `/system-review`.
 
 ## Identity
 
@@ -18,12 +18,12 @@ Five-tier model. Directory is the tier; location carries the certification level
 | Tier | Location | Meaning |
 |---|---|---|
 | L5 | (reserved) | Universally certified |
-| L4 | `$ZK/wiki/*.md`, `$ZK/wiki-cn/*.md` | Locally certified, schema-structured, TrustRank-scored |
-| L3 | `$ZK/papers/`, `$ZK/preprints/` + Readwise | Peer-reviewed, high-citation |
-| L2 | `$ZK/daily-notes/`, `$ZK/reflections/`, `$ZK/research/`, `$ZK/agent-findings/`, `$ZK/drafts/`, `$ZK/gtd/`, `$ZK/travel/`, `$ZK/health/`, `$ZK/work/`, `$ZK/archive/`, `$ZK/immigration/`, `$ZK/finance/` | Working: free-writes, reflections, research, drafts |
-| L1 | Readwise inbox, `$ZK/cache/`, `$ZK/readwise/` | Raw capture |
+| L4 | `$OV/wiki/*.md`, `$OV/wiki-cn/*.md` | Locally certified, schema-structured, TrustRank-scored |
+| L3 | `$OV/papers/`, `$OV/preprints/` + Readwise | Peer-reviewed, high-citation |
+| L2 | `$OV/daily-notes/`, `$OV/reflections/`, `$OV/research/`, `$OV/agent-findings/`, `$OV/drafts/`, `$OV/gtd/`, `$OV/travel/`, `$OV/health/`, `$OV/work/`, `$OV/archive/`, `$OV/immigration/`, `$OV/finance/` | Working: free-writes, reflections, research, drafts |
+| L1 | Readwise inbox, `$OV/cache/`, `$OV/readwise/` | Raw capture |
 
-`$ZK/` is the source of truth. Daily notes are user-authored locally. `$ZK/cache/` holds ephemeral fetches; `$ZK/readwise/` mirrors Readwise. There is no remote note-store mirror.
+`$OV/` is the source of truth. Daily notes are user-authored locally. `$OV/cache/` holds ephemeral fetches; `$OV/readwise/` mirrors Readwise. There is no remote note-store mirror.
 
 ## Reading Rules
 
@@ -31,13 +31,13 @@ Five-tier model. Directory is the tier; location carries the certification level
 |---|---|
 | Content query | `Bash: uv run scripts/semantic.py query "<concept>" --top N` |
 | Structural query | `Grep` with path/glob scoped to tier directory |
-| Daily note by date | `Read $ZK/daily-notes/YYYY-MM-DD.md` |
+| Daily note by date | `Read $OV/daily-notes/YYYY-MM-DD.md` |
 | Note by title | `Grep` for title then `Read` the file |
 
 - Semantic-primary search. Content queries start with `uv run scripts/semantic.py query`, not Grep. Grep is for structural queries only.
-- Local-first reads. Read from `$ZK/` via Read + Grep + semantic.py.
+- Local-first reads. Read from `$OV/` via Read + Grep + semantic.py.
 
-Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$ZK/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
+Prioritize by validation depth, not origin. Trust criterion: alloy (default) < wiki entry under `$OV/wiki/` < `#solo-flight`. Legacy `#ai-reflection` tags are searchable alloy. See `protocols/epistemic-hygiene.md`.
 
 ## Writing Rules
 
@@ -46,9 +46,9 @@ Prioritize by validation depth, not origin. Trust criterion: alloy (default) < w
 - Daily notes are user-authored. The system reads them; it does not modify them.
 - Cite sources. Reference notes by `[[Title]]`. Never claim the user wrote something without a source.
 - Match the user's language. Chinese for Chinese-language topics; English otherwise. Reading-intensive output in Chinese.
-- `$ZK` is the canonical persistence store, not auto-memory. Write user facts to `profile/identity.md`, goals to `profile/directions.md`, private policy or preferences to `personal/<topic>.md`, validated knowledge to `$ZK/wiki/`, session insights to `$ZK/reflections/`, project context to `profile/directions.md` or daily notes. Auto-memory is fallback only, reserved for items that fit no $ZK tier (rare cross-conversation orchestration nudges). On recall, search $ZK first via `scripts/semantic.py query` + Grep; consult auto-memory only when $ZK returns nothing.
+- `$OV` is the canonical persistence store, not auto-memory. Write user facts to `profile/identity.md`, goals to `profile/directions.md`, private policy or preferences to `personal/<topic>.md`, validated knowledge to `$OV/wiki/`, session insights to `$OV/reflections/`, project context to `profile/directions.md` or daily notes. Auto-memory is fallback only, reserved for items that fit no $OV tier (rare cross-conversation orchestration nudges). On recall, search $OV first via `scripts/semantic.py query` + Grep; consult auto-memory only when $OV returns nothing.
 
-Session reflections go to `$ZK/reflections/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
+Session reflections go to `$OV/reflections/YYYY-MM-DD-*.md` (local files). Include `### Full Text` for external content analyzed in session.
 
 Late-sleep rule: before 03:00 local, "today" = previous calendar day. Read both effective and calendar date notes when they differ.
 
@@ -77,7 +77,7 @@ All files include `Last built:` timestamp. Warn if >7 days stale. If missing: "R
 | `/reflect` | Primary entry point with session type menu |
 | `/curate` | Goal-aware triage of Readwise inbox |
 | `/introspect` | Build self-model from notes |
-| `/lint` | Structural + corpus-level checks on `$ZK/wiki/` |
+| `/lint` | Structural + corpus-level checks on `$OV/wiki/` |
 | `/promote` | Create L4 wiki entry from L2 sources |
 | `/prm` | Audit relationship health and support system robustness |
 | `/civ` | Civ-style life-management dashboard |
@@ -98,9 +98,9 @@ Detailed specifications loaded on demand by agents that need them:
 - `protocols/orchestrator.md` — workflow patterns, dispatch table, collaboration matrix
 - `protocols/runtime-adapters.md` — Claude Code and Codex portability contract
 - `protocols/wiki-schema.md` — L4 wiki entry format, claim markers, anchors
-- `protocols/local-first-architecture.md` — full five-tier model, $ZK/ directory layout
-- `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → `$ZK/` (structured repository) workflow + mv-default rules
-- `protocols/raw-indexing.md` — cross-cutting clickable indexes over `$ZK/<domain>/raw/` (wikilink-style backlinks, structure, dup handling)
+- `protocols/local-first-architecture.md` — full five-tier model, $OV/ directory layout
+- `protocols/drive-zk-ingestion.md` — Drive top-level (raw landing) → `$OV/` (structured repository) workflow + mv-default rules
+- `protocols/raw-indexing.md` — cross-cutting clickable indexes over `$OV/<domain>/raw/` (wikilink-style backlinks, structure, dup handling)
 - `protocols/epistemic-hygiene.md` — validation-depth taxonomy, failure modes
 - `protocols/harness-assumptions.md` — model-era assumption registry, audit checklist
 - `protocols/session-log.md` — session event log format

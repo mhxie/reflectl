@@ -1,11 +1,11 @@
 # Local Papers
 
-Research papers stored as local PDFs in `$ZK/papers/` (L3 externally certified knowledge: peer-reviewed or high-citation). Used for deep reading sessions when a paper is not available via URL or when the workflow needs the canonical PDF on disk.
+Research papers stored as local PDFs in `$OV/papers/` (L3 externally certified knowledge: peer-reviewed or high-citation). Used for deep reading sessions when a paper is not available via URL or when the workflow needs the canonical PDF on disk.
 
 ## Directory Structure
 
 ```
-$ZK/papers/
+$OV/papers/
 ├── <slug>.pdf            ← raw PDF
 ├── <slug>-notes.md       ← optional notes/artifacts
 └── ...

@@ -101,8 +101,8 @@ When a user asks Codex to run a Reflectl command:
 3. Read `.claude/commands/<command>.md` for the workflow.
 4. Translate Claude-specific constructs using the table in `AGENTS.md`.
 5. Read any referenced agent specs from `.claude/agents/`.
-6. Prefer local `$ZK/` files, `rg`, and `uv run scripts/semantic.py`.
-7. Ask before any local file write under `$ZK/`.
+6. Prefer local `$OV/` files, `rg`, and `uv run scripts/semantic.py`.
+7. Ask before any local file write under `$OV/`.
 8. Report any downgraded capability, such as missing web access or unavailable
    subagent dispatch.
 

@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ZK = (REPO_ROOT / "zk").resolve()
+OV = (REPO_ROOT / "zk").resolve()
 SKIP_DIRS = {"secure", "personal", "cache", ".obsidian", ".trash", "raw", "assets"}
 
 LINK_RE = re.compile(r"(!?\[)([^\]]*)(\]\()<?([^)>#]+)(#[^)>]*)?>?(\))")
@@ -89,7 +89,7 @@ def maybe_wrap(path: str) -> str:
 def relink_file(path: Path, idx: dict[str, list[Path]]) -> tuple[str, list[tuple[str, str]]]:
     """Returns (new_text, list of (old_link, new_link) diffs)."""
     text = path.read_text(encoding="utf-8")
-    source_rel = path.resolve().relative_to(ZK)
+    source_rel = path.resolve().relative_to(OV)
     diffs: list[tuple[str, str]] = []
 
     def _sub(m: re.Match) -> str:
@@ -109,7 +109,7 @@ def relink_file(path: Path, idx: dict[str, list[Path]]) -> tuple[str, list[tuple
         source_dir = path.parent
         target_abs = (source_dir / href).resolve()
         try:
-            target_rel_existing = target_abs.relative_to(ZK)
+            target_rel_existing = target_abs.relative_to(OV)
         except ValueError:
             return m.group(0)  # outside zk
         if target_abs.exists():
@@ -137,14 +137,14 @@ def main() -> None:
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
-    print(f"[index] building name index from {ZK}", file=sys.stderr)
-    idx = build_index(ZK)
+    print(f"[index] building name index from {OV}", file=sys.stderr)
+    idx = build_index(OV)
     print(f"[index] {sum(len(v) for v in idx.values())} files, {len(idx)} distinct names",
           file=sys.stderr)
 
     files = [
-        f for f in sorted(ZK.rglob("*.md"))
-        if is_tracked_path(f.relative_to(ZK))
+        f for f in sorted(OV.rglob("*.md"))
+        if is_tracked_path(f.relative_to(OV))
     ]
     print(f"[scan] {len(files)} tracked .md files", file=sys.stderr)
 
@@ -156,7 +156,7 @@ def main() -> None:
             continue
         files_changed += 1
         total_replacements += len(diffs)
-        rel = f.relative_to(ZK)
+        rel = f.relative_to(OV)
         if not args.quiet:
             print(f"\n=== {rel} ({len(diffs)} relinks) ===")
             for old, new in diffs:

@@ -4,7 +4,7 @@ privacy_check.py: Detect private-vault identifier leaks in committed files.
 
 Two automated discovery sources, no manual denylist needed:
 
-  1. Filename stems: multi-word `*.md` stems under PRIVATE_DIRS in `$ZK/`.
+  1. Filename stems: multi-word `*.md` stems under PRIVATE_DIRS in `$OV/`.
   2. Wiki-link targets: `[[...]]` references extracted from vault content.
      Catches person names, private note titles, and concepts that may not
      have their own files. Filtered to multi-word ASCII targets and any
@@ -34,7 +34,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ZK = Path(os.environ.get("ZK", "zk"))
+OV = Path(os.environ.get("OV", "zk"))
 ALLOWLIST = Path(__file__).resolve().parent / "privacy_allowlist.txt"
 PRIVATE_SLUGS = (
     Path(__file__).resolve().parent.parent / "personal" / "private_slugs.txt"
@@ -44,7 +44,7 @@ _INFRA_DIRS = {"cache", "assets", ".obsidian"}
 
 
 def _discover_private_dirs(root: Path) -> list[str]:
-    """Auto-discover content subdirectories under $ZK/.
+    """Auto-discover content subdirectories under $OV/.
 
     Skips infrastructure dirs (cache mirrors, binary assets, editor
     config) that don't contain user-authored private identifiers.
@@ -279,8 +279,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--json", action="store_true", help="Emit JSON output.")
     args = ap.parse_args(argv)
 
-    if not ZK.exists():
-        msg = f"privacy_check: {ZK} does not exist; nothing to check against"
+    if not OV.exists():
+        msg = f"privacy_check: {OV} does not exist; nothing to check against"
         if args.json:
             print(json.dumps(
                 {"zk_missing": True, "titles_scanned": 0, "hits": []},
@@ -292,11 +292,11 @@ def main(argv: list[str] | None = None) -> int:
 
     allowlist = load_allowlist()
     private_slugs = load_private_slugs()
-    dirs = _discover_private_dirs(ZK)
-    titles = collect_titles(ZK, allowlist, dirs)
+    dirs = _discover_private_dirs(OV)
+    titles = collect_titles(OV, allowlist, dirs)
     files = tracked_files()
     repo_stems = committed_stems(files)
-    wikilinks = collect_wikilinks(ZK, allowlist, dirs)
+    wikilinks = collect_wikilinks(OV, allowlist, dirs)
 
     def _matches_committed(term: str) -> bool:
         tl = term.lower()
@@ -310,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({
-            "zk_dir": ZK.as_posix(),
+            "ov_dir": OV.as_posix(),
             "filename_stems": len(titles),
             "wikilink_targets": len(wikilinks),
             "private_slugs": len(private_slugs),
@@ -337,7 +337,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {h['file']}:{h['line']}: {h['private_title']!r}")
         print()
         print(
-            "Each line shows a private identifier from your $ZK vault "
+            "Each line shows a private identifier from your $OV vault "
             "(filename stem or [[wikilink]] target) appearing in a tracked "
             "file. Replace with a generic placeholder, or add the term to "
             "scripts/privacy_allowlist.txt if the exposure is deliberate."

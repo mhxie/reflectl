@@ -54,8 +54,8 @@ High-frequency operations. Lift these directly instead of re-deriving from `prot
 | Need | Command |
 |---|---|
 | Semantic vault search | `uv run scripts/semantic.py query "<concept>" --top 10` |
-| Today's daily note | `cat "$ZK/daily-notes/$(date +%Y-%m-%d).md"` (before 03:00 local also read previous day) |
-| Wiki entry by title | `rg -l "<title>" "$ZK/wiki/"` |
+| Today's daily note | `cat "$OV/daily-notes/$(date +%Y-%m-%d).md"` (before 03:00 local also read previous day) |
+| Wiki entry by title | `rg -l "<title>" "$OV/wiki/"` |
 | Privacy gate | `uv run scripts/privacy_check.py --json` |
 | Harness state / lint | `python3 scripts/harness_lint.py --json` |
 | Source spec for a command | `python3 scripts/reflectl.py source <name>` |

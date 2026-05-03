@@ -80,7 +80,7 @@ The privacy gate (`/system-review` Phase 1b, mirrored from `/lint` Phase 0c) pre
 
 | Check | Pass Criteria | Fail Action |
 |-------|--------------|-------------|
-| Source snapshots | All source notes snapshotted to `$ZK/cache/<operation>-<slug>.md` at dispatch time (local copy from `$ZK/`) | Abort — do not draft from un-snapshotted sources |
+| Source snapshots | All source notes snapshotted to `$OV/cache/<operation>-<slug>.md` at dispatch time (local copy from `$OV/`) | Abort — do not draft from un-snapshotted sources |
 | Media count match | Output image count = snapshot media count | Block — re-scan snapshot files, restore missing media |
 | Size limit | Each output note < 15KB | Split into numbered parts before presenting |
 | Verbatim preservation | Chinese text, interview memos, raw observations preserved word-for-word | Block — diff against snapshot files to find paraphrased content |

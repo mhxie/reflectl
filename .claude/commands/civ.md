@@ -33,7 +33,7 @@ Each stock from a **specific vault artifact** with a known date. If >30 days sta
 
 - **金**: Most recent explicit NW/asset figure from financial plan or reflection. Report value + source date.
 - **气**: Weight from plan file or daily notes. Sleep pattern (regular/drifting/unknown). Exercise frequency estimate.
-- **识**: Wiki count (`ls "$ZK"/wiki/*.md | wc -l`) + reading sessions in 30d. Note bulk-sync caveat.
+- **识**: Wiki count (`ls "$OV"/wiki/*.md | wc -l`) + reading sessions in 30d. Note bulk-sync caveat.
 - **缘**: Estimate: distinct social interactions in daily notes + reflections (30d). DL0 count from PRM.
 - **心**: Qualitative read from recent reflections: evidence of self-efficacy, resilience, hope, optimism. Report as `high/stable/fragile/unknown`.
 - **誉**: Role level + tenure + ownership areas + publications/reviews. From profile + career reflections.
@@ -292,4 +292,4 @@ Ad hoc. Identical output on unchanged vault.
 
 ## Evolution
 
-Persistent era score ledger and historical snapshots are out of scope. If demand emerges, evolve toward `$ZK/civ/` state directory. The 3 pending consistency tests in the user's resource framework note may change the terminal value structure; the dashboard adapts when those resolve.
+Persistent era score ledger and historical snapshots are out of scope. If demand emerges, evolve toward `$OV/civ/` state directory. The 3 pending consistency tests in the user's resource framework note may change the terminal value structure; the dashboard adapts when those resolve.

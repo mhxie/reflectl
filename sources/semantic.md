@@ -6,7 +6,7 @@ Teaching doc for the `semantic.py` CLI. Agents and command files call this scrip
 
 ## Modes
 
-**Stub mode** (lexical fallback): active when `~/.cache/reflectl/lance/` does not exist. Uses lexical token matching (substring `count`) over the Markdown corpus under `$ZK/`. Prints a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
+**Stub mode** (lexical fallback): active when `~/.cache/reflectl/lance/` does not exist. Uses lexical token matching (substring `count`) over the Markdown corpus under `$OV/`. Prints a warning to stderr on every invocation so callers never mistake "empty result" for "no conceptual neighbor exists."
 
 **Real mode** (embedding-backed): active when `~/.cache/reflectl/lance/` exists (sentinel). Day-one stack: BGE-M3 (1024-dim, multilingual, 8K-token context) + LanceDB (embedded columnar store, cosine distance). Documents are chunked at markdown heading boundaries (~2K chars per chunk). Index is machine-local; rebuild with `uv run scripts/semantic.py index` on each machine (~7s on MPS). No caller code changes across the swap.
 
@@ -22,7 +22,7 @@ scripts/semantic.py --help
 
 | Flag | Meaning | Default |
 |---|---|---|
-| `--path DIR` | Restrict to a subdirectory (repeatable). | `$ZK/` |
+| `--path DIR` | Restrict to a subdirectory (repeatable). | `$OV/` |
 | `--after YYYY-MM-DD` | Files with mtime >= date. | none |
 | `--before YYYY-MM-DD` | Files with mtime <= date. | none |
 | `--top N` | Max results. | 10 |
@@ -86,7 +86,7 @@ scripts/semantic.py query "curiosity vectors"
 Restricted to reflections in the last 30 days, JSON output:
 ```
 scripts/semantic.py query "energy drain" \
-    --path "$ZK"/reflections \
+    --path "$OV"/reflections \
     --after 2026-03-07 \
     --format json
 ```
@@ -94,8 +94,8 @@ scripts/semantic.py query "energy drain" \
 Multiple paths, top 20 hits:
 ```
 scripts/semantic.py query "研究 方向" \
-    --path "$ZK"/daily-notes \
-    --path "$ZK"/reflections \
+    --path "$OV"/daily-notes \
+    --path "$OV"/reflections \
     --top 20
 ```
 

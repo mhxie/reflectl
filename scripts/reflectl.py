@@ -152,7 +152,7 @@ def cmd_prompt(args: argparse.Namespace) -> int:
         base_prompt,
         "",
         "Before acting, read `AGENTS.md`, `CLAUDE.md`, and `protocols/runtime-adapters.md`.",
-        "Translate Claude Code tool syntax to the current runtime. Prefer local `$ZK/` files and ask before any Reflect write.",
+        "Translate Claude Code tool syntax to the current runtime. Prefer local `$OV/` files and ask before any Reflect write.",
     ]
     if extra_args:
         parts.extend(["", f"Arguments/context: {extra_args}"])
@@ -220,7 +220,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         base_prompt,
         "",
         "Before acting, read `AGENTS.md`, `CLAUDE.md`, and `protocols/runtime-adapters.md`.",
-        "Translate Claude Code tool syntax to the current runtime. Prefer local `$ZK/` files and ask before any Reflect write.",
+        "Translate Claude Code tool syntax to the current runtime. Prefer local `$OV/` files and ask before any Reflect write.",
     ]
     if extra:
         parts.extend(["", f"Arguments/context: {extra}"])

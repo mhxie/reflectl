@@ -33,13 +33,13 @@ Verified by = [what the user can check to confirm]
 2. [Step] → verify: [check]
 ```
 
-Concrete transform, "Compact these notes" becomes: "Success = N notes in `$ZK/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `$ZK/cache/` → verify: snapshots exist on disk. 3. Curator drafts compaction → verify: Gate 4 passes (size < 15KB, verbatim preservation). 4. Orchestrator writes the compacted file after approval → verify: file exists at the proposed `target_path`."
+Concrete transform, "Compact these notes" becomes: "Success = N notes in `$OV/` replaced by 1 compacted note with verbatim claim preservation. Verified by: user reads the resulting note. 1. Researcher finds N notes → verify: count matches user's expectation. 2. Orchestrator snapshots sources to `$OV/cache/` → verify: snapshots exist on disk. 3. Curator drafts compaction → verify: Gate 4 passes (size < 15KB, verbatim preservation). 4. Orchestrator writes the compacted file after approval → verify: file exists at the proposed `target_path`."
 
 ## Note Writing
 
-All note writes are local file writes under `$ZK/`. The orchestrator (not the Curator) owns the `Write`/`Edit` tools. The Curator drafts proposals; the orchestrator writes after user approval. Every proposal carries a `target_path` under `$ZK/` and the orchestrator either creates the file (`Write`) or applies a surgical change (`Edit`).
+All note writes are local file writes under `$OV/`. The orchestrator (not the Curator) owns the `Write`/`Edit` tools. The Curator drafts proposals; the orchestrator writes after user approval. Every proposal carries a `target_path` under `$OV/` and the orchestrator either creates the file (`Write`) or applies a surgical change (`Edit`).
 
-Daily notes (`$ZK/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not modify them. Curator dispatches that target a daily-note path are refused.
+Daily notes (`$OV/daily-notes/YYYY-MM-DD.md`) are user-authored. The system reads them; it does not modify them. Curator dispatches that target a daily-note path are refused.
 
 ## Session Flow
 
@@ -88,7 +88,7 @@ The user can request these actions during or after any session:
 ### Note Operations (→ Curator)
 | User Says | Action | Agent |
 |-----------|--------|-------|
-| "Compact my notes on X" | Researcher finds notes in `$ZK/` → orchestrator snapshots each source to `$ZK/cache/compact-<slug>.md` at dispatch time (local `cp`) → Curator drafts compaction → orchestrator writes after approval | Researcher → Curator |
+| "Compact my notes on X" | Researcher finds notes in `$OV/` → orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time (local `cp`) → Curator drafts compaction → orchestrator writes after approval | Researcher → Curator |
 | "Merge these notes" | Curator drafts merged note from snapshot files; orchestrator writes after approval | Curator |
 | "Summarize [[Note]]" | Produce a concise summary | Synthesizer |
 | "Write this insight as a new note" | Curator drafts a local note under the appropriate tier; orchestrator writes after approval | Curator |
@@ -98,9 +98,9 @@ The user can request these actions during or after any session:
 | User Says | Action | Agent |
 |-----------|--------|-------|
 | "Find notes about X" | `Bash: uv run scripts/semantic.py query "X" --top 10` (semantic-primary for content queries) then `Grep` for exact-string follow-ups | Researcher |
-| "What did I write about X last year?" | Filename-date filter on `$ZK/daily-notes/` + `Grep`. Report the gap if a date range is missing locally. | Researcher |
+| "What did I write about X last year?" | Filename-date filter on `$OV/daily-notes/` + `Grep`. Report the gap if a date range is missing locally. | Researcher |
 | "Are there related notes I'm forgetting?" | `Bash: uv run scripts/semantic.py query "<concept>" --top 10` — stub lexical-falls-through today, embedding-backed once the real-mode sentinel lands. Reframe and retry if thin. | Researcher |
-| "Show me everything tagged #X" | `Grep "#X"` over `$ZK/` | Researcher |
+| "Show me everything tagged #X" | `Grep "#X"` over `$OV/` | Researcher |
 
 ### Meeting Operations (→ Meeting)
 | User Says | Action | Agent |
@@ -156,7 +156,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | Chain | Trigger | Flow | Value |
 |-------|---------|------|-------|
 | **Research → Synthesize → Review** | Every session | Researcher → Synthesizer → Reviewer | Core quality pipeline |
-| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and writes the reflection file under `$ZK/reflections/` (or another tier) after user approval. Synthesizer has no Write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
+| **Synthesizer → Orchestrator write-back** | Synthesizer returns output and a session asks for a write-back | Synthesizer produces the draft; the orchestrator catches it, runs the Reviewer+Challenger gate, and writes the reflection file under `$OV/reflections/` (or another tier) after user approval. Synthesizer has no Write tool — write-back is always orchestrator-side. | Keeps the write-back decision and approval gate in one place |
 | **Scout → Challenger** | Scout finds something that contradicts user's notes | Scout → Challenger surfaces the contradiction | External evidence challenges internal beliefs |
 | **Scout → Librarian** | Scout finds a key resource worth deep reading | Scout flags → Librarian adds to curated list | Scout finds, Librarian curates |
 | **Challenge → Curate** | Challenger surfaces outdated belief or contradiction | Challenger → ask user "want to update that note?" → Curator rewrites | Turns insight into note hygiene |
@@ -169,7 +169,7 @@ The orchestrator should actively look for collaboration opportunities during ses
 | **Reader → Challenger** | Reader surfaces a claim worth questioning | Challenger probes the claim against user's existing beliefs | Deepens engagement with the text |
 | **Reviewer + Challenger → Write-back** | Reading discussion ready for write-back | Reviewer checks grounding, Challenger checks completeness | Quality gate before writing to daily note |
 | **Evolver → Orchestrator → Review → Commit** | Evolver proposes a system change | Evolver makes changes (no commit) → returns `review_tier` to orchestrator → orchestrator dispatches reviewers → fixes issues → commits | Quality gate on system evolution (see Review Tiers) |
-| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$ZK/` → Orchestrator snapshots each source to `$ZK/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
+| **Batch Compaction** | User asks to compact a topic area | Researcher finds all notes in `$OV/` → Orchestrator snapshots each source to `$OV/cache/compact-<slug>.md` at dispatch time → Curator drafts one output note at a time → orchestrator writes each after approval | Sequential: all snapshots must exist on disk before Curator starts |
 
 ### Parallel Dispatches (A and B run simultaneously)
 

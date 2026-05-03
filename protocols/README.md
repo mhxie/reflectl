@@ -59,7 +59,7 @@ pattern-library.md (recognizes patterns, Moments, trade routes)
 epistemic-hygiene.md (validation-depth taxonomy)
   └── wiki-schema.md (L4 entry format, claim markers, anchors)
 
-local-first-architecture.md (five-tier model, `$ZK/` layout)
+local-first-architecture.md (five-tier model, `$OV/` layout)
 
 session-log.md (session process recording)
   └── meta-reflection.md (reads session logs for system health)

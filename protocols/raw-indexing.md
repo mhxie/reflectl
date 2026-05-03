@@ -2,7 +2,7 @@
 
 ## Purpose
 
-After Drive → `$ZK` ingestion (see [[drive-zk-ingestion.md]]), `$ZK/<domain>/raw/` accumulates categorical files. This protocol covers the next layer: **cross-cutting markdown indexes** that make raw lookups one-click via wikilinks.
+After Drive → `$OV` ingestion (see [[drive-zk-ingestion.md]]), `$OV/<domain>/raw/` accumulates categorical files. This protocol covers the next layer: **cross-cutting markdown indexes** that make raw lookups one-click via wikilinks.
 
 A raw-index is the navigational complement to the raw archive: raw is the source of truth, the index is the table of contents.
 
@@ -25,11 +25,11 @@ Skip when:
 
 | Index scope | Location pattern |
 |---|---|
-| Single domain (immigration only) | `$ZK/<domain>/<category>-index.md` |
-| Cross-domain identity-level | `$ZK/personal/<category>-index.md` |
-| Per-holder (when household has multiple subjects) | `$ZK/personal/<holder>/<category>-index.md` |
+| Single domain (immigration only) | `$OV/<domain>/<category>-index.md` |
+| Cross-domain identity-level | `$OV/personal/<category>-index.md` |
+| Per-holder (when household has multiple subjects) | `$OV/personal/<holder>/<category>-index.md` |
 
-Index lives in working tier (`$ZK/<domain>/` or `$ZK/personal/`), never under `raw/`. Raw stays unedited per ingestion protocol.
+Index lives in working tier (`$OV/<domain>/` or `$OV/personal/`), never under `raw/`. Raw stays unedited per ingestion protocol.
 
 ## Required structure
 
@@ -39,7 +39,7 @@ last_verified: YYYY-MM-DD
 canonical: true
 scope: <one-line: 索引覆盖什么, 不覆盖什么>
 sources:
-  - $ZK/<domain>/raw/ (relevant raw subtrees)
+  - $OV/<domain>/raw/ (relevant raw subtrees)
   - <other authoritative timeline/digest if any>
   - user input <date> (when manual confirmations were folded in)
 ---
@@ -55,7 +55,7 @@ sources:
 | ✅ | active |
 | ⚠️ | expiring soon |
 | 🔴 | expired / superseded |
-| ⛔ | missing — 应该有但 $ZK/ 找不到 |
+| ⛔ | missing — 应该有但 $OV/ 找不到 |
 | ❓ | status / 日期未确认 |
 
 ## <Holder or grouping> — <Name>
@@ -119,7 +119,7 @@ When the same logical document exists as multiple files (Drive-era duplicates, i
 
 ## Example: credentials index
 
-The canonical implementation lives under `$ZK/personal/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
+The canonical implementation lives under `$OV/personal/` (gitignored) as an `<identity>-index.md` covering identification documents. Concrete holder names, jurisdictions, document types, and copy locations stay in the private vault and are out of scope for this committed protocol.
 
 Generic structural elements (use as template):
 
@@ -132,6 +132,6 @@ Use the structure as a template; do not copy private content from the vault impl
 
 ## Cross-references
 
-- [[drive-zk-ingestion.md]] — how raw files arrive in `$ZK/<domain>/raw/` (the prerequisite)
+- [[drive-zk-ingestion.md]] — how raw files arrive in `$OV/<domain>/raw/` (the prerequisite)
 - [[local-first-architecture.md]] — tier model context (indexes live in working tier)
 - [[epistemic-hygiene.md]] — validation-depth applies: index entries are alloy unless user-verified (last_verified frontmatter)

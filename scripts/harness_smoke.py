@@ -2,7 +2,7 @@
 """
 harness_smoke.py: deterministic smoke test for the portable harness helpers.
 
-This intentionally avoids `$ZK/` and network access. It only checks the public
+This intentionally avoids `$OV/` and network access. It only checks the public
 repo harness surface: harness_lint.py, reflectl.py JSON outputs, source path
 lookups, and generated prompts.
 """

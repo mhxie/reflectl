@@ -1,12 +1,12 @@
 # /promote — Create L4 wiki entry from L2 source notes
 
-Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `$ZK/wiki/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for reflectl's claim-level trust architecture.
+Two-step workflow to promote existing L2 working notes (daily notes, reflections, agent findings, drafts) into a schema-compliant L4 wiki entry under `$OV/wiki/`. Inspired by llm_wiki's analyze-then-generate ingest pipeline, adapted for reflectl's claim-level trust architecture.
 
 **Scope:** one wiki entry per invocation. The user names a topic or set of source notes; the command produces a draft wiki entry with pre-populated `@anchor` markers for user review.
 
 ## Prerequisites
 
-1. Source notes must already exist under `$ZK/` (any tier except L4).
+1. Source notes must already exist under `$OV/` (any tier except L4).
 2. `protocols/wiki-schema.md` defines the target format.
 3. `scripts/trust.py` validates structural integrity after creation.
 
@@ -14,7 +14,7 @@ Two-step workflow to promote existing L2 working notes (daily notes, reflections
 
 The user provides one of:
 - A **topic** (e.g., "promote distributed locking") and the Researcher finds relevant source notes.
-- One or more **file paths** (e.g., `$ZK/daily-notes/2026-04-08.md`, `$ZK/agent-findings/lance-brief.md`).
+- One or more **file paths** (e.g., `$OV/daily-notes/2026-04-08.md`, `$OV/agent-findings/lance-brief.md`).
 
 ## Process
 
@@ -27,14 +27,14 @@ Research brief request: identify all notes related to [topic/paths] that contain
 claims suitable for L4 promotion. For each candidate:
   - Extract factual claims (not opinions or speculation)
   - Note any external sources referenced (URLs, paper citations, DOIs)
-  - Flag claims that overlap with existing wiki entries under $ZK/wiki/
+  - Flag claims that overlap with existing wiki entries under $OV/wiki/
   - Report the validation depth of each source note (L1 raw, L2 working, L3 external)
 
 Search strategy:
   1. scripts/semantic.py query "[topic]" --top 20  (primary)
-  2. Grep for exact terms across $ZK/ (structural follow-up)
+  2. Grep for exact terms across $OV/ (structural follow-up)
   3. Read candidate files in full
-  4. Cross-reference against existing $ZK/wiki/ entries via trust.py --json
+  4. Cross-reference against existing $OV/wiki/ entries via trust.py --json
 
 Return a structured brief with:
   - candidate_notes: [{path, title, relevant_claims: [text, source_url?]}]
@@ -55,7 +55,7 @@ After user approval of the brief, dispatch the **Curator** agent with the approv
 ```
 Wiki entry draft request.
 
-Target path: $ZK/wiki/<Title>.md   (title-case with spaces, matching the H1)
+Target path: $OV/wiki/<Title>.md   (title-case with spaces, matching the H1)
 Schema reference: protocols/wiki-schema.md
 
 Approved claims and anchors:
@@ -83,8 +83,8 @@ Instructions:
 ### Phase 3: Validate and Write
 
 1. **Present the draft** to the user for review. Show the full markdown.
-2. On user approval, **write the file** to `$ZK/wiki/<Title>.md` (title-case with spaces, matching the H1).
-3. Run `scripts/trust.py --note "$ZK/wiki/<Title>.md"` to verify structural integrity.
+2. On user approval, **write the file** to `$OV/wiki/<Title>.md` (title-case with spaces, matching the H1).
+3. Run `scripts/trust.py --note "$OV/wiki/<Title>.md"` to verify structural integrity.
    - If errors: show them, ask the user if they want to fix or abort.
    - If clean: report the initial trust score (will be raw PageRank, no floor until a reviewer pass).
 4. Run `scripts/lint.py` to check for corpus-level issues (shared anchors, etc.).
@@ -101,7 +101,7 @@ After the English entry passes validation, generate a Chinese shadow copy:
    - DO NOT translate `^cn` block IDs
    - Keep the `# Title` in English (filename must match)
    - Add at the top: `> 本文为 [[English Title]] 的中文版本。核心技术术语保留英文原文。`
-2. **Write** to `$ZK/wiki-cn/<Title>.md` (same filename as the English version).
+2. **Write** to `$OV/wiki-cn/<Title>.md` (same filename as the English version).
 3. This step is automatic and does not require additional user approval.
 
 ### Phase 5: Post-Creation Suggestions

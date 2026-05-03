@@ -1,6 +1,6 @@
 ## Purpose
 
-GitHub-canonical conventions for the `Zettel` repo (the synced `$ZK` markdown layer). These rules optimize for: clean GitHub UI rendering, efficient agent navigation, sustainable folder browsing, and a plain-markdown vault that stays ecosystem-agnostic (no editor-specific carry-over).
+GitHub-canonical conventions for the `Zettel` repo (the synced `$OV` markdown layer). These rules optimize for: clean GitHub UI rendering, efficient agent navigation, sustainable folder browsing, and a plain-markdown vault that stays ecosystem-agnostic (no editor-specific carry-over).
 
 Companion: `protocols/semantic-vocabulary.md` (backlink and tag conventions).
 
@@ -44,7 +44,7 @@ Reference syntax (relative path from the .md file's directory):
 
 ### Tracking
 
-`$ZK/.gitignore` whitelists `**/images/*.{png,jpg,jpeg,gif,svg,webp}`. Place an image under any `images/` subdir and it auto-tracks on next `git add`.
+`$OV/.gitignore` whitelists `**/images/*.{png,jpg,jpeg,gif,svg,webp}`. Place an image under any `images/` subdir and it auto-tracks on next `git add`.
 
 `assets/` (auto-paste collectors, hash-named imports from prior tools) is re-excluded; any `assets/images/<hash>.png` style import stays local. To promote an `assets/` image to GitHub, move it to the right `<tier>/images/` path with a semantic name and update the markdown reference.
 
@@ -57,7 +57,7 @@ Markdown that still points at `assets/images/<hash>.png` will render broken on G
 
 ### Examples in this file
 
-All filenames, paths, topics, and people referenced in the example blocks above and the table below are placeholders. Replace `<topic>`, `<vendor>`, `<source>`, `<author>`, `<lab>`, `<venue>` with concrete strings when applying the convention; do not commit those concrete strings into protocol or convention files (they belong inside `$ZK/`, which is gitignored).
+All filenames, paths, topics, and people referenced in the example blocks above and the table below are placeholders. Replace `<topic>`, `<vendor>`, `<source>`, `<author>`, `<lab>`, `<venue>` with concrete strings when applying the convention; do not commit those concrete strings into protocol or convention files (they belong inside `$OV/`, which is gitignored).
 
 ## Folder size — fission rule
 
@@ -75,15 +75,27 @@ The 32 threshold is hard, not "rough". A directory at 32 should be split before 
 | `readwise/articles/` | year-month if dated, else first-letter bucket | `readwise/articles/YYYY-MM/<slug>.md` |
 | `readwise/authors/` | first-letter bucket: `A/`, `B/`, …, `0-9/`, `中/` (CJK) | `readwise/authors/<X>/<Author Name>.md` |
 | `preprints/<class>/` | venue | `preprints/unofficial-reviews/<venue><yy>/` |
-| `wiki/`, `wiki-cn/` | first-letter bucket (alphabetical), or topic cluster | `wiki/<X>/<Topic Title>.md` |
+| `wiki/`, `wiki-cn/` | topic cluster (semantic) | `wiki/data-systems/<Topic Title>.md` |
 | `research/<area>/labs/` | by org type or first-letter | `research/<area>/labs/<X>/<lab>/` |
 | `archive/<subdir>` | first-letter bucket or topical sub-grouping (case-by-case) | `archive/people/<X>/<Person Name>.md` |
 
-### Rebuilding refs after fission
+### Rebuilding refs after any move (canonical workflow)
 
-File moves break standard markdown links `[X](path.md)`. After a split, run `scripts/relink.py --scan` (TBD) to detect broken refs and `scripts/relink.py --apply` to rewrite paths via the global stem index.
+File moves break standard markdown links `[X](path.md)` and image embeds `![](path)`. The relink contract makes reorganization non-destructive:
 
-The wikilink converter (`scripts/wikilink_to_md.py`) only handles `[[...]]` syntax. Once links are standard markdown, relink is a separate operation.
+```
+1. Move files via any tool         (cluster_wiki.py / fission.py / manual mv)
+2. uv run scripts/relink.py --apply   ← auto-fixes broken refs
+3. Commit
+```
+
+`scripts/relink.py` builds a global filename → location index across all tracked `.md`/image files, scans every `[text](path)` and `![alt](path)` reference, and rewrites broken paths to the file's current location. Since refs track filename (not path), any reorganization that doesn't rename files is fully recoverable. Use `--dry-run` first to preview changes.
+
+The wikilink converter (`scripts/wikilink_to_md.py`) only handles `[[...]]` syntax (one-time migration from wikilink format). Once links are standard markdown, `relink.py` is the steady-state tool for all subsequent moves.
+
+### Tier-specific semantic restructures
+
+`scripts/cluster_wiki.py` is the pattern for one-off semantic reorgs of a single tier: hardcode a `{filename: bucket}` map, move files into bucket subdirs, then run relink. Reusable per-tier — copy + adjust the `TOPIC_MAP`.
 
 ### Cascading splits
 

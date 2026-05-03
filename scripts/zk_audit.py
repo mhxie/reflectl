@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-zk_audit.py: Post-ingestion hygiene audit for the $ZK vault.
+zk_audit.py: Post-ingestion hygiene audit for the $OV vault.
 
 The Drive -> zk ingestion protocol describes how new material should land
 (raw/ siblings, per-domain README, digest in the working tier, no orphans
@@ -8,13 +8,13 @@ at root). This script is the matching post-condition check: after a heavy
 ingestion sweep, run it to catch the gaps that the protocol can describe
 but a human eye will miss.
 
-Audit categories (all reporting only; never mutates $ZK):
+Audit categories (all reporting only; never mutates $OV):
 
   [1] Missing READMEs in working-tier domains.
   [2] Raw subtrees with no apparent digest in the working tier.
   [3] Archive subtrees that overlap a current working-tier domain
       (consolidation candidates).
-  [4] Root-level .md orphans (only README.md belongs at $ZK root) and
+  [4] Root-level .md orphans (only README.md belongs at $OV root) and
       empty (0-byte) .md files in the working tier or vault root.
       Empty stubs under archive/ are counted in aggregate but not
       listed individually (they are a pre-ingestion pattern, not
@@ -27,13 +27,13 @@ CLI:
     uv run scripts/zk_audit.py --json     machine-readable output
 
 Exit code: 0 always (audit is advisory; user decides what to consolidate).
-2 only on IO error (e.g., $ZK is missing).
+2 only on IO error (e.g., $OV is missing).
 
 Design notes:
   - Stdlib only, mirrors scripts/privacy_check.py and scripts/lint.py style.
-  - Reads $ZK from env (defaults to "zk"). Never hardcodes user paths,
+  - Reads $OV from env (defaults to "zk"). Never hardcodes user paths,
     domain names from the user's vault, or filename stems. Domain names
-    are discovered by walking $ZK/.
+    are discovered by walking $OV/.
   - Heuristics, not perfect detectors. Each category documents its
     false-positive direction so the human reader can calibrate.
 """
@@ -48,7 +48,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ZK = Path(os.environ.get("ZK", "zk"))
+OV = Path(os.environ.get("OV", "zk"))
 
 # Top-level directories that are NOT Drive->zk ingestion targets.
 # These are still working-tier (L2 per CLAUDE.md) but they hold
@@ -137,7 +137,7 @@ def _is_hidden(name: str) -> bool:
 
 
 def discover_working_domains(root: Path) -> list[Path]:
-    """Working-tier domains: top-level directories under $ZK that are
+    """Working-tier domains: top-level directories under $OV that are
     neither hidden, infrastructure, nor a different-tier home.
 
     A "domain" here is the unit the ingestion protocol mints: e.g.,
@@ -289,7 +289,7 @@ def check_archive_overlap(root: Path, domains: list[Path]) -> list[Finding]:
 def check_root_orphans(root: Path) -> tuple[list[Finding], list[Finding], int]:
     """Returns (root_md_orphans, empty_md_in_working_or_root, empty_md_archive_count).
 
-    Root orphans: any *.md file at $ZK root other than README.md. Per
+    Root orphans: any *.md file at $OV root other than README.md. Per
     the protocol, the root is structural; content lives in tier dirs.
 
     Empty .md files: 0-byte markdown files in the working tier or at
@@ -393,25 +393,25 @@ def check_suspicious_dirs(root: Path) -> list[Finding]:
 
 
 def _rel(path: Path) -> str:
-    """Render a path relative to $ZK if possible, else absolute.
+    """Render a path relative to $OV if possible, else absolute.
 
     Audit output is for the human reading the report, so showing
     `auto/raw/Tesla...` is friendlier than the absolute Drive path.
     """
     try:
-        return "zk/" + path.relative_to(ZK).as_posix()
+        return "zk/" + path.relative_to(OV).as_posix()
     except ValueError:
         return path.as_posix()
 
 
 def run_audit() -> Report:
-    report = Report(vault=ZK.as_posix())
-    domains = discover_working_domains(ZK)
+    report = Report(vault=OV.as_posix())
+    domains = discover_working_domains(OV)
     report.missing_readmes = check_missing_readmes(domains)
     report.raw_no_digest = check_raw_without_digest(domains)
-    report.archive_overlap = check_archive_overlap(ZK, domains)
-    report.root_orphans, report.empty_md, report.empty_md_archive_count = check_root_orphans(ZK)
-    report.suspicious_dirs = check_suspicious_dirs(ZK)
+    report.archive_overlap = check_archive_overlap(OV, domains)
+    report.root_orphans, report.empty_md, report.empty_md_archive_count = check_root_orphans(OV)
+    report.suspicious_dirs = check_suspicious_dirs(OV)
     return report
 
 
@@ -469,12 +469,12 @@ def format_human(report: Report) -> str:
     if arch:
         summary = (
             f"Summary: 6 categories, {actionable} actionable + {arch} archive-aggregated "
-            f"= {total} total finding(s). Audit is advisory; no $ZK content was modified."
+            f"= {total} total finding(s). Audit is advisory; no $OV content was modified."
         )
     else:
         summary = (
             f"Summary: 6 categories, {total} total finding(s). "
-            "Audit is advisory; no $ZK content was modified."
+            "Audit is advisory; no $OV content was modified."
         )
     lines.append(summary)
     lines.append("")
@@ -488,15 +488,15 @@ def format_json(report: Report) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="scripts/zk_audit.py",
-        description="Post-ingestion hygiene audit for the $ZK vault.",
+        description="Post-ingestion hygiene audit for the $OV vault.",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON output.")
     args = parser.parse_args(argv)
 
-    if not ZK.exists():
-        msg = f"zk_audit: {ZK} does not exist; nothing to audit"
+    if not OV.exists():
+        msg = f"zk_audit: {OV} does not exist; nothing to audit"
         if args.json:
-            print(json.dumps({"vault": ZK.as_posix(), "error": "missing"}, indent=2))
+            print(json.dumps({"vault": OV.as_posix(), "error": "missing"}, indent=2))
         else:
             sys.stderr.write(msg + "\n")
         return 2

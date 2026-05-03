@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ZK = (REPO_ROOT / "zk").resolve()
+OV = (REPO_ROOT / "zk").resolve()
 
 # Mirrors zk/.gitignore semantics: dirs that never contain Reflect-bound or
 # GitHub-bound markdown.
@@ -193,7 +193,7 @@ def transform_wikilink(inner: str, source_rel: Path, idx: dict[str, list[Path]])
     if parsed:
         iso = parsed.strftime("%Y-%m-%d")
         daily_rel = Path("daily-notes") / f"{iso}.md"
-        if (ZK / daily_rel).exists():
+        if (OV / daily_rel).exists():
             display = alias or iso
             return md_link(display, relative_path(daily_rel, source_rel))
         return alias or iso
@@ -257,7 +257,7 @@ def transform_file(path: Path, idx: dict[str, list[Path]]) -> tuple[str, list[tu
     Wikilinks inside fenced or inline code are preserved verbatim — they may
     document syntax rather than reference notes."""
     text = path.read_text(encoding="utf-8")
-    source_rel = path.resolve().relative_to(ZK)
+    source_rel = path.resolve().relative_to(OV)
     diffs: list[tuple[str, str]] = []
 
     # Mask code regions so wikilink regex doesn't touch them.
@@ -296,8 +296,8 @@ def main() -> None:
     ap.add_argument("--quiet", action="store_true", help="Suppress per-file diff output")
     args = ap.parse_args()
 
-    print(f"[index] building stem index from {ZK}", file=sys.stderr)
-    idx = build_stem_index(ZK)
+    print(f"[index] building stem index from {OV}", file=sys.stderr)
+    idx = build_stem_index(OV)
     total_indexed = sum(len(v) for v in idx.values())
     print(f"[index] {total_indexed} files, {len(idx)} distinct stems", file=sys.stderr)
 
@@ -308,18 +308,18 @@ def main() -> None:
             p = (Path.cwd() / p).resolve()
         files = [p]
     elif args.tier:
-        tier_path = ZK / args.tier
+        tier_path = OV / args.tier
         if not tier_path.is_dir():
             print(f"[error] tier not found: {tier_path}", file=sys.stderr)
             sys.exit(1)
         files = [
             f for f in sorted(tier_path.rglob("*.md"))
-            if not any(part in SKIP_DIRS for part in f.relative_to(ZK).parts)
+            if not any(part in SKIP_DIRS for part in f.relative_to(OV).parts)
         ]
     else:
         files = [
-            f for f in sorted(ZK.rglob("*.md"))
-            if not any(part in SKIP_DIRS for part in f.relative_to(ZK).parts)
+            f for f in sorted(OV.rglob("*.md"))
+            if not any(part in SKIP_DIRS for part in f.relative_to(OV).parts)
         ]
 
     if args.limit:
@@ -365,7 +365,7 @@ def main() -> None:
         total_changes += len(diffs)
         for old, new in diffs:
             classify(old, new)
-        rel = f.resolve().relative_to(ZK)
+        rel = f.resolve().relative_to(OV)
         if not args.quiet:
             print(f"\n=== {rel} ({len(diffs)} changes) ===")
             for old, new in diffs:

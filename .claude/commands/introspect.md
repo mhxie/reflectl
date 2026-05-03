@@ -6,7 +6,7 @@ Unlike `/index` (mechanical extraction), `/introspect` discovers patterns: what 
 
 ## Prerequisites
 
-Verify the local `$ZK/` vault is present and non-empty: `Bash: test -d "$ZK"/daily-notes && ls "$ZK"/daily-notes | head -1`. If the directory is missing or empty, tell the user: "Local `$ZK/` vault is missing. Check that `$ZK` is set and points to a valid directory."
+Verify the local `$OV/` vault is present and non-empty: `Bash: test -d "$OV"/daily-notes && ls "$OV"/daily-notes | head -1`. If the directory is missing or empty, tell the user: "Local `$OV/` vault is missing. Check that `$OV` is set and points to a valid directory."
 
 ## Output Files
 
@@ -23,25 +23,25 @@ profile/
 
 ### Step 1: Gather Raw Material
 
-Run these searches in parallel over the local `$ZK/` vault. Local grep is instant, deterministic, and returns full paths you can then `Read` directly.
+Run these searches in parallel over the local `$OV/` vault. Local grep is instant, deterministic, and returns full paths you can then `Read` directly.
 
 **Goals & Directions:**
-1. `Grep(pattern: "目标", path: "$ZK/")` — Chinese goal mentions
-2. `Grep(pattern: "goal", path: "$ZK/", -i: true)` — English goal mentions
-3. `Grep(pattern: "小目标", path: "$ZK/")` — Annual goal notes
-4. `Grep(pattern: "objective", path: "$ZK/", -i: true)` — Additional goal mentions
+1. `Grep(pattern: "目标", path: "$OV/")` — Chinese goal mentions
+2. `Grep(pattern: "goal", path: "$OV/", -i: true)` — English goal mentions
+3. `Grep(pattern: "小目标", path: "$OV/")` — Annual goal notes
+4. `Grep(pattern: "objective", path: "$OV/", -i: true)` — Additional goal mentions
 
 **Identity & Themes:**
-5. Discover tags: `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$ZK"/ | sort -u` (local tag inventory)
-6. `Grep(pattern: "career", path: "$ZK/", -i: true)` — Career trajectory
-7. `Grep(pattern: "职业", path: "$ZK/")` — Chinese career notes
-8. `Grep(pattern: "learning", path: "$ZK/", -i: true)` — Learning interests
-9. `Grep(pattern: "学习", path: "$ZK/")` — Chinese learning notes
+5. Discover tags: `Bash: grep -rohE '#[A-Za-z][A-Za-z0-9_-]*' "$OV"/ | sort -u` (local tag inventory)
+6. `Grep(pattern: "career", path: "$OV/", -i: true)` — Career trajectory
+7. `Grep(pattern: "职业", path: "$OV/")` — Chinese career notes
+8. `Grep(pattern: "learning", path: "$OV/", -i: true)` — Learning interests
+9. `Grep(pattern: "学习", path: "$OV/")` — Chinese learning notes
 
 **Recent Context:**
-10. `Read $ZK/daily-notes/<today>.md` — today
-11. `Read $ZK/daily-notes/<yesterday>.md` — yesterday
-12. Recent planning: `Bash: find "$ZK"/daily-notes "$ZK"/reflections "$ZK"/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
+10. `Read $OV/daily-notes/<today>.md` — today
+11. `Read $OV/daily-notes/<yesterday>.md` — yesterday
+12. Recent planning: `Bash: find "$OV"/daily-notes "$OV"/reflections "$OV"/gtd -type f -name "*.md" -mtime -30 | xargs grep -l -i "plan" 2>/dev/null`
 
 Deduplicate results by file path. Prioritize files with recent mtimes. **Semantic pass:** for conceptual angles grep cannot phrase ("curiosity vectors", "intellectual taste", "what am I drawn to"), run `Bash: uv run scripts/semantic.py query "<concept>" --top 10`. Reframe and retry if thin.
 
@@ -58,7 +58,7 @@ This step goes beyond mechanical extraction. Look for:
 
 **Intellectual taste** (what you engage deeply with vs. skim):
 - Topics that recur across daily notes without being declared goals
-- Articles/papers you chose to deep-read vs. archive (check triage files in `$ZK/cache/triage-*.md`)
+- Articles/papers you chose to deep-read vs. archive (check triage files in `$OV/cache/triage-*.md`)
 - Discussion tangents that repeatedly surface in reflection sessions
 - Aesthetic preferences in how you evaluate ideas (from research-profile patterns)
 

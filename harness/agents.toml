@@ -15,7 +15,7 @@ codex_prompt = "Emulate the Challenger role using `.claude/agents/challenger.md`
 source = ".claude/agents/curator.md"
 model_profile = "note_operations"
 status = "portable-adapted"
-description = "Drafts note-content operations (compactions, merges, new notes, wiki entries) for the orchestrator to write under $ZK/."
+description = "Drafts note-content operations (compactions, merges, new notes, wiki entries) for the orchestrator to write under $OV/."
 codex_prompt = "Emulate the Curator role using `.claude/agents/curator.md` and the runtime adapter protocol."
 
 [agents.evolver]
