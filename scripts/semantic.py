@@ -40,7 +40,12 @@ from typing import Iterator, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # Lance index is machine-local (rebuild is ~7s on MPS, not worth syncing binaries).
-LANCE_DIR = Path.home() / ".cache" / "atelier" / "lance"
+_LANCE_NEW = Path.home() / ".cache" / "atelier" / "lance"
+_LANCE_OLD = Path.home() / ".cache" / "reflectl" / "lance"
+# Prefer the new path; fall back to the legacy reflectl/ cache if the new one
+# isn't built yet. Lets existing installations keep semantic search across the
+# atelier rename without a forced rebuild.
+LANCE_DIR = _LANCE_NEW if _LANCE_NEW.exists() else (_LANCE_OLD if _LANCE_OLD.exists() else _LANCE_NEW)
 DEFAULT_PATH = "zk"
 # Directories excluded from indexing (ephemeral caches, not worth embedding)
 INDEX_EXCLUDE = {"zk/cache"}
