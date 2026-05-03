@@ -94,7 +94,7 @@ The concrete tool mapping is in `harness/capabilities.toml`.
 
 ## Codex Command Execution
 
-When a user asks Codex to run a Atelier command:
+When a user asks Codex to run an Atelier command:
 
 1. Read `AGENTS.md`.
 2. Read `CLAUDE.md` for domain rules and safety constraints.
