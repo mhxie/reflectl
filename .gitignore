@@ -35,5 +35,10 @@ __pycache__/
 # Device-dependent config (each machine gets its own)
 semantic.toml
 
+# One-off / migration scripts that hardcode private vault content
+# (TOPIC_MAPs, lab lists, wiki entry titles). The steady-state generic
+# tools live at scripts/fission.py and scripts/relink.py.
+scripts/oneoff/
+
 # Local-first data layer (symlink or subdir; never commit the vault)
 zk
